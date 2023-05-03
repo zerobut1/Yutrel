@@ -3,6 +3,7 @@
 #include "runtime/function/window/window_system.h"
 
 #include <GLFW/glfw3.h>
+//#include <glad/glad.h>
 
 namespace Yutrel
 {
@@ -14,7 +15,7 @@ namespace Yutrel
 
         virtual bool shouldClose() const override;
 
-        virtual GLFWwindow *getglfwWindow() const override { return m_Window; }
+        virtual GLFWwindow *getglfwWindow() const override { return m_window; }
 
         virtual void pollEvents() const override { glfwPollEvents(); }
 
@@ -90,11 +91,13 @@ namespace Yutrel
             {
                 app->m_width  = width;
                 app->m_height = height;
+
+                app->onWindowSize(width,height);
             }
         }
         static void windowCloseCallback(GLFWwindow *window) { glfwSetWindowShouldClose(window, true); }
 
     private:
-        GLFWwindow *m_Window;
+        GLFWwindow *m_window;
     };
 } // namespace Yutrel
