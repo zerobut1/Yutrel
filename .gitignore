@@ -1,0 +1,6 @@
+.vscode
+.xmake
+build
+vsxmake2022
+
+.clang-format
