@@ -8,10 +8,14 @@ namespace Yutrel
     {
         // todo 还有反射系统，但是目前没有看懂
         g_runtime_global_context.startSystems();
+
+        LOG_INFO("engine start!");
     }
 
     void YutrelEngine::shutdownEngine()
     {
+        LOG_INFO("engine shutdown");
+
         g_runtime_global_context.shutdownSystems();
         // todo 反射系统注销
     }

@@ -14,6 +14,8 @@ namespace Yutrel
     {
         // 还有一堆各种system和manager
 
+        m_log_system = std::make_shared<LogSystem>();
+
         // 这里直接调用了Windows系统的实现，后面可能会加入不同平台的判断
         m_window_system = std::make_shared<Windows_WindowSystem>();
         m_window_system->initialize();
@@ -26,6 +28,10 @@ namespace Yutrel
 
     void RuntimeGlobalContext::shutdownSystems()
     {
+        m_render_system.reset();
+
         m_window_system.reset();
+
+        m_log_system.reset();
     }
 } // namespace Yutrel
