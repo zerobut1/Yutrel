@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include <xmemory>
+#include <memory>
 
 namespace Yutrel
 {

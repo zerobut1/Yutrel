@@ -6,4 +6,3 @@ target("runtime")
     add_files("**.cpp")
 
     add_includedirs("../")
-    add_includedirs("$(projectdir)/Engine/vendor")

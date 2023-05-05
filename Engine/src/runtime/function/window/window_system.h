@@ -1,12 +1,13 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
-
 #include <functional>
 #include <vector>
 
+struct GLFWwindow;
+
 namespace Yutrel
 {
+
     class WindowSystem
     {
     public:
@@ -16,7 +17,9 @@ namespace Yutrel
 
         virtual GLFWwindow *getglfwWindow() const = 0;
 
-        virtual void pollEvents() const = 0;
+        virtual void pollEvents() const                  = 0;
+        virtual std::array<int, 2> getWindowSize() const = 0;
+
     public:
         int m_width;
         int m_height;

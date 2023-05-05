@@ -2,6 +2,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include <array>
+
 namespace Yutrel
 {
     Windows_WindowSystem::~Windows_WindowSystem()
@@ -17,6 +19,8 @@ namespace Yutrel
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+        m_width = 1920;
+        m_height = 1080;
         m_window = glfwCreateWindow(1920, 1080, "test", nullptr, nullptr);
 
         glfwSetWindowUserPointer(m_window, this);
@@ -36,6 +40,11 @@ namespace Yutrel
     bool Windows_WindowSystem::shouldClose() const
     {
         return glfwWindowShouldClose(m_window);
+    }
+
+    std::array<int, 2> Windows_WindowSystem::getWindowSize() const
+    {
+        return std::array<int, 2>({m_width, m_height});
     }
 
 } // namespace Yutrel

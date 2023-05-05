@@ -2,13 +2,13 @@
 
 #include "runtime/function/window/window_system.h"
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glad/glad.h>
 
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_internal.h>
 
 #include <iostream>
 
@@ -27,26 +27,6 @@ namespace Yutrel
         {
             std::cout << "Failed to initialize GLAD" << std::endl;
         }
-
-
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO &io = ImGui::GetIO();
-        (void)io;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-        ImGui::StyleColorsDark();
-
-        ImGuiStyle &style = ImGui::GetStyle();
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            style.WindowRounding              = 0.0f;
-            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-        }
-
-        ImGui_ImplGlfw_InitForOpenGL(m_window, true);
-        ImGui_ImplOpenGL3_Init("#version 330");
 
         const char *vertexShaderSource   = "#version 330 core\n"
                                            "layout (location = 0) in vec3 aPos;\n"
@@ -140,58 +120,91 @@ namespace Yutrel
 
     void OpenGL_RenderSystem::tick()
     {
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
-        
-        
+        refreshFrameBuffer();
 
-
-
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glViewport(0, 0, m_viewport.width, m_viewport.height);
+        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // draw our first triangle
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-
-        
-        
-
-        
-        
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        
-
-        ImGui::Begin("scene manager");
-        ImGui::RadioButton("scene 1 (3k faces)", 0);
-        ImGui::End();
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-
-   
-        ImGuiIO &io = ImGui::GetIO();
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        if (m_ui)
         {
-            GLFWwindow *backup_current_context = glfwGetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backup_current_context);
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            m_ui->preRender();
+            ImGui::Render();
+
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
 
-        
-        
-
-
-
         glfwSwapBuffers(m_window);
+    }
+
+    void OpenGL_RenderSystem::initializeUIRenderBackend(WindowUI *window_ui)
+    {
+        m_ui = window_ui;
+
+        ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+        ImGui_ImplOpenGL3_Init("#version 460");
+    }
+
+    void OpenGL_RenderSystem::updateEngineContentViewport(float offset_x, float offset_y, float width, float height)
+    {
+        m_viewport.x      = offset_x;
+        m_viewport.y      = offset_y;
+        m_viewport.width  = width;
+        m_viewport.height = height;
+
+        // m_render_camera->setAspect(width / height);
+        // m_viewer_camera->setAspect(width / height);
+    }
+
+    EngineContentViewport OpenGL_RenderSystem::getEngineContentViewport() const
+    {
+        return {m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height};
+    }
+
+    void OpenGL_RenderSystem::refreshFrameBuffer()
+    {
+        if (framebuffer)
+        {
+            glDeleteFramebuffers(1, &framebuffer);
+            glDeleteTextures(1, &texColorBuffer);
+            glDeleteRenderbuffers(1, &texDepthBuffer);
+        }
+
+        glGenFramebuffers(1, &framebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+        glGenTextures(1, &texColorBuffer);
+        glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_viewport.width, m_viewport.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
+
+        glGenRenderbuffers(1, &texDepthBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, texDepthBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_viewport.width, m_viewport.height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texDepthBuffer);
+
+        // if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        //     LOG_WARN("framebuffer is not complete");
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
 } // namespace Yutrel
