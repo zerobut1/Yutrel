@@ -1,6 +1,8 @@
 #include "engine.h"
 
+#include "runtime/core/time.h"
 #include "runtime/function/global/global_context.h"
+
 namespace Yutrel
 {
 
@@ -20,23 +22,55 @@ namespace Yutrel
         // todo 反射系统注销
     }
 
-    bool YutrelEngine::tickOneFrame()
+    bool YutrelEngine::tickOneFrame(float delta_time)
     {
         // todo logicaltick
-        // todo pollevents
+        calculateFPS(delta_time);
 
-        rendererTick();
+        // todo swapdata
+        rendererTick(delta_time);
 
         g_runtime_global_context.m_window_system->pollEvents();
 
+        g_runtime_global_context.m_window_system->setTitle(
+            std::string("Yutrel - " + std::to_string(getFPS()) + " FPS").c_str());
         const bool should_window_close = g_runtime_global_context.m_window_system->shouldClose();
 
         return !should_window_close;
     }
 
-    void YutrelEngine::rendererTick()
+    void YutrelEngine::rendererTick(float delta_time)
     {
-        g_runtime_global_context.m_render_system->tick();
+        g_runtime_global_context.m_render_system->tick(delta_time);
+    }
+
+    float YutrelEngine::calculateDeltaTime()
+    {
+        float delta_time;
+
+        float time      = Time::getTime();
+        delta_time      = time - m_lastframetime;
+        m_lastframetime = time;
+
+        return delta_time;
+    }
+
+    const float YutrelEngine::s_fps_alpha = 1.0f / 100.0f;
+    void YutrelEngine::calculateFPS(float delta_time)
+    {
+        m_frame_count++;
+
+        if (m_frame_count == 1)
+        {
+            m_average_duration = delta_time;
+        }
+        else
+        {
+            m_average_duration = m_average_duration * (1 - s_fps_alpha) + delta_time * s_fps_alpha;
+        }
+
+        m_fps = static_cast<int>(1.f / m_average_duration);
+        
     }
 
 } // namespace Yutrel

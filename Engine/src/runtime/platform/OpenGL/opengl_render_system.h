@@ -14,7 +14,7 @@ namespace Yutrel
 
         virtual void initialize(RenderSystemInitInfo render_init_info) override;
 
-        virtual void tick() override;
+        virtual void tick(float delta_time) override;
 
         virtual void initializeUIRenderBackend(WindowUI *window_ui) override;
         virtual void updateEngineContentViewport(float offset_x, float offset_y, float width, float height) override;

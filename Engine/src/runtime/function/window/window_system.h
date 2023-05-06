@@ -20,6 +20,8 @@ namespace Yutrel
         virtual void pollEvents() const                  = 0;
         virtual std::array<int, 2> getWindowSize() const = 0;
 
+        virtual void setTitle(const char *title) = 0;
+
     public:
         int m_width;
         int m_height;

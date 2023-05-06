@@ -3,7 +3,6 @@
 #include "runtime/function/window/window_system.h"
 
 #include <GLFW/glfw3.h>
-// #include <glad/glad.h>
 
 namespace Yutrel
 {
@@ -20,10 +19,12 @@ namespace Yutrel
         virtual void pollEvents() const override { glfwPollEvents(); }
         virtual std::array<int, 2> getWindowSize() const override;
 
+        void setTitle(const char *title) override { glfwSetWindowTitle(m_window, title); }
+
     protected:
         static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->onKey(key, scancode, action, mods);
@@ -31,7 +32,7 @@ namespace Yutrel
         }
         static void charCallback(GLFWwindow *window, unsigned int codepoint)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->onChar(codepoint);
@@ -39,7 +40,7 @@ namespace Yutrel
         }
         static void charModsCallback(GLFWwindow *window, unsigned int codepoint, int mods)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->onCharMods(codepoint, mods);
@@ -47,7 +48,7 @@ namespace Yutrel
         }
         static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->onMouseButton(button, action, mods);
@@ -55,7 +56,7 @@ namespace Yutrel
         }
         static void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->onCursorPos(xpos, ypos);
@@ -63,7 +64,7 @@ namespace Yutrel
         }
         static void cursorEnterCallback(GLFWwindow *window, int entered)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->onCursorEnter(entered);
@@ -71,7 +72,7 @@ namespace Yutrel
         }
         static void scrollCallback(GLFWwindow *window, double xoffset, double yoffset)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->onScroll(xoffset, yoffset);
@@ -79,7 +80,7 @@ namespace Yutrel
         }
         static void dropCallback(GLFWwindow *window, int count, const char **paths)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->onDrop(count, paths);
@@ -87,13 +88,13 @@ namespace Yutrel
         }
         static void windowSizeCallback(GLFWwindow *window, int width, int height)
         {
-            WindowSystem *app = (WindowSystem *)glfwGetWindowUserPointer(window);
+            Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
             if (app)
             {
                 app->m_width  = width;
                 app->m_height = height;
 
-                app->onWindowSize(width, height);
+                // app->onWindowSize(width, height);
             }
         }
         static void windowCloseCallback(GLFWwindow *window) { glfwSetWindowShouldClose(window, true); }

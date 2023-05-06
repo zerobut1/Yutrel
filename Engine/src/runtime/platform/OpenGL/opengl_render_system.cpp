@@ -118,7 +118,7 @@ namespace Yutrel
         glBindVertexArray(0);
     }
 
-    void OpenGL_RenderSystem::tick()
+    void OpenGL_RenderSystem::tick(float delta_time)
     {
 
         refreshFrameBuffer();

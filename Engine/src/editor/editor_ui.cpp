@@ -8,6 +8,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_internal.h>
+#include <glm/glm.hpp>
 
 #include <array>
 #include <utility>
@@ -143,8 +144,8 @@ namespace Yutrel
             return;
         }
 
-        ImVec2 render_target_window_pos  = {0.0f, 0.0f};
-        ImVec2 render_target_window_size = {0.0f, 0.0f};
+        glm::vec2 render_target_window_pos  = {0.0f, 0.0f};
+        glm::vec2 render_target_window_size = {0.0f, 0.0f};
 
         render_target_window_pos.x  = ImGui::GetWindowPos().x;
         render_target_window_pos.y  = ImGui::GetWindowPos().y;
@@ -159,6 +160,9 @@ namespace Yutrel
 
         EngineContentViewport render_target_viewport;
         render_target_viewport = g_runtime_global_context.m_render_system->getEngineContentViewport();
+
+        // g_editor_global_context.m_input_manager->setEngineWindowPos(render_target_window_pos);
+        // g_editor_global_context.m_input_manager->setEngineWindowSize(render_target_window_size);
 
         uint64_t texture_id = g_runtime_global_context.m_render_system->getTexColorBuffer();
         ImGui::GetWindowDrawList()->AddImage((void *)texture_id,

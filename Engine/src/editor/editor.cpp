@@ -27,12 +27,13 @@ namespace Yutrel
 
     void YutrelEditor::run()
     {
+        assert(m_engine_runtime);
+        assert(m_editor_ui);
+        float delta_time;
         while (true)
         {
-            // todo 计算delta_time
-            // todo editor_context 目前没有必要
-
-            if (!m_engine_runtime->tickOneFrame())
+            delta_time = m_engine_runtime->calculateDeltaTime();
+            if (!m_engine_runtime->tickOneFrame(delta_time))
             {
                 return;
             }

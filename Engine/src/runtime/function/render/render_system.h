@@ -29,7 +29,7 @@ namespace Yutrel
 
         virtual void initialize(RenderSystemInitInfo render_init_info) = 0;
 
-        virtual void tick() = 0;
+        virtual void tick(float delta_time) = 0;
 
         virtual void initializeUIRenderBackend(WindowUI *window_ui)                                         = 0;
         virtual void updateEngineContentViewport(float offset_x, float offset_y, float width, float height) = 0;

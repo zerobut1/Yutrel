@@ -1,5 +1,7 @@
 #pragma once
 
+#include "editor_input_manager.h"
+
 namespace Yutrel
 {
     struct EditorGlobalContextInitInfo

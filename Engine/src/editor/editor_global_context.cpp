@@ -1,5 +1,7 @@
 #include "editor_global_context.h"
 
+#include "editor_input_manager.h"
+
 namespace Yutrel
 {
     EditorGlobalContext g_editor_global_context;
