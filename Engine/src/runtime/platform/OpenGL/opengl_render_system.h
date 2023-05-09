@@ -2,6 +2,7 @@
 
 #include "runtime/function/render/render_system.h"
 #include "runtime/platform/OpenGL/opengl_shader.h"
+#include "runtime/platform/OpenGL/opengl_texture.h"
 
 #include "GLFW/glfw3.h"
 #include <memory>
@@ -41,5 +42,6 @@ namespace Yutrel
         unsigned int texColorBuffer, texDepthBuffer, framebuffer = 0;
 
         std::shared_ptr<Shader> m_test_shader;
+        std::shared_ptr<Texture2D> m_test_texture;
     };
 } // namespace Yutrel
