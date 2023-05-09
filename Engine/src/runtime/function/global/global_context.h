@@ -8,12 +8,10 @@
 
 namespace Yutrel
 {
-
     class RuntimeGlobalContext
     {
     public:
         void startSystems();
-
         void shutdownSystems();
 
     public:

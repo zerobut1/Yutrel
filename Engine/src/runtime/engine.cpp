@@ -5,7 +5,6 @@
 
 namespace Yutrel
 {
-
     void YutrelEngine::startEngine()
     {
         // todo 还有反射系统，但是目前没有看懂
@@ -24,18 +23,19 @@ namespace Yutrel
 
     bool YutrelEngine::tickOneFrame(float delta_time)
     {
-        // todo logicaltick
         calculateFPS(delta_time);
 
+        // todo logicaltick
         // todo swapdata
+
         rendererTick(delta_time);
 
         g_runtime_global_context.m_window_system->pollEvents();
 
         g_runtime_global_context.m_window_system->setTitle(
             std::string("Yutrel - " + std::to_string(getFPS()) + " FPS").c_str());
-        const bool should_window_close = g_runtime_global_context.m_window_system->shouldClose();
 
+        const bool should_window_close = g_runtime_global_context.m_window_system->shouldClose();
         return !should_window_close;
     }
 
@@ -58,6 +58,7 @@ namespace Yutrel
     const float YutrelEngine::s_fps_alpha = 1.0f / 100.0f;
     void YutrelEngine::calculateFPS(float delta_time)
     {
+        // 平均采样法计算fps
         m_frame_count++;
 
         if (m_frame_count == 1)
@@ -70,7 +71,6 @@ namespace Yutrel
         }
 
         m_fps = static_cast<int>(1.f / m_average_duration);
-        
     }
 
 } // namespace Yutrel

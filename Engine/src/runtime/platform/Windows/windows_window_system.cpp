@@ -1,5 +1,7 @@
 #include "windows_window_system.h"
 
+#include "runtime/function/global/global_context.h"
+
 #include <GLFW/glfw3.h>
 
 #include <array>
@@ -12,19 +14,33 @@ namespace Yutrel
         glfwTerminate();
     }
 
-    void Windows_WindowSystem::initialize()
+    void Windows_WindowSystem::initialize(WindowCreateInfo create_info)
     {
-        glfwInit();
+        // 初始化GLFW
+        if (!glfwInit())
+        {
+            LOG_ERROR("failed to initialize GLFW");
+            return;
+        }
+
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-        m_width = 1920;
-        m_height = 1080;
-        m_window = glfwCreateWindow(1920, 1080, "test", nullptr, nullptr);
+        m_width  = create_info.width;
+        m_height = create_info.height;
+        m_window = glfwCreateWindow(m_width, m_height, create_info.title, nullptr, nullptr);
+
+        if (!m_window)
+        {
+            LOG_ERROR("failed to create window");
+            glfwTerminate();
+            return;
+        }
 
         glfwSetWindowUserPointer(m_window, this);
 
+        // 设置回调函数
         glfwSetKeyCallback(m_window, keyCallback);
         glfwSetCharCallback(m_window, charCallback);
         glfwSetCharModsCallback(m_window, charModsCallback);
@@ -45,6 +61,21 @@ namespace Yutrel
     std::array<int, 2> Windows_WindowSystem::getWindowSize() const
     {
         return std::array<int, 2>({m_width, m_height});
+    }
+
+    GLFWwindow *Windows_WindowSystem::getglfwWindow() const
+    {
+        return m_window;
+    }
+
+    void Windows_WindowSystem::pollEvents() const
+    {
+        glfwPollEvents();
+    }
+
+    void Windows_WindowSystem::setTitle(const char *title)
+    {
+        glfwSetWindowTitle(m_window, title);
     }
 
 } // namespace Yutrel

@@ -207,4 +207,8 @@ namespace Yutrel
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
+    void OpenGL_RenderSystem::clear()
+    {
+        //暂时为空
+    }
 } // namespace Yutrel

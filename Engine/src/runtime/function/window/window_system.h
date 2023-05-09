@@ -7,25 +7,28 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
+    struct WindowCreateInfo
+    {
+        int width;
+        int height;
+        const char *title;
+        bool is_fullscreen = false;
+    };
 
     class WindowSystem
     {
     public:
-        virtual void initialize() = 0;
+        virtual void initialize(WindowCreateInfo create_info) = 0;
+        virtual void setTitle(const char *title)              = 0;
+        virtual void pollEvents() const                       = 0;
+        virtual bool shouldClose() const                      = 0;
+        virtual GLFWwindow *getglfwWindow() const             = 0;
+        virtual std::array<int, 2> getWindowSize() const      = 0;
 
-        virtual bool shouldClose() const = 0;
-
-        virtual GLFWwindow *getglfwWindow() const = 0;
-
-        virtual void pollEvents() const                  = 0;
-        virtual std::array<int, 2> getWindowSize() const = 0;
-
-        virtual void setTitle(const char *title) = 0;
-
+        /*
+         *  Event也一并写到了window类中
+         */
     public:
-        int m_width;
-        int m_height;
-
         typedef std::function<void()> onResetFunc;
         typedef std::function<void(int, int, int, int)> onKeyFunc;
         typedef std::function<void(unsigned int)> onCharFunc;
@@ -62,6 +65,7 @@ namespace Yutrel
         void registerOnWindowSizeFunc(onWindowSizeFunc func) { m_onWindowSizeFunc.push_back(func); }
         void registerOnWindowCloseFunc(onWindowCloseFunc func) { m_onWindowCloseFunc.push_back(func); }
 
+    protected:
         void onReset()
         {
             for (auto &func : m_onResetFunc)
@@ -112,5 +116,9 @@ namespace Yutrel
             for (auto &func : m_onWindowSizeFunc)
                 func(width, height);
         }
+
+    protected:
+        int m_width;
+        int m_height;
     };
 } // namespace Yutrel

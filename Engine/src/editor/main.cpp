@@ -14,5 +14,6 @@ int main(int argc, char **argv)
     editor->clear();
 
     engine->shutdownEngine();
+
     return 0;
 }

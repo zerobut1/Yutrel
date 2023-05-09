@@ -10,16 +10,13 @@ namespace Yutrel
     {
     public:
         virtual ~Windows_WindowSystem();
-        virtual void initialize() override;
 
+        virtual void initialize(WindowCreateInfo create_info) override;
+        virtual void pollEvents() const override;
+        virtual void setTitle(const char *title) override;
         virtual bool shouldClose() const override;
-
-        virtual GLFWwindow *getglfwWindow() const override { return m_window; }
-
-        virtual void pollEvents() const override { glfwPollEvents(); }
+        virtual GLFWwindow *getglfwWindow() const override;
         virtual std::array<int, 2> getWindowSize() const override;
-
-        void setTitle(const char *title) override { glfwSetWindowTitle(m_window, title); }
 
     protected:
         static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -30,6 +27,7 @@ namespace Yutrel
                 app->onKey(key, scancode, action, mods);
             }
         }
+
         static void charCallback(GLFWwindow *window, unsigned int codepoint)
         {
             Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
@@ -38,6 +36,7 @@ namespace Yutrel
                 app->onChar(codepoint);
             }
         }
+
         static void charModsCallback(GLFWwindow *window, unsigned int codepoint, int mods)
         {
             Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
@@ -46,6 +45,7 @@ namespace Yutrel
                 app->onCharMods(codepoint, mods);
             }
         }
+
         static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
         {
             Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
@@ -54,6 +54,7 @@ namespace Yutrel
                 app->onMouseButton(button, action, mods);
             }
         }
+
         static void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
         {
             Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
@@ -62,6 +63,7 @@ namespace Yutrel
                 app->onCursorPos(xpos, ypos);
             }
         }
+
         static void cursorEnterCallback(GLFWwindow *window, int entered)
         {
             Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
@@ -70,6 +72,7 @@ namespace Yutrel
                 app->onCursorEnter(entered);
             }
         }
+
         static void scrollCallback(GLFWwindow *window, double xoffset, double yoffset)
         {
             Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
@@ -78,6 +81,7 @@ namespace Yutrel
                 app->onScroll(xoffset, yoffset);
             }
         }
+
         static void dropCallback(GLFWwindow *window, int count, const char **paths)
         {
             Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
@@ -86,6 +90,7 @@ namespace Yutrel
                 app->onDrop(count, paths);
             }
         }
+
         static void windowSizeCallback(GLFWwindow *window, int width, int height)
         {
             Windows_WindowSystem *app = (Windows_WindowSystem *)glfwGetWindowUserPointer(window);
@@ -93,15 +98,15 @@ namespace Yutrel
             {
                 app->m_width  = width;
                 app->m_height = height;
-
-                // app->onWindowSize(width, height);
             }
         }
-        static void windowCloseCallback(GLFWwindow *window) { glfwSetWindowShouldClose(window, true); }
+
+        static void windowCloseCallback(GLFWwindow *window)
+        {
+            glfwSetWindowShouldClose(window, true);
+        }
 
     private:
         GLFWwindow *m_window;
-        int m_width;
-        int m_height;
     };
 } // namespace Yutrel

@@ -13,6 +13,7 @@ namespace Yutrel
         virtual ~OpenGL_RenderSystem();
 
         virtual void initialize(RenderSystemInitInfo render_init_info) override;
+        virtual void clear() override;
 
         virtual void tick(float delta_time) override;
 
