@@ -1,8 +1,10 @@
 #pragma once
 
 #include "runtime/function/render/render_system.h"
+#include "runtime/platform/OpenGL/opengl_shader.h"
 
 #include "GLFW/glfw3.h"
+#include <memory>
 
 namespace Yutrel
 {
@@ -33,9 +35,11 @@ namespace Yutrel
         EngineContentViewport m_viewport;
 
         //--------tmp--------
-        unsigned int shaderProgram;
+
         unsigned int VAO, VBO;
         //--------------
         unsigned int texColorBuffer, texDepthBuffer, framebuffer = 0;
+
+        std::shared_ptr<Shader> m_test_shader;
     };
 } // namespace Yutrel

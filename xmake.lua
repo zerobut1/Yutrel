@@ -9,4 +9,6 @@ add_rules("mode.debug")
 -- includes sub-projects
 includes("Engine/src")
 
+add_cxxflags("/utf-8")
+
 set_targetdir("build")

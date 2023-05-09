@@ -24,8 +24,7 @@ namespace Yutrel
     class RenderSystem
     {
     public:
-        RenderSystem()          = default;
-        virtual ~RenderSystem() = default;
+        static std::shared_ptr<RenderSystem> create();
 
         virtual void initialize(RenderSystemInitInfo render_init_info) = 0;
         virtual void clear()                                           = 0;

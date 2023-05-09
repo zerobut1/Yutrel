@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <vector>
 
 struct GLFWwindow;
@@ -18,6 +19,8 @@ namespace Yutrel
     class WindowSystem
     {
     public:
+        static std::shared_ptr<WindowSystem> create();
+
         virtual void initialize(WindowCreateInfo create_info) = 0;
         virtual void setTitle(const char *title)              = 0;
         virtual void pollEvents() const                       = 0;
