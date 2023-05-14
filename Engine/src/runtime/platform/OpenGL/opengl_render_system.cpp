@@ -11,6 +11,7 @@
 #include <imgui_internal.h>
 
 #include <iostream>
+#include <memory>
 
 namespace Yutrel
 {
@@ -55,22 +56,16 @@ namespace Yutrel
             1.0f // top
         };
 
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
+        m_test_VA = VertexArray::create();
+
+        std::shared_ptr<VertexBuffer> test_VB = VertexBuffer::create(vertices, sizeof(vertices));
+        test_VB->setLayout({{Yutrel::ShaderDataType::Float3, "a_Pos"},
+                            {Yutrel::ShaderDataType::Float2, "a_TexCoord"}});
+        m_test_VA->addVertexBuffer(test_VB);
     }
 
     void OpenGL_RenderSystem::tick(float delta_time)
     {
-
         refreshFrameBuffer();
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -79,11 +74,11 @@ namespace Yutrel
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // draw our first triangle
-        m_test_texture->Bind();
         m_test_shader->Use();
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        m_test_texture->Bind();
+        m_test_VA->Bind();
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        // m_test_shader->unUse();
+        // glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_INT,nullptr);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
