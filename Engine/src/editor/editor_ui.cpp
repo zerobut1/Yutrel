@@ -4,6 +4,7 @@
 #include "runtime/function/global/global_context.h"
 
 #include <GLFW/glfw3.h>
+//暂且使用glm 以后会替换成自己的数学库
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>

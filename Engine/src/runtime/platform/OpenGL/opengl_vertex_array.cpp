@@ -78,7 +78,7 @@ namespace Yutrel
                                   (const void *)element.Offset);
             m_VertexBufferIndex++;
         }
-        // m_VertexBuffers.push_back(vertexBuffer);
+        glEnableVertexAttribArray(0);
         m_VertexBuffers.emplace_back(vertexBuffer);
     }
 

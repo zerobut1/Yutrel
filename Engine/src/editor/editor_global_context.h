@@ -16,9 +16,9 @@ namespace Yutrel
     public:
         // EditorSceneManager *m_scene_manager{nullptr};
         // EditorInputManager *m_input_manager{nullptr};
-        RenderSystem *m_render_system{nullptr};
-        WindowSystem *m_window_system{nullptr};
-        YutrelEngine *m_engine_runtime{nullptr};
+        RenderSystem *m_render_system;
+        WindowSystem *m_window_system;
+        YutrelEngine *m_engine_runtime;
 
     public:
         void initialize(const EditorGlobalContextInitInfo &init_info);

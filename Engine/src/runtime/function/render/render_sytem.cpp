@@ -9,6 +9,6 @@ namespace Yutrel
     std::shared_ptr<RenderSystem> RenderSystem::create()
     {
         //暂时直接使用opengl
-        return std::make_shared<OpenGL_RenderSystem>();
+        return std::make_shared<OpenGLRenderSystem>();
     }
 } // namespace Yutrel

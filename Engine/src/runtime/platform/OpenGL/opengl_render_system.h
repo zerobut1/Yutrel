@@ -1,6 +1,7 @@
 #pragma once
 
 #include "runtime/function/render/render_system.h"
+#include "runtime/platform/OpenGL/opengl_model.h"
 #include "runtime/platform/OpenGL/opengl_shader.h"
 #include "runtime/platform/OpenGL/opengl_texture.h"
 #include "runtime/platform/OpenGL/opengl_vertex_array.h"
@@ -10,11 +11,11 @@
 
 namespace Yutrel
 {
-    class OpenGL_RenderSystem : public RenderSystem
+    class OpenGLRenderSystem : public RenderSystem
     {
     public:
-        OpenGL_RenderSystem() = default;
-        virtual ~OpenGL_RenderSystem();
+        OpenGLRenderSystem() = default;
+        virtual ~OpenGLRenderSystem();
 
         virtual void initialize(RenderSystemInitInfo render_init_info) override;
         virtual void clear() override;
@@ -42,5 +43,7 @@ namespace Yutrel
         std::shared_ptr<VertexArray> m_test_VA;
         std::shared_ptr<Shader> m_test_shader;
         std::shared_ptr<Texture2D> m_test_texture;
+
+        std::shared_ptr<Model> m_test_model;
     };
 } // namespace Yutrel
