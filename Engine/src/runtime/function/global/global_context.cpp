@@ -1,6 +1,7 @@
 #include "global_context.h"
 
 #include "runtime/platform/OpenGL/opengl_render_system.h"
+#include "runtime/platform/Windows/windows_input_system.h"
 #include "runtime/platform/Windows/windows_window_system.h"
 
 #include <memory>
@@ -11,11 +12,11 @@ namespace Yutrel
 
     void RuntimeGlobalContext::startSystems()
     {
-        // 还有一堆各种system和manager
-
+        // log system
         m_log_system = std::make_shared<LogSystem>();
         LOG_INFO("log system initialized!");
 
+        // window system
         m_window_system = WindowSystem::create();
         WindowCreateInfo window_create_info;
         window_create_info.width  = 1920;
@@ -24,6 +25,11 @@ namespace Yutrel
         m_window_system->initialize(window_create_info);
         LOG_INFO("window system initialized!");
 
+        // input system
+        m_input_system = InputSystem::create();
+        m_input_system->initialize();
+
+        // render system
         m_render_system = RenderSystem::create();
         RenderSystemInitInfo render_init_info;
         render_init_info.window_system = m_window_system;
@@ -35,6 +41,8 @@ namespace Yutrel
     {
         m_render_system->clear();
         m_render_system.reset();
+
+        m_input_system.reset();
 
         m_window_system.reset();
 

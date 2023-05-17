@@ -63,13 +63,13 @@ namespace Yutrel
                             {Yutrel::ShaderDataType::Float2, "a_TexCoord"}});
         m_test_VA->addVertexBuffer(test_VB);
 
-
-        m_test_model = Model::create("../Engine/asset/object/nanosuit/nanosuit.obj");
-
+        // m_test_model = Model::create("../Engine/asset/object/nanosuit/nanosuit.obj");
+        m_test_model = Model::create("../Engine/asset/object/bunny/bunny_iH.ply");
     }
 
     void OpenGLRenderSystem::tick(float delta_time)
     {
+
         refreshFrameBuffer();
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -77,21 +77,21 @@ namespace Yutrel
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // draw our first triangle
-        
-
+        ///*
         // m_test_shader->Use();
         // glm::mat4 projection = glm::perspective(glm::radians(45.0f), 1920.0f/1080.0f, 0.1f, 100.0f);
-        // glm::mat4 view       = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        // glm::mat4 view       = glm::translate(view, glm::vec3(0.0f, 0.0f, 3.0f));
         // m_test_shader->setMat4("projection", projection);
         // m_test_shader->setMat4("view", view);
 
         // // render the loaded model
         // glm::mat4 model = glm::mat4(1.0f);
+        // model           = glm::rotate(model,); // translate it down so it's at the center of the scene
         // model           = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         // model           = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
         // m_test_shader->setMat4("model", model);
         // m_test_model->Draw();
+        //*/
 
         m_test_shader->Use();
         m_test_texture->Bind();

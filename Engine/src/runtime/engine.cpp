@@ -27,6 +27,10 @@ namespace Yutrel
 
         // todo logicaltick
         // todo swapdata
+        if (g_runtime_global_context.m_input_system->IsKeyPressed(Key::A))
+        {
+            LOG_INFO("A is pressed!");
+        }
 
         rendererTick(delta_time);
 

@@ -14,15 +14,15 @@ namespace Yutrel
     class EditorGlobalContext
     {
     public:
+        void initialize(const EditorGlobalContextInitInfo &init_info);
+        void clear();
+
+    public:
         // EditorSceneManager *m_scene_manager{nullptr};
         // EditorInputManager *m_input_manager{nullptr};
         RenderSystem *m_render_system;
         WindowSystem *m_window_system;
         YutrelEngine *m_engine_runtime;
-
-    public:
-        void initialize(const EditorGlobalContextInitInfo &init_info);
-        void clear();
     };
 
     extern EditorGlobalContext g_editor_global_context;

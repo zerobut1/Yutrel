@@ -3,6 +3,7 @@
 #include "runtime/core/log_system.h"
 #include "runtime/function/render/render_system.h"
 #include "runtime/function/window/window_system.h"
+#include "runtime/platform/Windows/windows_input_system.h"
 
 #include <memory>
 
@@ -17,6 +18,7 @@ namespace Yutrel
     public:
         std::shared_ptr<LogSystem> m_log_system;
         std::shared_ptr<WindowSystem> m_window_system;
+        std::shared_ptr<InputSystem> m_input_system;
         std::shared_ptr<RenderSystem> m_render_system;
     };
 

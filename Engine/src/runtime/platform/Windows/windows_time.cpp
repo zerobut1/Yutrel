@@ -6,7 +6,6 @@
 
 namespace Yutrel
 {
-
     float Time::getTime()
     {
         return glfwGetTime();

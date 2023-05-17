@@ -36,11 +36,13 @@ namespace Yutrel
         virtual void Draw() override;
 
     private:
-        void setupMesh();
+        void setupMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures);
 
     private:
-        float *vertices;
-        uint32_t *indices;
+        // float *vertices;
+        std::vector<float> vertices;
+        // uint32_t *indices;
+        std::vector<uint32_t> indices;
         std::vector<std::shared_ptr<Texture>> textures;
 
         std::shared_ptr<VertexArray> VAO;

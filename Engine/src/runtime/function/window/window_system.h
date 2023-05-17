@@ -28,9 +28,8 @@ namespace Yutrel
         virtual GLFWwindow *getglfwWindow() const             = 0;
         virtual std::array<int, 2> getWindowSize() const      = 0;
 
-        /*
-         *  Event也一并写到了window类中
-         */
+        //  Event也一并写到了window类中
+
     public:
         typedef std::function<void()> onResetFunc;
         typedef std::function<void(int, int, int, int)> onKeyFunc;

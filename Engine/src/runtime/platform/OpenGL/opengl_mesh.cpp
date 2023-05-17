@@ -8,22 +8,19 @@ namespace Yutrel
 {
     OpenGLMesh::OpenGLMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures)
     {
-        this->vertices = &vertices[0];
-        this->indices  = &indices[0];
         this->textures = textures;
-
-        setupMesh();
+        setupMesh(vertices, indices, textures);
     }
 
-    void OpenGLMesh::setupMesh()
+    void OpenGLMesh::setupMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures)
     {
         VAO                               = VertexArray::create();
-        std::shared_ptr<VertexBuffer> VBO = VertexBuffer::create(vertices, sizeof(vertices));
+        std::shared_ptr<VertexBuffer> VBO = VertexBuffer::create(&vertices[0], vertices.size()* sizeof(float));
         VBO->setLayout({{Yutrel::ShaderDataType::Float3, "a_Pos"},
                         {Yutrel::ShaderDataType::Float3, "a_Normal"},
                         {Yutrel::ShaderDataType::Float2, "a_TexCoord"}});
         VAO->addVertexBuffer(VBO);
-        std::shared_ptr<IndexBuffer> EBO = IndexBuffer::create(indices, sizeof(indices) / sizeof(uint32_t));
+        std::shared_ptr<IndexBuffer> EBO = IndexBuffer::create(&indices[0], indices.size());
         VAO->setIndexBuffer(EBO);
     }
 
@@ -34,7 +31,9 @@ namespace Yutrel
             textures[i]->Bind(i);
         }
         VAO->Bind();
-        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(sizeof(indices) / sizeof(uint32_t)), GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, VAO->getIndexBuffer()->getCount());
+
+        //glDrawElements(GL_TRIANGLES, VAO->getIndexBuffer()->getCount(), GL_UNSIGNED_INT, 0);
         VAO->Unbind();
     }
 
