@@ -116,6 +116,7 @@ namespace Yutrel
         // 1. diffuse maps
         std::vector<std::shared_ptr<Texture>> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE);
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+        /*
         // 2. specular maps
         std::vector<std::shared_ptr<Texture>> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR);
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
@@ -125,6 +126,7 @@ namespace Yutrel
         // 4. height maps
         std::vector<std::shared_ptr<Texture>> heightMaps = loadMaterialTextures(material, aiTextureType_HEIGHT);
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+        */
 
         // return a mesh object created from the extracted mesh data
         return Mesh::create(vertices, indices, textures);
@@ -139,6 +141,8 @@ namespace Yutrel
             aiString aistr;
             mat->GetTexture(type, i, &aistr);
             std::string str = aistr.C_Str();
+
+            str = "../Engine/asset/object/nanosuit/" + str;
 
             if (texture_loaded.count(str))
             {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "runtime/function/render/camera_controller.h"
 #include "runtime/function/render/render_system.h"
 #include "runtime/platform/OpenGL/opengl_model.h"
 #include "runtime/platform/OpenGL/opengl_shader.h"
@@ -37,13 +38,13 @@ namespace Yutrel
         WindowUI *m_ui;
         EngineContentViewport m_viewport;
 
-        //--------------
-        unsigned int texColorBuffer, texDepthBuffer, framebuffer = 0;
-
         std::shared_ptr<VertexArray> m_test_VA;
         std::shared_ptr<Shader> m_test_shader;
         std::shared_ptr<Texture2D> m_test_texture;
-
         std::shared_ptr<Model> m_test_model;
+        std::shared_ptr<CameraController> m_test_camera_controller;
+
+        //--------------tmp------------
+        unsigned int texColorBuffer, texDepthBuffer, framebuffer = 0;
     };
 } // namespace Yutrel

@@ -31,10 +31,12 @@ namespace Yutrel
             textures[i]->Bind(i);
         }
         VAO->Bind();
-        glDrawArrays(GL_TRIANGLES, 0, VAO->getIndexBuffer()->getCount());
+        // glDrawArrays(GL_TRIANGLES, 0, VAO->getIndexBuffer()->getCount());
 
-        //glDrawElements(GL_TRIANGLES, VAO->getIndexBuffer()->getCount(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, VAO->getIndexBuffer()->getCount(), GL_UNSIGNED_INT, 0);
         VAO->Unbind();
+
+        glActiveTexture(GL_TEXTURE0);
     }
 
 } // namespace Yutrel
