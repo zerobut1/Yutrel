@@ -9,6 +9,7 @@
 
 #include "GLFW/glfw3.h"
 #include <memory>
+#include <vector>
 
 namespace Yutrel
 {
@@ -39,14 +40,21 @@ namespace Yutrel
         WindowUI *m_ui;
         EngineContentViewport m_viewport;
 
-        std::shared_ptr<VertexArray> m_test_VA;
-        std::shared_ptr<Shader> m_test_shader;
+        std::shared_ptr<CameraController> m_test_camera_controller;
+
+        //skybox
+        std::shared_ptr<VertexArray> m_skybox_VAO;
+        std::shared_ptr<Shader> m_skybox_shader;
+        std::shared_ptr<TextureCubemaps> m_skybox_texture;
+
         std::shared_ptr<Shader> m_model_shader;
         std::shared_ptr<Texture2D> m_test_texture;
         std::shared_ptr<Model> m_test_model;
-        std::shared_ptr<CameraController> m_test_camera_controller;
 
         //--------------tmp------------
         unsigned int texColorBuffer, texDepthBuffer, framebuffer = 0;
     };
+
+    
+
 } // namespace Yutrel

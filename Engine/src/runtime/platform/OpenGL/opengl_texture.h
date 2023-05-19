@@ -3,6 +3,8 @@
 #include "runtime/function/render/texture.h"
 
 #include <glad/glad.h>
+#include <string>
+#include <vector>
 
 namespace Yutrel
 {
@@ -13,17 +15,38 @@ namespace Yutrel
         OpenGLTexture2D(const std::string &path);
         virtual ~OpenGLTexture2D();
 
-        virtual uint32_t getWidth() const override { return m_Width; }
-        virtual uint32_t getHeight() const override { return m_Height; }
+        virtual uint32_t getWidth() const override { return m_width; }
+        virtual uint32_t getHeight() const override { return m_height; }
 
         virtual void setData(void *data, uint32_t size) override;
 
         virtual void Bind(uint32_t slot = 0) const override;
 
     private:
-        std::string m_Path;
-        uint32_t m_Width, m_Height;
-        uint32_t m_RendererID;
-        GLenum m_InternalFormat, m_DataFormat;
+        std::string m_path;
+        uint32_t m_width, m_height;
+        uint32_t m_rendererID;
+        GLenum m_internal_format, m_data_format;
+    };
+
+    class OpenGLTextureCubemaps : public TextureCubemaps
+    {
+    public:
+        OpenGLTextureCubemaps(const std::vector<std::string> &paths);
+        virtual ~OpenGLTextureCubemaps();
+
+        virtual uint32_t getWidth() const override { return m_width; }
+        virtual uint32_t getHeight() const override { return m_height; }
+
+        //暂时不知道有啥用 先不实现了
+        virtual void setData(void *data, uint32_t size) override {};
+
+        virtual void Bind(uint32_t slot = 0) const override;
+
+    private:
+        std::vector<std::string> m_paths;
+        uint32_t m_width, m_height;
+        uint32_t m_rendererID;
+        GLenum m_internal_format, m_data_format;
     };
 } // namespace Yutrel

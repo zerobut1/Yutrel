@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace Yutrel
 {
@@ -23,5 +24,11 @@ namespace Yutrel
     public:
         static std::shared_ptr<Texture2D> create(uint32_t width, uint32_t height);
         static std::shared_ptr<Texture2D> create(const std::string &path);
+    };
+
+    class TextureCubemaps : public Texture
+    {
+    public:
+        static std::shared_ptr<TextureCubemaps> create(const std::vector<std::string> &paths);
     };
 } // namespace Yutrel

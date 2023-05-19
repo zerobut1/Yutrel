@@ -16,6 +16,53 @@
 
 namespace Yutrel
 {
+    // clang-format off
+    float vertices_skybox[] = {
+        // positions          
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+        
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f
+    };
+    // clang-format on
+
     OpenGLRenderSystem::~OpenGLRenderSystem()
     {
     }
@@ -37,52 +84,36 @@ namespace Yutrel
         //------------camera---------
         m_test_camera_controller = CameraController::create(m_viewport.width / m_viewport.height, glm::vec3{0.0f, 0.0f, 0.0f});
 
+        //---------VAO-----------
+        m_skybox_VAO                             = VertexArray::create();
+        std::shared_ptr<VertexBuffer> skybox_VBO = VertexBuffer::create(vertices_skybox, sizeof(vertices_skybox));
+        skybox_VBO->setLayout({{Yutrel::ShaderDataType::Float3, "a_Pos"}});
+        m_skybox_VAO->addVertexBuffer(skybox_VBO);
+
         //------------shader-----------
-        m_test_shader  = Shader::create("../Engine/asset/shader/test.vert", "../Engine/asset/shader/test.frag");
-        m_model_shader = Shader::create("../Engine/asset/shader/model.vert", "../Engine/asset/shader/model.frag");
+        m_skybox_shader = Shader::create("../Engine/asset/shader/skybox.vert", "../Engine/asset/shader/skybox.frag");
+        m_model_shader  = Shader::create("../Engine/asset/shader/model.vert", "../Engine/asset/shader/model.frag");
 
         //-----------texture------------
-        m_test_texture = Texture2D::create("D:/PROJECT/Yutrel/Engine/asset/texture/marble.jpg");
-        m_test_shader->Use();
-        m_test_shader->setInt("texture", 0);
-
-        // set up vertex data (and buffer(s)) and configure vertex attributes
-        // ------------------------------------------------------------------
-        float vertices[] = {
-            -0.5f,
-            -0.5f,
-            0.0f,
-            0.0f,
-            0.0f, // left
-            0.5f,
-            -0.5f,
-            0.0f,
-            1.0f,
-            0.0f,
-            // right
-            0.0f,
-            0.5f,
-            0.0f,
-            0.5f,
-            1.0f // top
-        };
-
-        //---------VAO----------
-        m_test_VA                             = VertexArray::create();
-        std::shared_ptr<VertexBuffer> test_VB = VertexBuffer::create(vertices, sizeof(vertices));
-        test_VB->setLayout({{Yutrel::ShaderDataType::Float3, "a_Pos"},
-                            {Yutrel::ShaderDataType::Float2, "a_TexCoord"}});
-        m_test_VA->addVertexBuffer(test_VB);
+        m_skybox_texture = TextureCubemaps::create(
+            {"../Engine/asset/texture/skybox/right.jpg",
+             "../Engine/asset/texture/skybox/left.jpg",
+             "../Engine/asset/texture/skybox/top.jpg",
+             "../Engine/asset/texture/skybox/bottom.jpg",
+             "../Engine/asset/texture/skybox/front.jpg",
+             "../Engine/asset/texture/skybox/back.jpg"});
 
         //----------model----------
         m_test_model = Model::create("../Engine/asset/object/nanosuit/nanosuit.obj");
         // m_test_model = Model::create("../Engine/asset/object/bunny/bunny_iH.ply");
-        
+
+        //---------------skybox-----------------
+        // m_skybox_VAO =
     }
 
     void OpenGLRenderSystem::tick(float delta_time)
     {
-         refreshFrameBuffer();
+        refreshFrameBuffer();
 
         m_test_camera_controller->tick(delta_time, m_viewport.width / m_viewport.height);
 
@@ -92,25 +123,31 @@ namespace Yutrel
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
 
-        // /*
+
+        //------------模型--------------
         m_model_shader->Use();
         glm::mat4 projection = m_test_camera_controller->getCamera().getProjectionMatrix();
         glm::mat4 view       = m_test_camera_controller->getCamera().getViewMatrix();
         m_model_shader->setMat4("projection", projection);
         m_model_shader->setMat4("view", view);
-
-        // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model           = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model           = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
         m_model_shader->setMat4("model", model);
         m_test_model->Draw();
-        // */
 
-        // m_test_shader->Use();
-        // m_test_texture->Bind();
-        // m_test_VA->Bind();
-        // glDrawArrays(GL_TRIANGLES, 0, 3);
+        //---------skybox--------------
+        glDepthFunc(GL_LEQUAL);
+        m_skybox_shader->Use();
+        view = glm::mat4(glm::mat3(m_test_camera_controller->getCamera().getViewMatrix()));
+        m_skybox_shader->setMat4("view", view);
+        m_skybox_shader->setMat4("projection", projection);
+        m_skybox_VAO->Bind();
+        m_skybox_texture->Bind();
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        m_skybox_VAO->Bind();
+        glDepthFunc(GL_LESS);
+
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -188,11 +225,10 @@ namespace Yutrel
 
     void OpenGLRenderSystem::clear()
     {
-        m_test_VA.reset();
-        m_test_shader.reset();
         m_model_shader.reset();
         m_test_texture.reset();
         m_test_model.reset();
         m_test_camera_controller.reset();
     }
+
 } // namespace Yutrel
