@@ -11,7 +11,7 @@ namespace Yutrel
     public:
         CameraController(float aspectRatio, glm::vec3 positon, float yaw, float pitch);
 
-        void tick(double delta_time);
+        void tick(double delta_time, float aspectRatio);
 
         Camera &getCamera() { return m_camera; }
         const Camera &getCamera() const { return m_camera; }
@@ -19,7 +19,6 @@ namespace Yutrel
         float getZoomLevel() const { return m_zoom_level; }
         void setZoomLevel(float level) { m_zoom_level = level; }
 
-        void onWindowResized(int width, int height);
         void onMouseScrolled(double xoffset, double yoffset);
         void onCursorPos(double xpos, double ypos);
 

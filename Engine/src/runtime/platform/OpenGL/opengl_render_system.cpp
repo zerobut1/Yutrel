@@ -10,9 +10,9 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_internal.h>
 
+#include <array>
 #include <iostream>
 #include <memory>
-#include <array>
 
 namespace Yutrel
 {
@@ -34,19 +34,17 @@ namespace Yutrel
             std::cout << "Failed to initialize GLAD" << std::endl;
         }
 
-        glEnable(GL_DEPTH_TEST);
-
         //------------camera---------
         m_test_camera_controller = CameraController::create(m_viewport.width / m_viewport.height, glm::vec3{0.0f, 0.0f, 0.0f});
 
         //------------shader-----------
-        // m_test_shader = Shader::create("../Engine/asset/shader/test.vert", "../Engine/asset/shader/test.frag");
-        m_test_shader = Shader::create("../Engine/asset/shader/model.vert", "../Engine/asset/shader/model.frag");
+        m_test_shader  = Shader::create("../Engine/asset/shader/test.vert", "../Engine/asset/shader/test.frag");
+        m_model_shader = Shader::create("../Engine/asset/shader/model.vert", "../Engine/asset/shader/model.frag");
 
         //-----------texture------------
-        // m_test_texture = Texture2D::create("D:/PROJECT/Yutrel/Engine/asset/texture/marble.jpg");
-        // m_test_shader->Use();
-        // m_test_shader->setInt("texture", 0);
+        m_test_texture = Texture2D::create("D:/PROJECT/Yutrel/Engine/asset/texture/marble.jpg");
+        m_test_shader->Use();
+        m_test_shader->setInt("texture", 0);
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -79,31 +77,33 @@ namespace Yutrel
         //----------model----------
         m_test_model = Model::create("../Engine/asset/object/nanosuit/nanosuit.obj");
         // m_test_model = Model::create("../Engine/asset/object/bunny/bunny_iH.ply");
+        
     }
 
     void OpenGLRenderSystem::tick(float delta_time)
     {
-        refreshFrameBuffer();
+         refreshFrameBuffer();
 
-        m_test_camera_controller->tick(delta_time);
+        m_test_camera_controller->tick(delta_time, m_viewport.width / m_viewport.height);
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glViewport(0, 0, m_viewport.width, m_viewport.height);
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
 
         // /*
-        m_test_shader->Use();
+        m_model_shader->Use();
         glm::mat4 projection = m_test_camera_controller->getCamera().getProjectionMatrix();
         glm::mat4 view       = m_test_camera_controller->getCamera().getViewMatrix();
-        m_test_shader->setMat4("projection", projection);
-        m_test_shader->setMat4("view", view);
+        m_model_shader->setMat4("projection", projection);
+        m_model_shader->setMat4("view", view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model           = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model           = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-        m_test_shader->setMat4("model", model);
+        m_model_shader->setMat4("model", model);
         m_test_model->Draw();
         // */
 
@@ -115,6 +115,7 @@ namespace Yutrel
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
         if (m_ui)
         {
             ImGui_ImplOpenGL3_NewFrame();
@@ -128,6 +129,37 @@ namespace Yutrel
         }
 
         glfwSwapBuffers(m_window);
+    }
+
+    void OpenGLRenderSystem::refreshFrameBuffer()
+    {
+        if (framebuffer)
+        {
+            glDeleteFramebuffers(1, &framebuffer);
+            glDeleteTextures(1, &texColorBuffer);
+            glDeleteRenderbuffers(1, &texDepthBuffer);
+        }
+        glGenFramebuffers(1, &framebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+        glGenTextures(1, &texColorBuffer);
+        glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_viewport.width, m_viewport.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        // 将它附加到当前绑定的帧缓冲对象
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
+
+        glGenRenderbuffers(1, &texDepthBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, texDepthBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_viewport.width, m_viewport.height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texDepthBuffer);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     void OpenGLRenderSystem::initializeUIRenderBackend(WindowUI *window_ui)
@@ -154,40 +186,13 @@ namespace Yutrel
         return {m_viewport.x, m_viewport.y, m_viewport.width, m_viewport.height};
     }
 
-    void OpenGLRenderSystem::refreshFrameBuffer()
-    {
-        if (framebuffer)
-        {
-            glDeleteFramebuffers(1, &framebuffer);
-            glDeleteTextures(1, &texColorBuffer);
-            glDeleteRenderbuffers(1, &texDepthBuffer);
-        }
-
-        glGenFramebuffers(1, &framebuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-        glGenTextures(1, &texColorBuffer);
-        glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_viewport.width, m_viewport.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
-
-        glGenRenderbuffers(1, &texDepthBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, texDepthBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_viewport.width, m_viewport.height);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texDepthBuffer);
-
-        // if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        //     LOG_WARN("framebuffer is not complete");
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-
     void OpenGLRenderSystem::clear()
     {
-        // 暂时为空
+        m_test_VA.reset();
+        m_test_shader.reset();
+        m_model_shader.reset();
+        m_test_texture.reset();
+        m_test_model.reset();
+        m_test_camera_controller.reset();
     }
 } // namespace Yutrel

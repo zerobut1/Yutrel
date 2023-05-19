@@ -26,15 +26,16 @@ namespace Yutrel
         m_camera.setUp(m_camera_up);
         m_camera.setProjection(m_aspect_ratio, m_zoom_level);
 
-        g_runtime_global_context.m_window_system->registerOnWindowSizeFunc(std::bind(&CameraController::onWindowResized, this, std::placeholders::_1, std::placeholders::_2));
         g_runtime_global_context.m_window_system->registerOnScrollFunc(std::bind(&CameraController::onMouseScrolled, this, std::placeholders::_1, std::placeholders::_2));
         g_runtime_global_context.m_window_system->registerOnCursorPosFunc(std::bind(&CameraController::onCursorPos, this, std::placeholders::_1, std::placeholders::_2));
     }
 
-    void CameraController::tick(double delta_time)
+    void CameraController::tick(double delta_time, float aspectRatio)
     {
         auto input     = g_runtime_global_context.m_input_system;
         float velocity = m_camera_speed * delta_time;
+        m_aspect_ratio = aspectRatio;
+        m_camera.setProjection(m_aspect_ratio, m_zoom_level);
 
         if (input->IsKeyPressed(Key::D))
         {
@@ -62,12 +63,6 @@ namespace Yutrel
         }
         
         m_camera.setPosition(m_camera_position);
-    }
-
-    void CameraController::onWindowResized(int width, int height)
-    {
-        m_aspect_ratio = (float)width / (float)height;
-        m_camera.setProjection(m_aspect_ratio, m_zoom_level);
     }
 
     void CameraController::onMouseScrolled(double xoffset, double yoffset)

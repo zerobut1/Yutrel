@@ -34,12 +34,14 @@ namespace Yutrel
     private:
         void refreshFrameBuffer();
 
+    private:
         GLFWwindow *m_window;
         WindowUI *m_ui;
         EngineContentViewport m_viewport;
 
         std::shared_ptr<VertexArray> m_test_VA;
         std::shared_ptr<Shader> m_test_shader;
+        std::shared_ptr<Shader> m_model_shader;
         std::shared_ptr<Texture2D> m_test_texture;
         std::shared_ptr<Model> m_test_model;
         std::shared_ptr<CameraController> m_test_camera_controller;

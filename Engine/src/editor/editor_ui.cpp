@@ -4,8 +4,6 @@
 #include "runtime/function/global/global_context.h"
 
 #include <GLFW/glfw3.h>
-//暂且使用glm 以后会替换成自己的数学库
-#include <glm/glm.hpp>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -143,8 +141,8 @@ namespace Yutrel
             return;
         }
 
-        glm::vec2 render_target_window_pos  = {0.0f, 0.0f};
-        glm::vec2 render_target_window_size = {0.0f, 0.0f};
+        ImVec2 render_target_window_pos  = {0.0f, 0.0f};
+        ImVec2 render_target_window_size = {0.0f, 0.0f};
 
         render_target_window_pos.x  = ImGui::GetWindowPos().x;
         render_target_window_pos.y  = ImGui::GetWindowPos().y;
@@ -164,12 +162,17 @@ namespace Yutrel
         // g_editor_global_context.m_input_manager->setEngineWindowSize(render_target_window_size);
 
         uint64_t texture_id = g_runtime_global_context.m_render_system->getTexColorBuffer();
+        ///*
         ImGui::GetWindowDrawList()->AddImage((void *)texture_id,
                                              ImVec2(render_target_window_pos.x, render_target_window_pos.y),
                                              ImVec2(render_target_window_size.x + render_target_window_pos.x,
                                                     render_target_window_size.y + render_target_window_pos.y),
                                              ImVec2(0, 1),
                                              ImVec2(1, 0));
+        //*/
+        //ImGui::Image((void *)texture_id, ImGui::GetContentRegionAvail());
+        //ImGui::Image((void *)texture_id, ImGui::GetContentRegionAvail(), ImVec2(0.0, 0.0), ImVec2(1.0, 1.0), ImVec4(0, 0, 255, 1), ImVec4(0, 255, 0, 1));
+
 
         ImGui::End();
     }
