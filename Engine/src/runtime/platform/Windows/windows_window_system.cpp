@@ -1,10 +1,10 @@
+#include "yutrel_pch.h"
+
 #include "windows_window_system.h"
 
 #include "runtime/function/global/global_context.h"
 
 #include <GLFW/glfw3.h>
-
-#include <array>
 
 namespace Yutrel
 {
@@ -16,11 +16,11 @@ namespace Yutrel
 
     void Windows_WindowSystem::initialize(WindowCreateInfo create_info)
     {
-        // 初始化GLFW
+
         if (!glfwInit())
         {
             LOG_ERROR("failed to initialize GLFW");
-            return;
+            assert(false);
         }
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -34,8 +34,7 @@ namespace Yutrel
         if (!m_window)
         {
             LOG_ERROR("failed to create window");
-            glfwTerminate();
-            return;
+            assert(false);
         }
 
         glfwSetWindowUserPointer(m_window, this);

@@ -1,10 +1,10 @@
+#include "yutrel_pch.h"
+
 #include "camera_controller.h"
 
-#include "glm/fwd.hpp"
 #include "runtime/function/global/global_context.h"
 
-#include <functional>
-#include <memory>
+#include "glm/fwd.hpp"
 
 namespace Yutrel
 {
@@ -13,6 +13,9 @@ namespace Yutrel
         return std::make_shared<CameraController>(aspectRatio, positon, yaw, pitch);
     }
 
+    /**
+     *根据相机的初始位置和俯仰角初始化
+     */
     CameraController::CameraController(float aspectRatio, glm::vec3 positon, float yaw, float pitch)
         : m_camera(),
           m_aspect_ratio(aspectRatio),
@@ -26,10 +29,14 @@ namespace Yutrel
         m_camera.setUp(m_camera_up);
         m_camera.setProjection(m_aspect_ratio, m_zoom_level);
 
+        // 滚轮缩放视角和右键按住拖动视角
         g_runtime_global_context.m_window_system->registerOnScrollFunc(std::bind(&CameraController::onMouseScrolled, this, std::placeholders::_1, std::placeholders::_2));
         g_runtime_global_context.m_window_system->registerOnCursorPosFunc(std::bind(&CameraController::onCursorPos, this, std::placeholders::_1, std::placeholders::_2));
     }
 
+    /**
+     * 目前的tick主要是用键盘控制摄像机位置
+     */
     void CameraController::tick(double delta_time, float aspectRatio)
     {
         auto input     = g_runtime_global_context.m_input_system;
@@ -61,18 +68,23 @@ namespace Yutrel
         {
             m_camera_position -= glm::vec3(0.0, 1.0, 0.0) * velocity;
         }
-        
+
         m_camera.setPosition(m_camera_position);
     }
 
     void CameraController::onMouseScrolled(double xoffset, double yoffset)
     {
-        m_zoom_level -= yoffset;
+        m_zoom_level -= yoffset * m_sensitivity_scroll;
+        // 缩放在1到45范围之内;
         m_zoom_level = std::max(m_zoom_level, 1.0f);
         m_zoom_level = std::min(m_zoom_level, 45.0f);
         m_camera.setProjection(m_aspect_ratio, m_zoom_level);
     }
 
+    /**
+     *目前的实现是将视角移动写到event中
+     *应该会有更科学的写法
+     */
     void CameraController::onCursorPos(double xpos, double ypos)
     {
         auto input = g_runtime_global_context.m_input_system;
@@ -107,19 +119,18 @@ namespace Yutrel
 
     void CameraController::ProcessMouseMovement(float xoffset, float yoffset)
     {
-        xoffset *= m_sensitivity;
-        yoffset *= m_sensitivity;
+        xoffset *= m_sensitivity_mouse;
+        yoffset *= m_sensitivity_mouse;
 
         m_yaw += xoffset;
         m_pitch += yoffset;
 
-        // make sure that when pitch is out of bounds, screen doesn't get flipped
+        // 上下视角不超过90度
         if (m_pitch > 89.0f)
             m_pitch = 89.0f;
         if (m_pitch < -89.0f)
             m_pitch = -89.0f;
 
-        // update Front, Right and Up Vectors using the updated Euler angles
         updateCameraVectors();
     }
 

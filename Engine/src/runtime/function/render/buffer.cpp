@@ -1,7 +1,8 @@
+#include "yutrel_pch.h"
+
 #include "buffer.h"
 
 #include "runtime/platform/OpenGL/opengl_buffer.h"
-#include <memory>
 
 namespace Yutrel
 {

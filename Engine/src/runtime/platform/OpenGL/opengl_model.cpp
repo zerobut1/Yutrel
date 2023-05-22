@@ -1,11 +1,11 @@
+#include "yutrel_pch.h"
+
 #include "opengl_model.h"
 
-#include "assimp/material.h"
 #include "runtime/function/global/global_context.h"
 #include "runtime/platform/OpenGL/opengl_texture.h"
 
-#include <memory>
-#include <string>
+#include "assimp/material.h"
 
 namespace Yutrel
 {
@@ -16,7 +16,6 @@ namespace Yutrel
 
     void OpenGLModel::loadModel(std::string const &path)
     {
-        // read file via ASSIMP
         Assimp::Importer importer;
         const aiScene *scene = importer.ReadFile(
             path,
@@ -25,10 +24,11 @@ namespace Yutrel
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
         {
             LOG_ERROR("ASSIMP:{0}", importer.GetErrorString());
+            assert(false);
             return;
         }
         // retrieve the directory path of the filepath
-        directory = path.substr(0, path.find_last_of('/'));
+        m_directory = path.substr(0, path.find_last_of('/') + 1);
 
         // process ASSIMP's root node recursively
         processNode(scene->mRootNode, scene);
@@ -36,22 +36,18 @@ namespace Yutrel
 
     void OpenGLModel::Draw()
     {
-        for (auto &mesh : meshes)
+        for (auto &mesh : m_meshes)
             mesh->Draw();
     }
 
     void OpenGLModel::processNode(aiNode *node, const aiScene *scene)
     {
-        // process each mesh located at the current node
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
         {
-            // the node object only contains indices to index the actual objects in the scene.
-            // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
             // 根据索引找到对应的mesh数据
             aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-            meshes.emplace_back(processMesh(mesh, scene));
+            m_meshes.emplace_back(processMesh(mesh, scene));
         }
-        // after we've processed all of the meshes (if any) we then recursively process each of the children nodes
         for (unsigned int i = 0; i < node->mNumChildren; i++)
         {
             processNode(node->mChildren[i], scene);
@@ -60,8 +56,8 @@ namespace Yutrel
 
     std::shared_ptr<Mesh> OpenGLModel::processMesh(aiMesh *mesh, const aiScene *scene)
     {
-        std::vector<float> vertices(0);
-        std::vector<uint32_t> indices(0);
+        std::vector<float> vertices;
+        std::vector<uint32_t> indices;
         std::vector<std::shared_ptr<Texture>> textures;
 
         // 顶点属性
@@ -97,26 +93,17 @@ namespace Yutrel
         for (unsigned int i = 0; i < mesh->mNumFaces; i++)
         {
             aiFace face = mesh->mFaces[i];
-            // retrieve all indices of the face and store them in the indices vector
             for (unsigned int j = 0; j < face.mNumIndices; j++)
             {
                 indices.emplace_back(face.mIndices[j]);
             }
         }
 
-        // process materials
+        // 这一部分后面要更改
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
-        // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER.
-        // Same applies to other texture as the following list summarizes:
-        // diffuse: texture_diffuseN
-        // specular: texture_specularN
-        // normal: texture_normalN
-
         // 1. diffuse maps
         std::vector<std::shared_ptr<Texture>> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE);
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        /*
         // 2. specular maps
         std::vector<std::shared_ptr<Texture>> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR);
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
@@ -126,9 +113,7 @@ namespace Yutrel
         // 4. height maps
         std::vector<std::shared_ptr<Texture>> heightMaps = loadMaterialTextures(material, aiTextureType_HEIGHT);
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-        */
 
-        // return a mesh object created from the extracted mesh data
         return Mesh::create(vertices, indices, textures);
     }
 
@@ -142,7 +127,7 @@ namespace Yutrel
             mat->GetTexture(type, i, &aistr);
             std::string str = aistr.C_Str();
 
-            str = "../Engine/asset/object/nanosuit/" + str;
+            str = m_directory + str;
 
             if (texture_loaded.count(str))
             {

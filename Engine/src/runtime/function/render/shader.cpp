@@ -1,7 +1,8 @@
+#include "yutrel_pch.h"
+
 #include "shader.h"
 
 #include "runtime/platform/OpenGL/opengl_shader.h"
-#include <memory>
 
 namespace Yutrel
 {

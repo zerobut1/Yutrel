@@ -1,18 +1,15 @@
+#include "yutrel_pch.h"
+
 #include "opengl_render_system.h"
 
 #include "runtime/function/window/window_system.h"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
-
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_internal.h>
-
-#include <array>
-#include <iostream>
-#include <memory>
 
 namespace Yutrel
 {
@@ -82,7 +79,7 @@ namespace Yutrel
         }
 
         //------------camera---------
-        m_test_camera_controller = CameraController::create(m_viewport.width / m_viewport.height, glm::vec3{0.0f, 0.0f, 0.0f});
+        m_test_camera_controller = CameraController::create(m_viewport.width / m_viewport.height, glm::vec3{0.0f, 5.0f, 5.0f});
 
         //---------VAO-----------
         m_skybox_VAO                             = VertexArray::create();
@@ -105,6 +102,7 @@ namespace Yutrel
 
         //----------model----------
         m_test_model = Model::create("../Engine/asset/object/nanosuit/nanosuit.obj");
+        // m_test_model = Model::create("../Engine/asset/object/backpack/backpack.obj");
         // m_test_model = Model::create("../Engine/asset/object/bunny/bunny_iH.ply");
 
         //---------------skybox-----------------
@@ -123,7 +121,6 @@ namespace Yutrel
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
 
-
         //------------模型--------------
         m_model_shader->Use();
         glm::mat4 projection = m_test_camera_controller->getCamera().getProjectionMatrix();
@@ -132,7 +129,7 @@ namespace Yutrel
         m_model_shader->setMat4("view", view);
         glm::mat4 model = glm::mat4(1.0f);
         model           = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model           = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+        model           = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
         m_model_shader->setMat4("model", model);
         m_test_model->Draw();
 
@@ -147,7 +144,6 @@ namespace Yutrel
         glDrawArrays(GL_TRIANGLES, 0, 36);
         m_skybox_VAO->Bind();
         glDepthFunc(GL_LESS);
-
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -207,7 +203,7 @@ namespace Yutrel
         ImGui_ImplOpenGL3_Init("#version 460");
     }
 
-    void OpenGLRenderSystem::updateEngineContentViewport(float offset_x, float offset_y, float width, float height)
+    void OpenGLRenderSystem::setEngineContentViewport(float offset_x, float offset_y, float width, float height)
     {
         m_viewport.x      = offset_x;
         m_viewport.y      = offset_y;

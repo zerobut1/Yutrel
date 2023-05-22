@@ -18,6 +18,9 @@ namespace Yutrel
         virtual GLFWwindow *getglfwWindow() const override;
         virtual std::array<int, 2> getWindowSize() const override;
 
+    private:
+        GLFWwindow *m_window;
+
     protected:
         static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
         {
@@ -105,8 +108,5 @@ namespace Yutrel
         {
             glfwSetWindowShouldClose(window, true);
         }
-
-    private:
-        GLFWwindow *m_window;
     };
 } // namespace Yutrel

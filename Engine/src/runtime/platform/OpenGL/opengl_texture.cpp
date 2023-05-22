@@ -1,8 +1,9 @@
+#include "yutrel_pch.h"
+
 #include "opengl_texture.h"
 
 #include "runtime/function/global/global_context.h"
 
-// #include <stb_image.h>
 #include <stb_image.h>
 
 namespace Yutrel
@@ -100,6 +101,10 @@ namespace Yutrel
         glBindTextureUnit(slot, m_rendererID);
     }
 
+    /**
+     *这里的实现是比较早的opengl版本的实现
+     *后面可能会更新
+     */
     OpenGLTextureCubemaps::OpenGLTextureCubemaps(const std::vector<std::string> &paths)
         : m_paths(paths)
     {
@@ -112,8 +117,8 @@ namespace Yutrel
             int width, height, channels;
             stbi_uc *data = stbi_load(paths[i].c_str(), &width, &height, &channels, 0);
 
-            m_width       = width;
-            m_height      = height;
+            m_width  = width;
+            m_height = height;
 
             // 确认是RGB还是RGBA格式
             GLenum internalFormat = 0, dataFormat = 0;

@@ -1,10 +1,9 @@
+#include "yutrel_pch.h"
+
 #include "global_context.h"
 
 #include "runtime/platform/OpenGL/opengl_render_system.h"
-#include "runtime/platform/Windows/windows_input_system.h"
 #include "runtime/platform/Windows/windows_window_system.h"
-
-#include <memory>
 
 namespace Yutrel
 {
@@ -28,6 +27,7 @@ namespace Yutrel
         // input system
         m_input_system = InputSystem::create();
         m_input_system->initialize();
+        LOG_INFO("input system initialized!");
 
         // render system
         m_render_system = RenderSystem::create();

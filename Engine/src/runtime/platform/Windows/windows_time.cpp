@@ -1,4 +1,4 @@
-#pragma once
+#include "yutrel_pch.h"
 
 #include "runtime/core/time.h"
 

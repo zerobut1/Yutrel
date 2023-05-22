@@ -11,8 +11,8 @@ namespace Yutrel
         virtual ~YutrelEngine() = default;
 
         void startEngine();
-        void shutdownEngine();
         bool tickOneFrame(float delta_time);
+        void shutdownEngine();
 
         float calculateDeltaTime();
         int getFPS() const { return m_fps; }
@@ -23,7 +23,7 @@ namespace Yutrel
         void calculateFPS(float delta_time);
 
     private:
-        float m_lastframetime    = 0;
+        float m_lastframetime    = 0.0f;
         float m_average_duration = 0.0f;
         int m_frame_count        = 0;
         int m_fps                = 0;

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "GLFW/glfw3.h"
 #include "runtime/function/input/input_system.h"
+
+#include "GLFW/glfw3.h"
 
 namespace Yutrel
 {

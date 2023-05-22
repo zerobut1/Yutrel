@@ -8,17 +8,18 @@
 
 namespace Yutrel
 {
+    // 模型类
     class Model
     {
     public:
+        static std::shared_ptr<Model> create(std::string const &path);
+
         virtual ~Model() = default;
 
         virtual void Draw() = 0;
 
-        static std::shared_ptr<Model> create(std::string const &path);
-
     protected:
-        std::vector<std::shared_ptr<Mesh>> meshes;
-        std::string directory;
+        std::vector<std::shared_ptr<Mesh>> m_meshes;
+        std::string m_directory;
     };
 } // namespace Yutrel

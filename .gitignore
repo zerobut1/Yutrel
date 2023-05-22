@@ -1,5 +1,6 @@
 .vscode
 .xmake
+.VSCodeCounter
 build
 vsxmake2022
 

@@ -1,7 +1,8 @@
+#include "yutrel_pch.h"
+
 #include "window_system.h"
 
 #include "runtime/platform/Windows/windows_window_system.h"
-#include <memory>
 
 namespace Yutrel
 {
@@ -9,8 +10,5 @@ namespace Yutrel
     {
         // 暂时直接使用windows(glfw)
         return std::make_shared<Windows_WindowSystem>();
-
-
-        
-    }   
+    }
 } // namespace Yutrel

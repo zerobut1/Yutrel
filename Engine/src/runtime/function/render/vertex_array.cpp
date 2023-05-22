@@ -1,7 +1,8 @@
+#include "yutrel_pch.h"
+
 #include "vertex_array.h"
 
 #include "runtime/platform/OpenGL/opengl_vertex_array.h"
-#include <memory>
 
 namespace Yutrel
 {

@@ -1,10 +1,10 @@
+#include "yutrel_pch.h"
+
 #include "editor.h"
 
-#include "editor_global_context.h"
-#include "editor_ui.h"
+#include "editor/global/editor_global_context.h"
+#include "editor/ui/editor_ui.h"
 #include "runtime/function/global/global_context.h"
-
-#include <memory>
 
 namespace Yutrel
 {
@@ -14,7 +14,7 @@ namespace Yutrel
 
         m_engine_runtime = engine;
 
-        // context
+        // editor global context
         EditorGlobalContextInitInfo init_info = {
             g_runtime_global_context.m_window_system.get(),
             g_runtime_global_context.m_render_system.get(),
@@ -29,10 +29,15 @@ namespace Yutrel
         m_editor_ui->initialize(ui_init_info);
     }
 
+    /**
+     * editor run的过程
+     * 就是计算delta time并tick engine
+     */
     void YutrelEditor::run()
     {
         assert(m_engine_runtime);
         assert(m_editor_ui);
+
         float delta_time;
         while (true)
         {

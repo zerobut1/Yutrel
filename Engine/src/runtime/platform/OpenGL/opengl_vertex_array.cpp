@@ -1,3 +1,5 @@
+#include "yutrel_pch.h"
+
 #include "opengl_vertex_array.h"
 
 #include <glad/glad.h>
@@ -31,16 +33,15 @@ namespace Yutrel
         case ShaderDataType::Bool:
             return GL_BOOL;
         default:
+            LOG_ERROR("Unknown ShaderDataType!");
+            assert(false);
             break;
         }
-
-        // ENGINE_CORE_ASSERT(false, "Unknown ShaderDataType!");
         return 0;
     }
 
     OpenGLVertexArray::OpenGLVertexArray()
     {
-        // Create和Gen的区别并不明确
         glCreateVertexArrays(1, &m_RendererID);
     }
 

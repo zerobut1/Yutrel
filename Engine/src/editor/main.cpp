@@ -1,3 +1,5 @@
+#include "yutrel_pch.h"
+
 #include "editor/editor.h"
 #include "runtime/engine.h"
 

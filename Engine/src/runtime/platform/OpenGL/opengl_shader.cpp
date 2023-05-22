@@ -1,11 +1,11 @@
+#include "yutrel_pch.h"
+
 #include "opengl_shader.h"
 
 #include "runtime/function/global/global_context.h"
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
-
-#include <fstream>
 
 namespace Yutrel
 {
@@ -71,7 +71,9 @@ namespace Yutrel
     {
 
         GLuint program = glCreateProgram();
-        // ENGINE_CORE_ASSERT(shaderSources.size() <= 2, "We only support 2 sahders for now!");
+
+        assert(shaderSources.size() <= 2);
+
         std::array<GLenum, 2> glShaderIDs;
         int glShaderIDIndex = 0;
         for (auto &kv : shaderSources)

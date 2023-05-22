@@ -1,3 +1,5 @@
+#include "yutrel_pch.cpp"
+
 #include "engine.h"
 
 #include "runtime/core/time.h"
@@ -7,7 +9,7 @@ namespace Yutrel
 {
     void YutrelEngine::startEngine()
     {
-        // todo 还有反射系统，但是目前没有看懂
+        // todo 反射系统，但是目前没有看懂
         g_runtime_global_context.startSystems();
 
         LOG_INFO("engine start!");
@@ -21,11 +23,17 @@ namespace Yutrel
         // todo 反射系统注销
     }
 
+    /**
+     * 逻辑tick(暂未实现)
+     * 交换数据(暂未实现)
+     * 渲染tick
+     */
     bool YutrelEngine::tickOneFrame(float delta_time)
     {
         calculateFPS(delta_time);
 
         // todo logicaltick
+
         // todo swapdata
 
         rendererTick(delta_time);
@@ -59,6 +67,7 @@ namespace Yutrel
     void YutrelEngine::calculateFPS(float delta_time)
     {
         // 平均采样法计算fps
+        // 这个方法计算出来的fps有点奇怪
         m_frame_count++;
 
         if (m_frame_count == 1)

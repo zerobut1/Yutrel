@@ -1,8 +1,8 @@
+#include "yutrel_pch.h"
+
 #include "texture.h"
 
 #include "runtime/platform/OpenGL/opengl_texture.h"
-
-#include <memory>
 
 namespace Yutrel
 {

@@ -1,8 +1,8 @@
+#include "yutrel_pch.h"
+
 #include "input_system.h"
 
 #include "runtime/platform/Windows/windows_input_system.h"
-
-#include <memory>
 
 namespace Yutrel
 {

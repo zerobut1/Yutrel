@@ -1,6 +1,8 @@
+#include "yutrel_pch.h"
+
 #include "editor_ui.h"
 
-#include "editor_global_context.h"
+#include "editor/global/editor_global_context.h"
 #include "runtime/function/global/global_context.h"
 
 #include <GLFW/glfw3.h>
@@ -9,9 +11,7 @@
 #include <imgui_impl_opengl3.h>
 #include <imgui_internal.h>
 
-#include <array>
-#include <utility>
-
+// 需要一次大更改，往后放放吧
 namespace Yutrel
 {
     std::vector<std::pair<std::string, bool>> g_editor_node_state_array;
@@ -149,7 +149,7 @@ namespace Yutrel
         render_target_window_size.x = ImGui::GetWindowSize().x;
         render_target_window_size.y = ImGui::GetWindowSize().y;
 
-        g_runtime_global_context.m_render_system->updateEngineContentViewport(
+        g_runtime_global_context.m_render_system->setEngineContentViewport(
             render_target_window_pos.x,
             render_target_window_pos.y,
             render_target_window_size.x,
@@ -170,9 +170,8 @@ namespace Yutrel
                                              ImVec2(0, 1),
                                              ImVec2(1, 0));
         //*/
-        //ImGui::Image((void *)texture_id, ImGui::GetContentRegionAvail());
-        //ImGui::Image((void *)texture_id, ImGui::GetContentRegionAvail(), ImVec2(0.0, 0.0), ImVec2(1.0, 1.0), ImVec4(0, 0, 255, 1), ImVec4(0, 255, 0, 1));
-
+        // ImGui::Image((void *)texture_id, ImGui::GetContentRegionAvail());
+        // ImGui::Image((void *)texture_id, ImGui::GetContentRegionAvail(), ImVec2(0.0, 0.0), ImVec2(1.0, 1.0), ImVec4(0, 0, 255, 1), ImVec4(0, 255, 0, 1));
 
         ImGui::End();
     }

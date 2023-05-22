@@ -3,6 +3,7 @@
 #include "runtime/function/render/texture.h"
 
 #include <glad/glad.h>
+
 #include <string>
 #include <vector>
 
@@ -15,12 +16,12 @@ namespace Yutrel
         OpenGLTexture2D(const std::string &path);
         virtual ~OpenGLTexture2D();
 
+        virtual void Bind(uint32_t slot = 0) const override;
+
         virtual uint32_t getWidth() const override { return m_width; }
         virtual uint32_t getHeight() const override { return m_height; }
 
         virtual void setData(void *data, uint32_t size) override;
-
-        virtual void Bind(uint32_t slot = 0) const override;
 
     private:
         std::string m_path;
@@ -35,13 +36,13 @@ namespace Yutrel
         OpenGLTextureCubemaps(const std::vector<std::string> &paths);
         virtual ~OpenGLTextureCubemaps();
 
+        virtual void Bind(uint32_t slot = 0) const override;
+
         virtual uint32_t getWidth() const override { return m_width; }
         virtual uint32_t getHeight() const override { return m_height; }
 
-        //暂时不知道有啥用 先不实现了
-        virtual void setData(void *data, uint32_t size) override {};
-
-        virtual void Bind(uint32_t slot = 0) const override;
+        // 暂时不知道有啥用 先不实现了
+        virtual void setData(void *data, uint32_t size) override{};
 
     private:
         std::vector<std::string> m_paths;

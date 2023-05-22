@@ -6,9 +6,12 @@
 
 namespace Yutrel
 {
+    // 顶点数组类
     class VertexArray
     {
     public:
+        static std::shared_ptr<VertexArray> create();
+
         virtual ~VertexArray() = default;
 
         virtual void Bind() const   = 0;
@@ -19,7 +22,5 @@ namespace Yutrel
 
         virtual const std::vector<std::shared_ptr<VertexBuffer>> &getVectorBuffers() const = 0;
         virtual const std::shared_ptr<IndexBuffer> &getIndexBuffer() const                 = 0;
-
-        static std::shared_ptr<VertexArray> create();
     };
 } // namespace Yutrel

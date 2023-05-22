@@ -1,5 +1,8 @@
 target("runtime")
     set_kind("static")
+
+    set_pcxxheader("$(projectdir)/Engine/src/yutrel_pch.h")
+
     add_packages("glfw","glad","glm","assimp","spdlog","imgui")
 
     add_headerfiles("**.h")

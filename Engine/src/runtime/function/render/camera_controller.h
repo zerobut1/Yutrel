@@ -5,10 +5,14 @@
 
 namespace Yutrel
 {
-
+    /**
+     *cameracontroller负责camera与其它系统的交互以及控制
+     */
     class CameraController
     {
     public:
+        static std::shared_ptr<CameraController> create(float aspectRatio, glm::vec3 positon, float yaw = -90.0f, float pitch = 0.0f);
+
         CameraController(float aspectRatio, glm::vec3 positon, float yaw, float pitch);
 
         void tick(double delta_time, float aspectRatio);
@@ -21,8 +25,6 @@ namespace Yutrel
 
         void onMouseScrolled(double xoffset, double yoffset);
         void onCursorPos(double xpos, double ypos);
-
-        static std::shared_ptr<CameraController> create(float aspectRatio, glm::vec3 positon, float yaw = -90.0f, float pitch = 0.0f);
 
     private:
         void ProcessMouseMovement(float xoffset, float yoffset);
@@ -44,7 +46,8 @@ namespace Yutrel
         bool firstMouse      = true;
 
         glm::vec3 m_world_up = {0.0f, 1.0f, 0.0f};
-        float m_sensitivity  = 0.1f;
+        float m_sensitivity_mouse = 0.1f;
+        float m_sensitivity_scroll = 2.0f;
         float m_camera_speed = 5.0f;
     };
 

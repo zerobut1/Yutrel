@@ -25,12 +25,10 @@ namespace Yutrel
         virtual void tick(float delta_time) override;
 
         virtual void initializeUIRenderBackend(WindowUI *window_ui) override;
-        virtual void updateEngineContentViewport(float offset_x, float offset_y, float width, float height) override;
+        virtual void setEngineContentViewport(float offset_x, float offset_y, float width, float height) override;
         virtual EngineContentViewport getEngineContentViewport() const override;
 
-        virtual unsigned int getFrameBuffer() const override { return framebuffer; }
-        virtual unsigned int getTexColorBuffer() const override { return texColorBuffer; }
-        virtual unsigned int getTexDepthBuffer() const override { return texDepthBuffer; }
+        virtual int getTexColorBuffer() const override { return texColorBuffer; }
 
     private:
         void refreshFrameBuffer();
@@ -42,7 +40,7 @@ namespace Yutrel
 
         std::shared_ptr<CameraController> m_test_camera_controller;
 
-        //skybox
+        // skybox
         std::shared_ptr<VertexArray> m_skybox_VAO;
         std::shared_ptr<Shader> m_skybox_shader;
         std::shared_ptr<TextureCubemaps> m_skybox_texture;
@@ -54,7 +52,5 @@ namespace Yutrel
         //--------------tmp------------
         unsigned int texColorBuffer, texDepthBuffer, framebuffer = 0;
     };
-
-    
 
 } // namespace Yutrel

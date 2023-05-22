@@ -1,7 +1,5 @@
 #pragma once
 
-// #include "runtime/function/render/render_system.h"
-// #include "runtime/function/window/window_system.h"
 #include <memory>
 
 namespace Yutrel

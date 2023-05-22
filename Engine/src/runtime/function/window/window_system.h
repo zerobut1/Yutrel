@@ -28,8 +28,11 @@ namespace Yutrel
         virtual GLFWwindow *getglfwWindow() const             = 0;
         virtual std::array<int, 2> getWindowSize() const      = 0;
 
-        //  Event也一并写到了window类中
+    protected:
+        int m_width;
+        int m_height;
 
+        //  Event也一并写到了window类中
     public:
         typedef std::function<void()> onResetFunc;
         typedef std::function<void(int, int, int, int)> onKeyFunc;
@@ -118,9 +121,5 @@ namespace Yutrel
             for (auto &func : m_onWindowSizeFunc)
                 func(width, height);
         }
-
-    protected:
-        int m_width;
-        int m_height;
     };
 } // namespace Yutrel

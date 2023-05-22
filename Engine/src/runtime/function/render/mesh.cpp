@@ -1,8 +1,8 @@
+#include "yutrel_pch.h"
+
 #include "mesh.h"
 
 #include "runtime/platform/OpenGL/opengl_mesh.h"
-
-#include <memory>
 
 namespace Yutrel
 {

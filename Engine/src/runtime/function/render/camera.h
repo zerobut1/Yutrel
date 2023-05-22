@@ -5,6 +5,10 @@
 
 namespace Yutrel
 {
+    /**
+     *camera类主要维护view和projection两个矩阵
+     *目前是一个透视投影摄像机
+     */
     class Camera
     {
     public:

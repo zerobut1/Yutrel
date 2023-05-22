@@ -27,6 +27,7 @@ namespace Yutrel
 
         virtual const std::string &getName() const override { return m_Name; }
 
+    private:
         void uploadUniformInt(const std::string &name, int value);
         void uploadUniformIntArray(const std::string &name, int *values, uint32_t count);
         void uploadUniformFloat(const std::string &name, float value);
@@ -36,10 +37,10 @@ namespace Yutrel
         void uploadUniformMat3(const std::string &name, const glm::mat3 &matrix);
         void uploadUniformMat4(const std::string &name, const glm::mat4 &matrix);
 
-    private:
         std::string readFile(const std::string &filepath);
         void compile(const std::unordered_map<GLenum, std::string> &shaderSources);
 
+    private:
         uint32_t m_RendererID;
         std::string m_Name;
     };

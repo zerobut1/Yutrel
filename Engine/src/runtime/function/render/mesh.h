@@ -7,6 +7,8 @@
 
 namespace Yutrel
 {
+
+    // 网格类
     class Mesh
     {
     public:

@@ -1,11 +1,9 @@
 #pragma once
 
-#include "runtime/core/log_system.h"
+#include "runtime/core/log/log_system.h"
+#include "runtime/function/input/input_system.h"
 #include "runtime/function/render/render_system.h"
 #include "runtime/function/window/window_system.h"
-#include "runtime/platform/Windows/windows_input_system.h"
-
-#include <memory>
 
 namespace Yutrel
 {

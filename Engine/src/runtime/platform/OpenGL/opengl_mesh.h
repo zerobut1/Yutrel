@@ -15,37 +15,23 @@
 
 namespace Yutrel
 {
-    constexpr int MAX_BONE_INFLUENCE = 4;
-
-    struct Vertex
-    {
-        // position
-        glm::vec3 Position;
-        // normal
-        glm::vec3 Normal;
-        // texCoords
-        glm::vec2 TexCoords;
-    };
+    // constexpr int MAX_BONE_INFLUENCE = 4;
 
     class OpenGLMesh : public Mesh
     {
     public:
         OpenGLMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures);
 
-        // render the mesh
         virtual void Draw() override;
 
     private:
         void setupMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures);
 
     private:
-        // float *vertices;
-        std::vector<float> vertices;
-        // uint32_t *indices;
-        std::vector<uint32_t> indices;
+        // 这样的格式不满足实时切换texture的需求,后面会更改
         std::vector<std::shared_ptr<Texture>> textures;
 
-        std::shared_ptr<VertexArray> VAO;
+        std::shared_ptr<VertexArray> m_VAO;
     };
 
 } // namespace Yutrel

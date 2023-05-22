@@ -1,6 +1,6 @@
 #pragma once
 
-#include "editor_input_manager.h"
+// #include "editor_input_manager.h"
 
 namespace Yutrel
 {
@@ -11,6 +11,8 @@ namespace Yutrel
         class YutrelEngine *engine_runtime;
     };
 
+    // 编辑器的context
+    // 目前作用貌似不大
     class EditorGlobalContext
     {
     public:

@@ -1,9 +1,7 @@
 #pragma once
 
 #include "runtime/engine.h"
-#include "editor_ui.h"
-
-#include <memory>
+#include "editor/ui/editor_ui.h"
 
 namespace Yutrel
 {
@@ -14,12 +12,11 @@ namespace Yutrel
         virtual ~YutrelEditor() = default;
 
         void initialize(YutrelEngine *engine);
-
         void run();
-
         void clear();
 
     protected:
+        //这里为什么是protected暂时没想明白
         std::shared_ptr<EditorUI> m_editor_ui;
         YutrelEngine *m_engine_runtime;
     };
