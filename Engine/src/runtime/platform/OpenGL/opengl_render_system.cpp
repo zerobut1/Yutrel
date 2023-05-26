@@ -1,3 +1,7 @@
+#include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/quaternion_trigonometric.hpp"
+#include "glm/trigonometric.hpp"
 #include "yutrel_pch.h"
 
 #include "opengl_render_system.h"
@@ -10,6 +14,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_internal.h>
+#include <stdint.h>
 
 namespace Yutrel
 {
@@ -58,10 +63,29 @@ namespace Yutrel
         -1.0f, -1.0f,  1.0f,
         1.0f, -1.0f,  1.0f
     };
+
+    float vertices_plane[] = {
+        5.0f,  -0.5f,  5.0f, 2.0f, 0.0f,
+        -5.0f, -0.5f,  5.0f, 0.0f, 0.0f,
+        -5.0f, -0.5f, -5.0f, 0.0f, 2.0f,
+        5.0f, -0.5f,  5.0f, 2.0f, 0.0f,
+        -5.0f, -0.5f, -5.0f, 0.0f, 2.0f, 
+        5.0f,  -0.5f, -5.0f, 2.0f, 2.0f
+    };
+
+    float vertices_qurd[] = {
+        // positions        // texture Coords
+        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+        1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+    };
     // clang-format on
+    constexpr uint32_t SHADOWMAP_SIZE = 1024;
 
     OpenGLRenderSystem::~OpenGLRenderSystem()
     {
+        clear();
     }
 
     void OpenGLRenderSystem::initialize(RenderSystemInitInfo render_init_info)
@@ -73,76 +97,154 @@ namespace Yutrel
         m_viewport.height = render_init_info.window_system->getWindowSize()[1];
 
         // 初始化GLAD
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-        {
-            std::cout << "Failed to initialize GLAD" << std::endl;
-        }
+        assert(("Failed to initialize GLAD", gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)));
 
         //------------camera---------
-        m_test_camera_controller = CameraController::create(m_viewport.width / m_viewport.height, glm::vec3{0.0f, 5.0f, 5.0f});
+        m_camera_controller = CameraController::create(m_viewport.width / m_viewport.height, glm::vec3{0.0f, 1.0f, 4.0f});
 
-        //---------VAO-----------
+        //---------skybox-----------
         m_skybox_VAO                             = VertexArray::create();
         std::shared_ptr<VertexBuffer> skybox_VBO = VertexBuffer::create(vertices_skybox, sizeof(vertices_skybox));
         skybox_VBO->setLayout({{Yutrel::ShaderDataType::Float3, "a_Pos"}});
         m_skybox_VAO->addVertexBuffer(skybox_VBO);
 
-        //------------shader-----------
         m_skybox_shader = Shader::create("../Engine/asset/shader/skybox.vert", "../Engine/asset/shader/skybox.frag");
-        m_model_shader  = Shader::create("../Engine/asset/shader/model.vert", "../Engine/asset/shader/model.frag");
 
-        //-----------texture------------
         m_skybox_texture = TextureCubemaps::create(
-            {"../Engine/asset/texture/skybox/right.jpg",
-             "../Engine/asset/texture/skybox/left.jpg",
-             "../Engine/asset/texture/skybox/top.jpg",
-             "../Engine/asset/texture/skybox/bottom.jpg",
-             "../Engine/asset/texture/skybox/front.jpg",
-             "../Engine/asset/texture/skybox/back.jpg"});
+            {"../resource/texture/skybox/right.jpg",
+             "../resource/texture/skybox/left.jpg",
+             "../resource/texture/skybox/top.jpg",
+             "../resource/texture/skybox/bottom.jpg",
+             "../resource/texture/skybox/front.jpg",
+             "../resource/texture/skybox/back.jpg"});
 
-        //----------model----------
-        m_test_model = Model::create("../Engine/asset/object/nanosuit/nanosuit.obj");
-        // m_test_model = Model::create("../Engine/asset/object/backpack/backpack.obj");
-        // m_test_model = Model::create("../Engine/asset/object/bunny/bunny_iH.ply");
+        //----------plane-------------------
+        m_plane_VAO                             = VertexArray::create();
+        std::shared_ptr<VertexBuffer> plane_VBO = VertexBuffer::create(vertices_plane, sizeof(vertices_plane));
+        plane_VBO->setLayout({{Yutrel::ShaderDataType::Float3, "a_Pos"},
+                              {Yutrel::ShaderDataType::Float2, "a_Pos"}});
+        m_plane_VAO->addVertexBuffer(plane_VBO);
 
-        //---------------skybox-----------------
-        // m_skybox_VAO =
+        m_plane_shader = Shader::create("../Engine/asset/shader/plane.vert", "../Engine/asset/shader/plane.frag");
+
+        m_plane_texture = Texture2D::create("../resource/texture/marble.jpg");
+
+        //------------bunny-----------
+        m_bunny_model  = Model::create("../resource/object/bunny/bunny_iH.ply");
+        m_bunny_shader = Shader::create("../Engine/asset/shader/bunny.vert", "../Engine/asset/shader/bunny.frag");
+
+        //---------backpack------------
+        // m_backpack_model = Model::create("../Engine/asset/object/backpack/backpack.obj");
+        // m_bunny_model = Model::create("../Engine/asset/object/nanosuit/nanosuit.obj");
+
+        //-------------shadowmap------------
+        glGenFramebuffers(1, &m_shadowmap_framebuffer);
+        // m_shadowmap_texture = Texture2D::create(SHADOWMAP_SIZE, SHADOWMAP_SIZE);
+
+        glGenTextures(1, &m_shadowmap_texture);
+        glBindTexture(GL_TEXTURE_2D, m_shadowmap_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOWMAP_SIZE, SHADOWMAP_SIZE, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_shadowmap_texture->getRnedererID(), 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_shadowmap_framebuffer);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_shadowmap_texture, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        m_shadowmap_shader = Shader::create("../Engine/asset/shader/shadowmap.vert", "../Engine/asset/shader/shadowmap.frag");
+
+        //--------quad----------
     }
 
     void OpenGLRenderSystem::tick(float delta_time)
     {
-        refreshFrameBuffer();
+        refreshOutputFrameBuffer();
 
-        m_test_camera_controller->tick(delta_time, m_viewport.width / m_viewport.height);
+        m_camera_controller->tick(delta_time, m_viewport.width / m_viewport.height);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glm::vec3 lightPos(-2.0f, 2.0f, -1.0f);
+
+        //-----------------------------
+        // 渲染shadowmap
+        //-----------------------------
+        glBindFramebuffer(GL_FRAMEBUFFER, m_shadowmap_framebuffer);
+        glViewport(0, 0, SHADOWMAP_SIZE, SHADOWMAP_SIZE);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        glm::mat4 lightProjection  = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
+        glm::mat4 lightView        = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+        m_shadowmap_shader->Use();
+        m_shadowmap_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+        drawScene(m_shadowmap_shader);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        //-----------------------------
+        // 渲染场景
+        //-----------------------------
+        glBindFramebuffer(GL_FRAMEBUFFER, m_output_framebuffer);
         glViewport(0, 0, m_viewport.width, m_viewport.height);
+        // m_renderer_output->setSize(m_viewport.width, m_viewport.height);
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
 
-        //------------模型--------------
-        m_model_shader->Use();
-        glm::mat4 projection = m_test_camera_controller->getCamera().getProjectionMatrix();
-        glm::mat4 view       = m_test_camera_controller->getCamera().getViewMatrix();
-        m_model_shader->setMat4("projection", projection);
-        m_model_shader->setMat4("view", view);
-        glm::mat4 model = glm::mat4(1.0f);
-        model           = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model           = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-        m_model_shader->setMat4("model", model);
-        m_test_model->Draw();
+        glm::mat4 model      = glm::mat4(1.0f);
+        glm::mat4 view       = m_camera_controller->getCamera().getViewMatrix();
+        glm::mat4 projection = m_camera_controller->getCamera().getProjectionMatrix();
+
+        //-----------plane--------------
+        m_plane_VAO->Bind();
+        m_plane_shader->Use();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -0.5f, 0.0f));
+        m_plane_shader->setMat4("model", model);
+        m_plane_shader->setMat4("view", view);
+        m_plane_shader->setMat4("projection", projection);
+        m_plane_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        m_plane_shader->setFloat3("viewPos", m_camera_controller->getCamera().getPosition());
+        m_plane_shader->setFloat3("lightPos", lightPos);
+        m_plane_texture->Bind(0);
+        // m_shadowmap_texture->Bind(1);
+        glBindTextureUnit(1, m_shadowmap_texture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        m_plane_shader->unUse();
+        m_plane_VAO->Unbind();
+
+        //------------bunny--------------
+        m_bunny_shader->Use();
+        model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+        m_bunny_shader->setMat4("model", model);
+        m_bunny_shader->setMat4("view", view);
+        m_bunny_shader->setMat4("projection", projection);
+        m_bunny_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        m_bunny_shader->setFloat3("viewPos", m_camera_controller->getCamera().getPosition());
+        m_bunny_shader->setFloat3("lightPos", lightPos);
+        glBindTextureUnit(0, m_shadowmap_texture);
+        // m_shadowmap_texture->Bind();
+        m_bunny_model->Draw();
+        m_bunny_shader->unUse();
 
         //---------skybox--------------
         glDepthFunc(GL_LEQUAL);
+        m_skybox_VAO->Bind();
         m_skybox_shader->Use();
-        view = glm::mat4(glm::mat3(m_test_camera_controller->getCamera().getViewMatrix()));
+        view = glm::mat4(glm::mat3(m_camera_controller->getCamera().getViewMatrix()));
         m_skybox_shader->setMat4("view", view);
         m_skybox_shader->setMat4("projection", projection);
-        m_skybox_VAO->Bind();
         m_skybox_texture->Bind();
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        m_skybox_VAO->Bind();
+        m_skybox_shader->unUse();
+        m_skybox_VAO->Unbind();
         glDepthFunc(GL_LESS);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -154,43 +256,56 @@ namespace Yutrel
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
-
             m_ui->preRender();
             ImGui::Render();
-
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
 
         glfwSwapBuffers(m_window);
     }
 
-    void OpenGLRenderSystem::refreshFrameBuffer()
+    void OpenGLRenderSystem::drawScene(std::shared_ptr<Shader> &shader)
     {
-        if (framebuffer)
+        glm::mat4 model = glm::mat4(1.0f);
+        shader->Use();
+        //-----------plane--------------
+        m_plane_VAO->Bind();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -0.5f, 0.0f));
+        shader->setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        m_plane_VAO->Unbind();
+
+        //------------bunny--------------
+        model = glm::mat4(1.0f);
+        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+        shader->setMat4("model", model);
+        m_bunny_model->Draw();
+
+        shader->unUse();
+    }
+
+    void OpenGLRenderSystem::refreshOutputFrameBuffer()
+    {
+        if (m_output_framebuffer)
         {
-            glDeleteFramebuffers(1, &framebuffer);
-            glDeleteTextures(1, &texColorBuffer);
-            glDeleteRenderbuffers(1, &texDepthBuffer);
+            glDeleteFramebuffers(1, &m_output_framebuffer);
+            m_renderer_output.reset();
+            glDeleteRenderbuffers(1, &m_output_renderbuffer);
         }
-        glGenFramebuffers(1, &framebuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
-        glGenTextures(1, &texColorBuffer);
-        glBindTexture(GL_TEXTURE_2D, texColorBuffer);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_viewport.width, m_viewport.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glGenFramebuffers(1, &m_output_framebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_output_framebuffer);
+        m_renderer_output = Texture2D::create(m_viewport.width, m_viewport.height);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderer_output->getRnedererID(), 0);
 
-        // 将它附加到当前绑定的帧缓冲对象
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
-
-        glGenRenderbuffers(1, &texDepthBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, texDepthBuffer);
+        glGenRenderbuffers(1, &m_output_renderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, m_output_renderbuffer);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_viewport.width, m_viewport.height);
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, texDepthBuffer);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_output_renderbuffer);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -209,9 +324,6 @@ namespace Yutrel
         m_viewport.y      = offset_y;
         m_viewport.width  = width;
         m_viewport.height = height;
-
-        // m_render_camera->setAspect(width / height);
-        // m_viewer_camera->setAspect(width / height);
     }
 
     EngineContentViewport OpenGLRenderSystem::getEngineContentViewport() const
@@ -221,10 +333,6 @@ namespace Yutrel
 
     void OpenGLRenderSystem::clear()
     {
-        m_model_shader.reset();
-        m_test_texture.reset();
-        m_test_model.reset();
-        m_test_camera_controller.reset();
     }
 
 } // namespace Yutrel

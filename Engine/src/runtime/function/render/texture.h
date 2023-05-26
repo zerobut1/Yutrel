@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,10 @@ namespace Yutrel
     public:
         static std::shared_ptr<Texture2D> create(uint32_t width, uint32_t height);
         static std::shared_ptr<Texture2D> create(const std::string &path);
+
+        //----------tmp----------
+        virtual uint32_t getRnedererID() const = 0;
+        virtual void setSize(uint32_t width, uint32_t height) = 0;
     };
 
     // 立方体贴图

@@ -11,21 +11,14 @@ namespace Yutrel
     OpenGLTexture2D::OpenGLTexture2D(uint32_t width, uint32_t height)
         : m_width(width), m_height(height)
     {
-        m_internal_format = GL_RGBA8;
-        m_data_format     = GL_RGBA;
+        m_internal_format = GL_RGB8;
+        m_data_format     = GL_RGB;
 
         glCreateTextures(GL_TEXTURE_2D, 1, &m_rendererID);
         glTextureStorage2D(m_rendererID, 1, m_internal_format, m_width, m_height);
 
-        // 缩小时使用线性过滤
-        // 放大时使用临近过滤-图像放大后成为一个个小像素点
-        // 放大时使用线性过滤-图像放大后线条较为平滑
-        // 对于棋盘纹理来说，临近过滤更好
         glTextureParameteri(m_rendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(m_rendererID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        // glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        // x和y方向使用重复的纹理环绕方式
+        glTextureParameteri(m_rendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteri(m_rendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTextureParameteri(m_rendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
@@ -55,30 +48,18 @@ namespace Yutrel
             internalFormat = GL_RGB8;
             dataFormat     = GL_RGB;
         }
-        // ENGINE_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
-
         m_internal_format = internalFormat;
         m_data_format     = dataFormat;
 
         glCreateTextures(GL_TEXTURE_2D, 1, &m_rendererID);
         glTextureStorage2D(m_rendererID, 1, internalFormat, m_width, m_height);
 
-        // 缩小时使用线性过滤
-        // 放大时使用临近过滤-图像放大后成为一个个小像素点
-        // 放大时使用线性过滤-图像放大后线条较为平滑
-        // 对于棋盘纹理来说，临近过滤更好
-        glTextureParameteri(m_rendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(m_rendererID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        // glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureSubImage2D(m_rendererID, 0, 0, 0, m_width, m_height, dataFormat, GL_UNSIGNED_BYTE, data);
 
-        // x和y方向使用重复的纹理环绕方式
+        glTextureParameteri(m_rendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(m_rendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTextureParameteri(m_rendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTextureParameteri(m_rendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        // 这个函数搞不懂是啥意思啊啊啊啊啊啊啊啊
-        // 为啥不用glTexImage2D啊
-        // 难道是方便一次性绑定多个纹理？
-        glTextureSubImage2D(m_rendererID, 0, 0, 0, m_width, m_height, dataFormat, GL_UNSIGNED_BYTE, data);
 
         stbi_image_free(data);
     }

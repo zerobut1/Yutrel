@@ -4,6 +4,7 @@
 
 #include <glad/glad.h>
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,16 @@ namespace Yutrel
         virtual uint32_t getHeight() const override { return m_height; }
 
         virtual void setData(void *data, uint32_t size) override;
+
+        //--------tmp---------
+        virtual uint32_t getRnedererID() const override { return m_rendererID; };
+        virtual void setSize(uint32_t width, uint32_t height) override
+        {
+            // glTextureSubImage2D(m_rendererID, 0, 0, 0, width, height, m_data_format, GL_UNSIGNED_BYTE, nullptr);
+            // glTexImage2D(m_rendererID, 0, m_data_format, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_rendererID);
+            glTextureStorage2D(m_rendererID, 0, m_internal_format, width, height);
+        }
 
     private:
         std::string m_path;

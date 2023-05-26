@@ -3,5 +3,6 @@
 .VSCodeCounter
 build
 vsxmake2022
+resource
 
 .clang-format
