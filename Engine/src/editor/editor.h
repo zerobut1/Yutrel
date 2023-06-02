@@ -1,23 +1,22 @@
 #pragma once
 
-#include "runtime/engine.h"
 #include "editor/ui/editor_ui.h"
+
+#include <Yutrel/core/application/application.h>
 
 namespace Yutrel
 {
-    class YutrelEditor
+    class YutrelEditor : public Application
     {
     public:
-        YutrelEditor()          = default;
+        YutrelEditor(YutrelEngine *engine);
         virtual ~YutrelEditor() = default;
 
-        void initialize(YutrelEngine *engine);
-        void run();
-        void clear();
+        virtual void initialize() override;
+        virtual void tick() override;
+        virtual void clear() override;
 
-    protected:
-        //这里为什么是protected暂时没想明白
+    private:
         std::shared_ptr<EditorUI> m_editor_ui;
-        YutrelEngine *m_engine_runtime;
     };
 } // namespace Yutrel

@@ -1,21 +1,12 @@
-#include "yutrel_pch.h"
+#include <Yutrel/Yutrel.h>
+#include <Yutrel/main.h>
 
-#include "editor/editor.h"
-#include "runtime/engine.h"
+#include "editor.h"
 
-int main(int argc, char **argv)
+namespace Yutrel
 {
-    Yutrel::YutrelEngine *engine = new Yutrel::YutrelEngine();
-    engine->startEngine();
-
-    Yutrel::YutrelEditor *editor = new Yutrel::YutrelEditor();
-    editor->initialize(engine);
-
-    editor->run();
-
-    editor->clear();
-
-    engine->shutdownEngine();
-
-    return 0;
-}
+    Application *CreateApplication(YutrelEngine *engine)
+    {
+        return new YutrelEditor(engine);
+    }
+} // namespace Yutrel

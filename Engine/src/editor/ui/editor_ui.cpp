@@ -2,8 +2,7 @@
 
 #include "editor_ui.h"
 
-#include "editor/global/editor_global_context.h"
-#include "runtime/function/global/global_context.h"
+#include "Yutrel/function/global/global_context.h"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -76,7 +75,7 @@ namespace Yutrel
 
         const ImGuiViewport *main_viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(main_viewport->WorkPos, ImGuiCond_Always);
-        std::array<int, 2> window_size = g_editor_global_context.m_window_system->getWindowSize();
+        std::array<int, 2> window_size = g_runtime_global_context.m_window_system->getWindowSize();
         ImGui::SetNextWindowSize(ImVec2((float)window_size[0], (float)window_size[1]), ImGuiCond_Always);
 
         ImGui::SetNextWindowViewport(main_viewport->ID);
