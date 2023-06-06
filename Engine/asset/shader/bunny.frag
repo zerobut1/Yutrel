@@ -56,6 +56,7 @@ void main()
     vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 
     FragColor = vec4(lighting, 1.0);
+    // FragColor = texture(texture_shadowmap,fs_in.TexCoords);
     // FragColor = vec4(fs_in.FragPosLightSpace, 1.0);
     // FragColor = vec4(vec3(shadow), 1.0);
     // FragColor = vec4(fs_in.Normal, 1.0);

@@ -16,7 +16,7 @@ namespace Yutrel
         LOG_INFO("log system initialized!");
 
         // window system
-        m_window_system = WindowSystem::create();
+        m_window_system = WindowSystem::Create();
         WindowCreateInfo window_create_info;
         window_create_info.width  = 1920;
         window_create_info.height = 1080;
@@ -25,12 +25,12 @@ namespace Yutrel
         LOG_INFO("window system initialized!");
 
         // input system
-        m_input_system = InputSystem::create();
+        m_input_system = InputSystem::Create();
         m_input_system->initialize();
         LOG_INFO("input system initialized!");
 
         // render system
-        m_render_system = RenderSystem::create();
+        m_render_system = RenderSystem::Create();
         RenderSystemInitInfo render_init_info;
         render_init_info.window_system = m_window_system;
         m_render_system->initialize(render_init_info);

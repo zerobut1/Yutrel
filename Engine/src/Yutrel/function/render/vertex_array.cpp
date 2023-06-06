@@ -6,7 +6,7 @@
 
 namespace Yutrel
 {
-    std::shared_ptr<VertexArray> VertexArray::create()
+    std::shared_ptr<VertexArray> VertexArray::Create()
     {
         return std::make_shared<OpenGLVertexArray>();
     }

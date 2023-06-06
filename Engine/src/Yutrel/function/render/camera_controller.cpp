@@ -8,7 +8,7 @@
 
 namespace Yutrel
 {
-    std::shared_ptr<CameraController> CameraController::create(float aspectRatio, glm::vec3 positon, float yaw, float pitch)
+    std::shared_ptr<CameraController> CameraController::Create(float aspectRatio, glm::vec3 positon, float yaw, float pitch)
     {
         return std::make_shared<CameraController>(aspectRatio, positon, yaw, pitch);
     }

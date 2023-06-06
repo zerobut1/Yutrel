@@ -114,7 +114,7 @@ namespace Yutrel
         std::vector<std::shared_ptr<Texture>> heightMaps = loadMaterialTextures(material, aiTextureType_HEIGHT);
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-        return Mesh::create(vertices, indices, textures);
+        return Mesh::Create(vertices, indices, textures);
     }
 
     std::vector<std::shared_ptr<Texture>> OpenGLModel::loadMaterialTextures(aiMaterial *mat, aiTextureType type)
@@ -135,7 +135,7 @@ namespace Yutrel
             }
             else
             {
-                std::shared_ptr<Texture2D> texture = Texture2D::create(str);
+                std::shared_ptr<Texture2D> texture = Texture2D::Create(str);
                 texture_loaded[str]                = texture;
                 textures.emplace_back(texture);
             }

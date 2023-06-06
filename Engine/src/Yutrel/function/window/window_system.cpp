@@ -6,7 +6,7 @@
 
 namespace Yutrel
 {
-    std::shared_ptr<WindowSystem> WindowSystem::create()
+    std::shared_ptr<WindowSystem> WindowSystem::Create()
     {
         // 暂时直接使用windows(glfw)
         return std::make_shared<Windows_WindowSystem>();

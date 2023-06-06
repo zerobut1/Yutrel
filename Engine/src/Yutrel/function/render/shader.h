@@ -11,8 +11,8 @@ namespace Yutrel
     class Shader
     {
     public:
-        static std::shared_ptr<Shader> create(const std::string &vertex_path, const std::string &fragment_path);
-        static std::shared_ptr<Shader> create(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc);
+        static std::shared_ptr<Shader> Create(const std::string &vertex_path, const std::string &fragment_path);
+        static std::shared_ptr<Shader> Create(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc);
 
         virtual ~Shader() = default;
 

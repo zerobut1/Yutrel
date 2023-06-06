@@ -1,14 +1,10 @@
-#include "yutrel_pch.h"
-
 #include "editor_ui.h"
 
-#include "Yutrel/function/global/global_context.h"
+#include <Yutrel./Yutrel.h>
 
 #include <GLFW/glfw3.h>
+#include <glm/fwd.hpp>
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-#include <imgui_internal.h>
 
 // 需要一次大更改，往后放放吧
 namespace Yutrel
@@ -27,7 +23,7 @@ namespace Yutrel
         ImGui::CreateContext();
 
         float x_scale, y_scale;
-        glfwGetWindowContentScale(init_info.window_system->getglfwWindow(), &x_scale, &y_scale);
+        glfwGetWindowContentScale(static_cast<GLFWwindow *>(init_info.window_system->getWindow()), &x_scale, &y_scale);
         float content_scale = fmaxf(1.0f, fmaxf(x_scale, y_scale));
 
         ImGuiIO &io = ImGui::GetIO();
@@ -148,20 +144,22 @@ namespace Yutrel
         render_target_window_size.x = ImGui::GetWindowSize().x;
         render_target_window_size.y = ImGui::GetWindowSize().y;
 
+        /*
         g_runtime_global_context.m_render_system->setEngineContentViewport(
             render_target_window_pos.x,
             render_target_window_pos.y,
             render_target_window_size.x,
             render_target_window_size.y);
-
-        EngineContentViewport render_target_viewport;
-        render_target_viewport = g_runtime_global_context.m_render_system->getEngineContentViewport();
+        */
+        // glm::vec2 render_target_viewport{1920,1080};
 
         // g_editor_global_context.m_input_manager->setEngineWindowPos(render_target_window_pos);
         // g_editor_global_context.m_input_manager->setEngineWindowSize(render_target_window_size);
 
-        uint64_t texture_id = g_runtime_global_context.m_render_system->getTexColorBuffer();
         ///*
+        m_viewport_size.x = render_target_window_size.x;
+        m_viewport_size.y = render_target_window_size.y;
+
         ImGui::GetWindowDrawList()->AddImage((void *)texture_id,
                                              ImVec2(render_target_window_pos.x, render_target_window_pos.y),
                                              ImVec2(render_target_window_size.x + render_target_window_pos.x,
@@ -196,6 +194,7 @@ namespace Yutrel
         /*
          * 会填充设置的，以后吧
          */
+        ImGui::SliderFloat3("light_pos", (float *)&YutrelEditor::get().lightPos, -1.0f, 1.0f);
 
         ImGui::End();
     }

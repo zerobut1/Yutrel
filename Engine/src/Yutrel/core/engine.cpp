@@ -23,30 +23,6 @@ namespace Yutrel
         // todo 反射系统注销
     }
 
-    /**
-     * 逻辑tick(暂未实现)
-     * 交换数据(暂未实现)
-     * 渲染tick
-     */
-    bool YutrelEngine::tickOneFrame(float delta_time)
-    {
-        calculateFPS(delta_time);
-
-        // todo logicaltick
-
-        // todo swapdata
-
-        rendererTick(delta_time);
-
-        g_runtime_global_context.m_window_system->pollEvents();
-
-        g_runtime_global_context.m_window_system->setTitle(
-            std::string("Yutrel - " + std::to_string(getFPS()) + " FPS").c_str());
-
-        const bool should_window_close = g_runtime_global_context.m_window_system->shouldClose();
-        return !should_window_close;
-    }
-
     void YutrelEngine::rendererTick(float delta_time)
     {
         g_runtime_global_context.m_render_system->tick(delta_time);

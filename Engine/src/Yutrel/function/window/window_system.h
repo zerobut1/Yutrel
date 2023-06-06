@@ -19,13 +19,13 @@ namespace Yutrel
     class WindowSystem
     {
     public:
-        static std::shared_ptr<WindowSystem> create();
+        static std::shared_ptr<WindowSystem> Create();
 
         virtual void initialize(WindowCreateInfo create_info) = 0;
+        virtual void tick() const                             = 0;
         virtual void setTitle(const char *title)              = 0;
-        virtual void pollEvents() const                       = 0;
         virtual bool shouldClose() const                      = 0;
-        virtual GLFWwindow *getglfwWindow() const             = 0;
+        virtual void *getWindow() const                       = 0;
         virtual std::array<int, 2> getWindowSize() const      = 0;
 
     protected:

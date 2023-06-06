@@ -6,7 +6,7 @@
 
 namespace Yutrel
 {
-    std::shared_ptr<Model> Model::create(std::string const &path)
+    std::shared_ptr<Model> Model::Create(std::string const &path)
     {
         return std::make_shared<OpenGLModel>(path);
     }

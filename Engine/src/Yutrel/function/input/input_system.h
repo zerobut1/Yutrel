@@ -13,7 +13,7 @@ namespace Yutrel
     class InputSystem
     {
     public:
-        static std::shared_ptr<InputSystem> create();
+        static std::shared_ptr<InputSystem> Create();
 
         virtual void initialize()                           = 0;
         virtual bool IsKeyPressed(KeyCode key)              = 0;

@@ -12,13 +12,13 @@ namespace Yutrel
 
     void OpenGLMesh::setupMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures)
     {
-        m_VAO                             = VertexArray::create();
-        std::shared_ptr<VertexBuffer> VBO = VertexBuffer::create(&vertices[0], vertices.size() * sizeof(float));
+        m_VAO                             = VertexArray::Create();
+        std::shared_ptr<VertexBuffer> VBO = VertexBuffer::Create(&vertices[0], vertices.size() * sizeof(float));
         VBO->setLayout({{Yutrel::ShaderDataType::Float3, "a_Pos"},
                         {Yutrel::ShaderDataType::Float3, "a_Normal"},
                         {Yutrel::ShaderDataType::Float2, "a_TexCoord"}});
         m_VAO->addVertexBuffer(VBO);
-        std::shared_ptr<IndexBuffer> EBO = IndexBuffer::create(&indices[0], indices.size());
+        std::shared_ptr<IndexBuffer> EBO = IndexBuffer::Create(&indices[0], indices.size());
         m_VAO->setIndexBuffer(EBO);
     }
 

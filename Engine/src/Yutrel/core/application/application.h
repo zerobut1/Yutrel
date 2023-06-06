@@ -16,10 +16,15 @@ namespace Yutrel
         void run();
 
     protected:
-        virtual void tick() = 0;
+        virtual void tick(float delta_time) = 0;
 
     protected:
-        YutrelEngine *m_engine_runtime;
+        YutrelEngine *m_engine;
+
+        std::shared_ptr<WindowUI> m_ui;
+
+    private:
+        bool m_running = true;
     };
 
     Application *CreateApplication(YutrelEngine *engine);

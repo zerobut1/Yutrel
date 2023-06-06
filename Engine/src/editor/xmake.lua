@@ -5,6 +5,9 @@ target("Yutrel_Editor")
     -- set_pcxxheader("$(projectdir)/Engine/src/yutrel_pch.h")
 
     add_packages("spdlog","imgui","glm")
+    
+    -- tmp
+    add_packages("glfw","glad","assimp")
 
     add_headerfiles("**.h")
     add_files("**.cpp")

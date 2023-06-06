@@ -6,6 +6,8 @@ set_defaultarchs("x64")
 add_rules("mode.debug")
 -- add_rules("plugin.vsxmake.autoupdate")
 
+set_languages("cxx17")
+
 -- includes sub-projects
 includes("Engine/src")
 

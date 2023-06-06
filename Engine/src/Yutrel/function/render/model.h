@@ -12,7 +12,7 @@ namespace Yutrel
     class Model
     {
     public:
-        static std::shared_ptr<Model> create(std::string const &path);
+        static std::shared_ptr<Model> Create(std::string const &path);
 
         virtual ~Model() = default;
 

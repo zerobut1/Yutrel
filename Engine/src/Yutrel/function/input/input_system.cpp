@@ -6,7 +6,7 @@
 
 namespace Yutrel
 {
-    std::shared_ptr<InputSystem> InputSystem::create()
+    std::shared_ptr<InputSystem> InputSystem::Create()
     {
         return std::make_shared<WindowsInputSystem>();
     }

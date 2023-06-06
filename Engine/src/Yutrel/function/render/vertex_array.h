@@ -10,7 +10,7 @@ namespace Yutrel
     class VertexArray
     {
     public:
-        static std::shared_ptr<VertexArray> create();
+        static std::shared_ptr<VertexArray> Create();
 
         virtual ~VertexArray() = default;
 

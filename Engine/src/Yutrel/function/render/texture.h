@@ -25,8 +25,8 @@ namespace Yutrel
     class Texture2D : public Texture
     {
     public:
-        static std::shared_ptr<Texture2D> create(uint32_t width, uint32_t height);
-        static std::shared_ptr<Texture2D> create(const std::string &path);
+        static std::shared_ptr<Texture2D> Create(uint32_t width, uint32_t height);
+        static std::shared_ptr<Texture2D> Create(const std::string &path);
 
         //----------tmp----------
         virtual uint32_t getRnedererID() const = 0;
@@ -37,6 +37,6 @@ namespace Yutrel
     class TextureCubemaps : public Texture
     {
     public:
-        static std::shared_ptr<TextureCubemaps> create(const std::vector<std::string> &paths);
+        static std::shared_ptr<TextureCubemaps> Create(const std::vector<std::string> &paths);
     };
 } // namespace Yutrel

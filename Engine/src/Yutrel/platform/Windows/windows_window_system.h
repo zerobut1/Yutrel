@@ -12,10 +12,10 @@ namespace Yutrel
         virtual ~Windows_WindowSystem();
 
         virtual void initialize(WindowCreateInfo create_info) override;
-        virtual void pollEvents() const override;
+        virtual void tick() const override;
         virtual void setTitle(const char *title) override;
         virtual bool shouldClose() const override;
-        virtual GLFWwindow *getglfwWindow() const override;
+        virtual void *getWindow() const override;
         virtual std::array<int, 2> getWindowSize() const override;
 
     private:

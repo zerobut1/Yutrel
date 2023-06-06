@@ -52,6 +52,12 @@ namespace Yutrel
         glfwSetWindowCloseCallback(m_window, windowCloseCallback);
     }
 
+    void Windows_WindowSystem::tick() const
+    {
+        glfwPollEvents();
+        glfwSwapBuffers(m_window);
+    }
+
     bool Windows_WindowSystem::shouldClose() const
     {
         return glfwWindowShouldClose(m_window);
@@ -62,14 +68,9 @@ namespace Yutrel
         return std::array<int, 2>({m_width, m_height});
     }
 
-    GLFWwindow *Windows_WindowSystem::getglfwWindow() const
+    void *Windows_WindowSystem::getWindow() const
     {
         return m_window;
-    }
-
-    void Windows_WindowSystem::pollEvents() const
-    {
-        glfwPollEvents();
     }
 
     void Windows_WindowSystem::setTitle(const char *title)

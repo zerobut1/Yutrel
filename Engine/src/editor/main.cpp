@@ -1,7 +1,7 @@
-#include <Yutrel/Yutrel.h>
-#include <Yutrel/main.h>
-
 #include "editor.h"
+
+#include <Yutrel/Yutrel.h>
+#include <Yutrel/entry_point.h>
 
 namespace Yutrel
 {

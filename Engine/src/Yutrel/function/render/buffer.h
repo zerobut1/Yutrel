@@ -149,7 +149,7 @@ namespace Yutrel
     class VertexBuffer
     {
     public:
-        static std::shared_ptr<VertexBuffer> create(float *vertices, uint32_t size);
+        static std::shared_ptr<VertexBuffer> Create(float *vertices, uint32_t size);
 
         virtual ~VertexBuffer() = default;
 
@@ -164,7 +164,7 @@ namespace Yutrel
     class IndexBuffer
     {
     public:
-        static std::shared_ptr<IndexBuffer> create(uint32_t *indices, uint32_t count);
+        static std::shared_ptr<IndexBuffer> Create(uint32_t *indices, uint32_t count);
 
         virtual ~IndexBuffer() = default;
 

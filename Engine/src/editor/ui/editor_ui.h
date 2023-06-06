@@ -1,6 +1,14 @@
 #pragma once
 
-#include "Yutrel/function/ui/window_ui.h"
+#include "editor/editor.h"
+
+#include <Yutrel/Yutrel.h>
+
+#include <glm/fwd.hpp>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_internal.h>
 
 namespace Yutrel
 {
@@ -12,6 +20,10 @@ namespace Yutrel
 
         virtual void initialize(WindowUIInitInfo init_info) override final;
         virtual void preRender() override final;
+
+        virtual void setEngineOutputTextureID(uint32_t id) override { texture_id = id; }
+
+        virtual std::array<int, 2> getViewport() override { return {(int)m_viewport_size.x, (int)m_viewport_size.y}; }
 
     private:
         void showEditorUI();
@@ -26,5 +38,8 @@ namespace Yutrel
         bool m_game_engine_window_open = true;
         // 设置信息窗口
         bool m_detail_window_open = true;
+
+        ImVec2 m_viewport_size{1920.0f, 1080.0f};
+        uint64_t texture_id;
     };
 } // namespace Yutrel

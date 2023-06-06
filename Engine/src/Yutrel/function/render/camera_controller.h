@@ -11,7 +11,7 @@ namespace Yutrel
     class CameraController
     {
     public:
-        static std::shared_ptr<CameraController> create(float aspectRatio, glm::vec3 positon, float yaw = -90.0f, float pitch = 0.0f);
+        static std::shared_ptr<CameraController> Create(float aspectRatio, glm::vec3 positon, float yaw = -90.0f, float pitch = 0.0f);
 
         CameraController(float aspectRatio, glm::vec3 positon, float yaw, float pitch);
 
