@@ -22,8 +22,9 @@ namespace Yutrel
         virtual void clear()                                           = 0;
         virtual void tick(float delta_time)                            = 0;
 
-        // 初始化ui
-        virtual void initializeUIRenderBackend(WindowUI *window_ui) = 0;
-        virtual void renderUI(std::shared_ptr<WindowUI> ui)         = 0;
+        // ui
+        virtual void initializeUIRender(WindowUI *window_ui) = 0;
+        virtual void renderUI(std::shared_ptr<WindowUI> ui)  = 0;
+        virtual void clearUIRender(WindowUI *window_ui)      = 0;
     };
 } // namespace Yutrel

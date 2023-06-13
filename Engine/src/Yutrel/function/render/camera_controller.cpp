@@ -37,12 +37,10 @@ namespace Yutrel
     /**
      * 目前的tick主要是用键盘控制摄像机位置
      */
-    void CameraController::tick(double delta_time, float aspectRatio)
+    void CameraController::tick(double delta_time)
     {
         auto input     = g_runtime_global_context.m_input_system;
         float velocity = m_camera_speed * delta_time;
-        m_aspect_ratio = aspectRatio;
-        m_camera.setProjection(m_aspect_ratio, m_zoom_level);
 
         if (input->IsKeyPressed(Key::D))
         {
@@ -70,6 +68,12 @@ namespace Yutrel
         }
 
         m_camera.setPosition(m_camera_position);
+    }
+
+    void CameraController::resize(float aspectRatio)
+    {
+        m_aspect_ratio = aspectRatio;
+        m_camera.setProjection(m_aspect_ratio, m_zoom_level);
     }
 
     void CameraController::onMouseScrolled(double xoffset, double yoffset)

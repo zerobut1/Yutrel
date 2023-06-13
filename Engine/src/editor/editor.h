@@ -29,42 +29,33 @@ namespace Yutrel
     private:
         static YutrelEditor *s_instance;
 
-        std::shared_ptr<Framebuffer> m_output_framebuffer;
-
-        glm::vec2 m_viewport_size = {1920.0f, 1080.0f};
-
-        glm::vec3 lightPos = {-2.0f, 2.0f, -1.0f};
-
         std::shared_ptr<CameraController> m_camera_controller;
 
+        std::shared_ptr<Framebuffer> m_viewport_framebuffer;
+        glm::vec2 m_viewport_size = {1920.0f, 1080.0f};
+
+        // 点光源
+        glm::vec3 lightPos = {-2.0f, 2.0f, -1.0f};
+        std::shared_ptr<Model> m_lightcube_model;
+        std::shared_ptr<Shader> m_lightcube_shader;
+
+        // shadowmap
+        std::shared_ptr<Framebuffer> m_shadowmap_framebuffer;
+        std::shared_ptr<Shader> m_shadowmap_shader;
+        std::shared_ptr<Shader> m_shadow_shader;
+
         // skybox
-        std::shared_ptr<VertexArray> m_skybox_VAO;
         std::shared_ptr<Model> m_skybox_model;
         std::shared_ptr<Shader> m_skybox_shader;
         std::shared_ptr<TextureCubemaps> m_skybox_texture;
 
         // plane
-        std::shared_ptr<VertexArray> m_plane_VAO;
         std::shared_ptr<Model> m_plane_model;
-        std::shared_ptr<Shader> m_plane_shader;
+        // std::shared_ptr<Shader> m_plane_shader;
         std::shared_ptr<Texture2D> m_plane_texture;
 
         // bunny
         std::shared_ptr<Model> m_bunny_model;
-        std::shared_ptr<Shader> m_bunny_shader;
-
-        // plane
-        // std::shared_ptr<VertexArray> m_quad_VAO;
-        // std::shared_ptr<Shader> m_quad_shader;
-        // std::shared_ptr<Texture2D> m_quad_texture;
-
-        std::shared_ptr<Framebuffer> m_shadowmap_framebuffer;
-
-        //--------------tmp------------
-        unsigned int m_output_renderbuffer;
-        std::shared_ptr<Texture2D> m_renderer_output;
-
-        // std::shared_ptr<Texture2D> m_shadowmap_texture;
-        std::shared_ptr<Shader> m_shadowmap_shader;
+        // std::shared_ptr<Shader> m_bunny_shader;
     };
 } // namespace Yutrel

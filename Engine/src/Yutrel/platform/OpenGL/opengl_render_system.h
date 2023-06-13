@@ -25,8 +25,10 @@ namespace Yutrel
         virtual void clear() override{};
         virtual void tick(float delta_time) override{};
 
-        virtual void initializeUIRenderBackend(WindowUI *window_ui) override;
+        // ui
+        virtual void initializeUIRender(WindowUI *window_ui) override;
         virtual void renderUI(std::shared_ptr<WindowUI> ui) override;
+        virtual void clearUIRender(WindowUI *window_ui) override;
     };
 
 } // namespace Yutrel

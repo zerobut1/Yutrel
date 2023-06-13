@@ -9,43 +9,34 @@
 // 需要一次大更改，往后放放吧
 namespace Yutrel
 {
-    std::vector<std::pair<std::string, bool>> g_editor_node_state_array;
-    int g_node_depth = -1;
-
-    EditorUI::EditorUI()
-    {
-        // 暂时为空
-    }
-
-    void EditorUI::initialize(WindowUIInitInfo init_info)
+    void EditorUI::initialize()
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
-        float x_scale, y_scale;
-        glfwGetWindowContentScale(static_cast<GLFWwindow *>(init_info.window_system->getWindow()), &x_scale, &y_scale);
-        float content_scale = fmaxf(1.0f, fmaxf(x_scale, y_scale));
-
         ImGuiIO &io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
         io.ConfigDockingAlwaysTabBar         = true;
         io.ConfigWindowsMoveFromTitleBarOnly = true;
+
         // 暂时用比较暴力的方法设置字体
         io.Fonts->AddFontFromFileTTF(
             "C:\\Windows\\Fonts\\msyh.ttc",
-            32.0f,
-            nullptr,
-            nullptr);
-        io.Fonts->Build();
+            32.0f);
 
-        ImGuiStyle &style     = ImGui::GetStyle();
-        style.WindowPadding   = ImVec2(1.0, 0);
-        style.FramePadding    = ImVec2(14.0, 2.0f);
-        style.ChildBorderSize = 0.0f;
-        style.FrameRounding   = 5.0f;
-        style.FrameBorderSize = 1.5f;
+        // todo :搞一个好看的UI
+        ImGui::StyleColorsDark();
 
-        init_info.render_system->initializeUIRenderBackend(this);
+        ImGuiStyle &style = ImGui::GetStyle();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            style.WindowRounding              = 0.0f;
+            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        }
+
+        YutrelEditor::get().m_engine->getRenderSystem()->initializeUIRender(this);
     }
 
     void EditorUI::preRender()
@@ -53,65 +44,71 @@ namespace Yutrel
         showEditorUI();
     }
 
+    void EditorUI::clear()
+    {
+        YutrelEditor::get().m_engine->getRenderSystem()->clearUIRender(this);
+    }
+
     void EditorUI::showEditorUI()
     {
         // 暂时只显示这三部分
-        showEditorMenu(&m_editor_menu_window_open);
-        showEditorGameWindow(&m_game_engine_window_open);
-        showEditorDetailWindow(&m_detail_window_open);
+        showMenuBar(&m_menu_bar_open);
+        showGameViewport(&m_game_engine_viewport_open);
+        showSettingsWindow(&m_game_settings_open);
     }
 
-    void EditorUI::showEditorMenu(bool *p_open)
+    void EditorUI::showMenuBar(bool *p_open)
     {
-        ImGuiDockNodeFlags dock_flags = ImGuiDockNodeFlags_DockSpace;
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar |
-                                        ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
-                                        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBackground |
-                                        ImGuiConfigFlags_NoMouseCursorChange | ImGuiWindowFlags_NoBringToFrontOnFocus;
+        static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-        const ImGuiViewport *main_viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(main_viewport->WorkPos, ImGuiCond_Always);
-        std::array<int, 2> window_size = g_runtime_global_context.m_window_system->getWindowSize();
-        ImGui::SetNextWindowSize(ImVec2((float)window_size[0], (float)window_size[1]), ImGuiCond_Always);
+        // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+        // because it would be confusing to have two docking targets within each others.
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 
-        ImGui::SetNextWindowViewport(main_viewport->ID);
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-        ImGui::Begin("Editor menu", p_open, window_flags);
+        // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
+        // and handle the pass-thru hole, so we ask Begin() to not render a background.
+        if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+            window_flags |= ImGuiWindowFlags_NoBackground;
 
-        ImGuiID main_docking_id = ImGui::GetID("Main Docking");
-        if (ImGui::DockBuilderGetNode(main_docking_id) == nullptr)
+        // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+        // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
+        // all active windows docked into it will lose their parent and become undocked.
+        // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
+        // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::Begin("DockSpace Demo", p_open, window_flags);
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar(2);
+
+        // Submit the DockSpace
+        ImGuiIO &io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
         {
-            ImGui::DockBuilderAddNode(main_docking_id, dock_flags);
-            ImGui::DockBuilderSetNodePos(main_docking_id,
-                                         ImVec2(main_viewport->WorkPos.x, main_viewport->WorkPos.y + 18.0f));
-            ImGui::DockBuilderSetNodeSize(main_docking_id,
-                                          ImVec2((float)window_size[0], (float)window_size[1] - 18.0f));
-
-            ImGuiID center = main_docking_id;
-            ImGuiID left;
-            ImGuiID right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.3f, nullptr, &left);
-
-            ImGuiID left_other;
-            ImGuiID left_file_content = ImGui::DockBuilderSplitNode(left, ImGuiDir_Down, 0.30f, nullptr, &left_other);
-
-            ImGuiID left_game_engine;
-            ImGuiID left_asset =
-                ImGui::DockBuilderSplitNode(left_other, ImGuiDir_Left, 0.30f, nullptr, &left_game_engine);
-
-            ImGui::DockBuilderDockWindow("Inspector", right);
-            ImGui::DockBuilderDockWindow("Scene View", left_game_engine);
-
-            ImGui::DockBuilderFinish(main_docking_id);
+            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
-
-        ImGui::DockSpace(main_docking_id);
+        else
+        {
+            LOG_ERROR("Dockspace Disabled!");
+        }
 
         if (ImGui::BeginMenuBar())
         {
-            if (ImGui::BeginMenu("Window"))
+            if (ImGui::BeginMenu("Options"))
             {
-                ImGui::MenuItem("Scene View", nullptr, &m_game_engine_window_open);
-                ImGui::MenuItem("Inspector", nullptr, &m_detail_window_open);
+                ImGui::MenuItem("Viewport", NULL, &m_game_engine_viewport_open);
+                ImGui::MenuItem("Settings", NULL, &m_game_settings_open);
+                // ImGui::Separator();
+                // todo : close
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();
@@ -120,81 +117,32 @@ namespace Yutrel
         ImGui::End();
     }
 
-    void EditorUI::showEditorGameWindow(bool *p_open)
+    void EditorUI::showGameViewport(bool *p_open)
     {
-        ImGuiIO &io                   = ImGui::GetIO();
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize;
-
-        const ImGuiViewport *main_viewport = ImGui::GetMainViewport();
-
         if (!*p_open)
             return;
 
-        if (!ImGui::Begin("Scene View", p_open, window_flags))
-        {
-            ImGui::End();
-            return;
-        }
+        ImGui::Begin("Viewport");
 
-        ImVec2 render_target_window_pos  = {0.0f, 0.0f};
-        ImVec2 render_target_window_size = {0.0f, 0.0f};
+        ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
-        render_target_window_pos.x  = ImGui::GetWindowPos().x;
-        render_target_window_pos.y  = ImGui::GetWindowPos().y;
-        render_target_window_size.x = ImGui::GetWindowSize().x;
-        render_target_window_size.y = ImGui::GetWindowSize().y;
+        YutrelEditor::get().m_viewport_size.x = viewportPanelSize.x;
+        YutrelEditor::get().m_viewport_size.y = viewportPanelSize.y;
 
-        /*
-        g_runtime_global_context.m_render_system->setEngineContentViewport(
-            render_target_window_pos.x,
-            render_target_window_pos.y,
-            render_target_window_size.x,
-            render_target_window_size.y);
-        */
-        // glm::vec2 render_target_viewport{1920,1080};
-
-        // g_editor_global_context.m_input_manager->setEngineWindowPos(render_target_window_pos);
-        // g_editor_global_context.m_input_manager->setEngineWindowSize(render_target_window_size);
-
-        ///*
-        m_viewport_size.x = render_target_window_size.x;
-        m_viewport_size.y = render_target_window_size.y;
-
-        ImGui::GetWindowDrawList()->AddImage((void *)texture_id,
-                                             ImVec2(render_target_window_pos.x, render_target_window_pos.y),
-                                             ImVec2(render_target_window_size.x + render_target_window_pos.x,
-                                                    render_target_window_size.y + render_target_window_pos.y),
-                                             ImVec2(0, 1),
-                                             ImVec2(1, 0));
-        //*/
-        // ImGui::Image((void *)texture_id, ImGui::GetContentRegionAvail());
-        // ImGui::Image((void *)texture_id, ImGui::GetContentRegionAvail(), ImVec2(0.0, 0.0), ImVec2(1.0, 1.0), ImVec4(0, 0, 255, 1), ImVec4(0, 255, 0, 1));
+        uint64_t texture_ID = YutrelEditor::get().m_viewport_framebuffer->getColorAttachmentRendererID();
+        ImGui::Image(reinterpret_cast<void *>(texture_ID), ImVec2{viewportPanelSize.x, viewportPanelSize.y}, ImVec2{0, 1}, ImVec2{1, 0});
 
         ImGui::End();
     }
 
-    void EditorUI::showEditorDetailWindow(bool *p_open)
+    void EditorUI::showSettingsWindow(bool *p_open)
     {
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
-
-        const ImGuiViewport *main_viewport = ImGui::GetMainViewport();
-
         if (!*p_open)
             return;
 
-        if (!ImGui::Begin("Inspector", p_open, window_flags))
-        {
-            ImGui::End();
-            return;
-        }
+        ImGui::Begin("Settings");
 
-        // Inspector
-        ImGuiIO &io = ImGui::GetIO();
-
-        /*
-         * 会填充设置的，以后吧
-         */
-        ImGui::SliderFloat3("light_pos", (float *)&YutrelEditor::get().lightPos, -1.0f, 1.0f);
+        ImGui::SliderFloat3("light_pos", (float *)&YutrelEditor::get().lightPos, -2.0f, 2.0f);
 
         ImGui::End();
     }

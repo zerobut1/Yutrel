@@ -42,10 +42,17 @@ namespace Yutrel
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
-    void OpenGLRenderSystem::initializeUIRenderBackend(WindowUI *window_ui)
+    void OpenGLRenderSystem::initializeUIRender(WindowUI *window_ui)
     {
         ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow()), true);
         ImGui_ImplOpenGL3_Init("#version 460");
+    }
+
+    void OpenGLRenderSystem::clearUIRender(WindowUI *window_ui)
+    {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
     }
 
 } // namespace Yutrel

@@ -15,9 +15,14 @@ namespace Yutrel
 
         CameraController(float aspectRatio, glm::vec3 positon, float yaw, float pitch);
 
-        void tick(double delta_time, float aspectRatio);
+        void tick(double delta_time);
 
-        Camera &getCamera() { return m_camera; }
+        void resize(float aspectRatio);
+
+        Camera &getCamera()
+        {
+            return m_camera;
+        }
         const Camera &getCamera() const { return m_camera; }
 
         float getZoomLevel() const { return m_zoom_level; }
@@ -45,10 +50,10 @@ namespace Yutrel
         float lastY          = 0.0f;
         bool firstMouse      = true;
 
-        glm::vec3 m_world_up = {0.0f, 1.0f, 0.0f};
-        float m_sensitivity_mouse = 0.1f;
+        glm::vec3 m_world_up       = {0.0f, 1.0f, 0.0f};
+        float m_sensitivity_mouse  = 0.1f;
         float m_sensitivity_scroll = 2.0f;
-        float m_camera_speed = 5.0f;
+        float m_camera_speed       = 5.0f;
     };
 
 } // namespace Yutrel
