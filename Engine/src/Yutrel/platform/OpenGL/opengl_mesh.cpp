@@ -26,7 +26,7 @@ namespace Yutrel
     {
         for (unsigned int i = 0; i < textures.size(); i++)
         {
-            textures[i]->Bind(i);
+            textures[i]->Bind(i+1);
         }
         m_VAO->Bind();
 

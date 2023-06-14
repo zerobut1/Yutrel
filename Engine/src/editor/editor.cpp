@@ -71,9 +71,8 @@ namespace Yutrel
         m_bunny_model = Model::Create("../resource/object/bunny/bunny_iH.ply");
         // m_bunny_shader = Shader::Create("../Engine/asset/shader/bunny.vert", "../Engine/asset/shader/bunny.frag");
 
-        //---------backpack------------
-        // m_backpack_model = Model::create("../Engine/asset/object/backpack/backpack.obj");
-        // m_bunny_model = Model::create("../Engine/asset/object/nanosuit/nanosuit.obj");
+        // ---------backpack------------
+        m_backpack_model = Model::Create("../resource/object/backpack/backpack.obj");
     }
 
     void YutrelEditor::tick(float delta_time)
@@ -97,11 +96,9 @@ namespace Yutrel
         m_shadowmap_framebuffer->Bind();
         glClear(GL_DEPTH_BUFFER_BIT); // todo rendersystem
 
-        glm::mat4 lightProjection  = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
-        glm::mat4 lightView        = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-
         m_shadowmap_shader->Use();
+        glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
         m_shadowmap_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
         drawScene(m_shadowmap_shader);
@@ -112,6 +109,7 @@ namespace Yutrel
         // 渲染场景
         //-----------------------------
         m_viewport_framebuffer->Bind();
+        // todo:put in render system
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
@@ -120,36 +118,37 @@ namespace Yutrel
         glm::mat4 view       = m_camera_controller->getCamera().getViewMatrix();
         glm::mat4 projection = m_camera_controller->getCamera().getProjectionMatrix();
 
-        //-----------plane--------------
         m_shadow_shader->Use();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
-        m_shadow_shader->setMat4("model", model);
         m_shadow_shader->setMat4("view", view);
         m_shadow_shader->setMat4("projection", projection);
         m_shadow_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
         m_shadow_shader->setFloat3("viewPos", m_camera_controller->getCamera().getPosition());
         m_shadow_shader->setFloat3("lightPos", lightPos);
+
+        //-----------plane--------------
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
+        m_shadow_shader->setMat4("model", model);
         glBindTextureUnit(0, m_shadowmap_framebuffer->getColorAttachmentRendererID());
         m_plane_texture->Bind(1);
         m_plane_model->Draw();
-        m_shadow_shader->unUse();
 
         //------------bunny--------------
+        // model = glm::mat4(1.0f);
+        // model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        // model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+        // m_shadow_shader->setMat4("model", model);
+        // glBindTextureUnit(0, m_shadowmap_framebuffer->getColorAttachmentRendererID());
+        // m_bunny_model->Draw();
+
+        //--------------backpack-------------
         m_shadow_shader->Use();
         model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+        model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
         m_shadow_shader->setMat4("model", model);
-        m_shadow_shader->setMat4("view", view);
-        m_shadow_shader->setMat4("projection", projection);
-        m_shadow_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        m_shadow_shader->setFloat3("viewPos", m_camera_controller->getCamera().getPosition());
-        m_shadow_shader->setFloat3("lightPos", lightPos);
         glBindTextureUnit(0, m_shadowmap_framebuffer->getColorAttachmentRendererID());
-        m_bunny_model->Draw();
-        m_shadow_shader->unUse();
+        m_backpack_model->Draw();
 
         //------------light cube-----------
         m_lightcube_shader->Use();
@@ -160,7 +159,7 @@ namespace Yutrel
         m_lightcube_shader->setMat4("view", view);
         m_lightcube_shader->setMat4("projection", projection);
         m_lightcube_model->Draw();
-        m_lightcube_shader->unUse();
+        // m_lightcube_shader->unUse();
 
         //---------skybox--------------
         glDepthFunc(GL_LEQUAL);
@@ -183,18 +182,23 @@ namespace Yutrel
         //-----------plane--------------
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+        model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
         shader->setMat4("model", model);
         m_plane_model->Draw();
 
         //------------bunny--------------
-        model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
-        shader->setMat4("model", model);
-        m_bunny_model->Draw();
+        // model = glm::mat4(1.0f);
+        // model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        // model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+        // shader->setMat4("model", model);
+        // m_bunny_model->Draw();
 
-        shader->unUse();
+        //---------backpack---------------
+        model = glm::mat4(1.0f);
+        shader->setMat4("model", model);
+        m_backpack_model->Draw();
+
+        // shader->unUse();
     }
 
     void YutrelEditor::clear()

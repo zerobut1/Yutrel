@@ -142,7 +142,7 @@ namespace Yutrel
 
         ImGui::Begin("Settings");
 
-        ImGui::SliderFloat3("light_pos", (float *)&YutrelEditor::get().lightPos, -2.0f, 2.0f);
+        ImGui::SliderFloat3("light_pos", (float *)&YutrelEditor::get().lightPos, -5.0f, 5.0f);
 
         ImGui::End();
     }
