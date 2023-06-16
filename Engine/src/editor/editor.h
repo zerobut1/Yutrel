@@ -38,8 +38,8 @@ namespace Yutrel
         glm::vec2 m_viewport_size = {1920.0f, 1080.0f};
 
         // 点光源
-        glm::vec3 lightPos         = {-2.0f, 3.0f, -1.0f};
-        glm::mat4 lightProjection  = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f);
+        glm::vec3 lightPos        = {-2.0f, 3.0f, -1.0f};
+        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f);
         std::shared_ptr<Model> m_lightcube_model;
         std::shared_ptr<Shader> m_lightcube_shader;
 

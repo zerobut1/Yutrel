@@ -20,4 +20,9 @@ namespace Yutrel
     {
         return std::make_shared<OpenGLTextureCubemaps>(paths);
     }
+
+    std::shared_ptr<TextureCubemaps> TextureCubemaps::Create(const std::string &path)
+    {
+        return std::make_shared<OpenGLTextureCubemaps>(path);
+    }
 } // namespace Yutrel

@@ -47,15 +47,17 @@ namespace Yutrel
         m_shadow_shader         = Shader::Create("../Engine/asset/shader/shadow.vert", "../Engine/asset/shader/shadow.frag");
 
         //---------skybox-----------
-        m_skybox_model   = Model::Create("../resource/object/cube/cube.obj");
-        m_skybox_shader  = Shader::Create("../Engine/asset/shader/skybox.vert", "../Engine/asset/shader/skybox.frag");
-        m_skybox_texture = TextureCubemaps::Create(
-            {"../resource/texture/skybox/right.jpg",
-             "../resource/texture/skybox/left.jpg",
-             "../resource/texture/skybox/top.jpg",
-             "../resource/texture/skybox/bottom.jpg",
-             "../resource/texture/skybox/front.jpg",
-             "../resource/texture/skybox/back.jpg"});
+        m_skybox_model  = Model::Create("../resource/object/cube/cube.obj");
+        m_skybox_shader = Shader::Create("../Engine/asset/shader/skybox.vert", "../Engine/asset/shader/skybox.frag");
+        // m_skybox_texture = TextureCubemaps::Create(
+        //     {"../resource/texture/skybox/right.jpg",
+        //      "../resource/texture/skybox/left.jpg",
+        //      "../resource/texture/skybox/top.jpg",
+        //      "../resource/texture/skysbox/bottom.jpg",
+        //      "../resource/texture/skybox/front.jpg",
+        //      "../resource/texture/skybox/back.jpg"});
+        // m_skybox_texture = TextureCubemaps::Create("../resource/texture/hdr/kloppenheim.hdr");
+        m_skybox_texture = TextureCubemaps::Create("../resource/texture/hdr/cayley_interior.hdr");
 
         //----------plane-------------------
         m_plane_model = Model::Create("../resource/object/plane/plane.obj");
@@ -68,7 +70,7 @@ namespace Yutrel
         // m_plane_texture = Texture2D::Create("../resource/texture/marble.jpg");
 
         //------------bunny-----------
-        m_bunny_model = Model::Create("../resource/object/bunny/bunny_iH.ply");
+        m_bunny_model = Model::Create("../resource/object/bunny/bunny.obj");
         // m_bunny_shader = Shader::Create("../Engine/asset/shader/bunny.vert", "../Engine/asset/shader/bunny.frag");
 
         // ---------backpack------------
@@ -97,7 +99,7 @@ namespace Yutrel
         glClear(GL_DEPTH_BUFFER_BIT); // todo rendersystem
 
         m_shadowmap_shader->Use();
-        glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightView        = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;
         m_shadowmap_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 

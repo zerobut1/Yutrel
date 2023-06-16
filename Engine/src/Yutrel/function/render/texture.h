@@ -27,10 +27,6 @@ namespace Yutrel
     public:
         static std::shared_ptr<Texture2D> Create(uint32_t width, uint32_t height);
         static std::shared_ptr<Texture2D> Create(const std::string &path);
-
-        //----------tmp----------
-        virtual uint32_t getRnedererID() const = 0;
-        virtual void setSize(uint32_t width, uint32_t height) = 0;
     };
 
     // 立方体贴图
@@ -38,5 +34,6 @@ namespace Yutrel
     {
     public:
         static std::shared_ptr<TextureCubemaps> Create(const std::vector<std::string> &paths);
+        static std::shared_ptr<TextureCubemaps> Create(const std::string &path);
     };
 } // namespace Yutrel
