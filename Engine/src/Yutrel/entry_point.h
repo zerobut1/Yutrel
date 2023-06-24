@@ -1,23 +1,23 @@
-#pragma once
+// #pragma once
 
-#include "Yutrel/core/application/application.h"
-#include "Yutrel/core/engine.h"
+// #include "Yutrel/core/application/application.h"
+// #include "Yutrel/core/engine.h"
 
-extern Yutrel::Application *Yutrel::CreateApplication(YutrelEngine *engine);
+// extern Yutrel::Application *Yutrel::CreateApplication(YutrelEngine *engine);
 
-int main(int argc, char **argv)
-{
-    auto engine = new Yutrel::YutrelEngine();
-    engine->startEngine();
+// int main(int argc, char **argv)
+// {
+//     auto engine = new Yutrel::YutrelEngine();
+//     engine->startEngine();
 
-    auto editor = Yutrel::CreateApplication(engine);
-    editor->initialize();
+//     auto editor = Yutrel::CreateApplication(engine);
+//     editor->initialize();
 
-    editor->run();
+//     editor->run();
 
-    editor->clear();
+//     editor->clear();
 
-    engine->shutdownEngine();
+//     engine->shutdownEngine();
 
-    return 0;
-}
+//     return 0;
+// }

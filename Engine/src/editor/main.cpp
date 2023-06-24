@@ -1,12 +1,20 @@
-#include "editor.h"
-
 #include <Yutrel/Yutrel.h>
-#include <Yutrel/entry_point.h>
 
-namespace Yutrel
+int main()
 {
-    Application *CreateApplication(YutrelEngine *engine)
-    {
-        return new YutrelEditor(engine);
-    }
-} // namespace Yutrel
+    auto app = Yutrel::CreateApplication();
+
+    // app->AddSystem(XXXX)
+    // ->AddSystem(XXXX);
+
+    app->Init();
+
+    app->Run();
+}
+
+/*想要的启动方式
+
+#include <Yutrel.h>
+
+
+*/
