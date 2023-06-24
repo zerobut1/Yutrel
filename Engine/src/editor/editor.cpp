@@ -90,7 +90,10 @@ namespace Yutrel
         }
 
         // camera
-        m_camera_controller->tick(delta_time);
+        if (m_viewport_focused)
+        {
+            m_camera_controller->tick(delta_time);
+        }
 
         //-----------------------------
         // 渲染shadowmap

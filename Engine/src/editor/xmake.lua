@@ -7,7 +7,7 @@ target("Yutrel_Editor")
     add_packages("spdlog","imgui","glm")
     
     -- tmp
-    add_packages("glfw","glad","assimp")
+    add_packages("glfw","glad","assimp","entt")
 
     add_headerfiles("**.h")
     add_files("**.cpp")

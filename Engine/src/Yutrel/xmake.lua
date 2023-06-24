@@ -3,7 +3,7 @@ target("Yutrel")
 
     set_pcxxheader("$(projectdir)/Engine/src/yutrel_pch.h")
 
-    add_packages("glfw","glad","glm","assimp","spdlog","imgui")
+    add_packages("glfw","glad","glm","assimp","spdlog","imgui","entt")
 
     add_headerfiles("**.h")
     add_headerfiles("$(projectdir)/Engine/vendor/stb_image/*.h")

@@ -6,7 +6,6 @@
 #include <glm/fwd.hpp>
 #include <imgui.h>
 
-// 需要一次大更改，往后放放吧
 namespace Yutrel
 {
     void EditorUI::initialize()
@@ -123,6 +122,8 @@ namespace Yutrel
             return;
 
         ImGui::Begin("Viewport");
+
+        YutrelEditor::get().m_viewport_focused = ImGui::IsWindowFocused();
 
         ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 

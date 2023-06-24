@@ -15,5 +15,8 @@
 #include "Yutrel/function/render/shader.h"
 #include "Yutrel/function/render/texture.h"
 #include "Yutrel/function/render/vertex_array.h"
+#include "Yutrel/function/scene/component.h"
+#include "Yutrel/function/scene/entity.h"
+#include "Yutrel/function/scene/scene.h"
 #include "Yutrel/function/ui/window_ui.h"
 #include "Yutrel/function/window/window_system.h"

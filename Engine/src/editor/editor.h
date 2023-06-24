@@ -36,6 +36,11 @@ namespace Yutrel
 
         std::shared_ptr<Framebuffer> m_viewport_framebuffer;
         glm::vec2 m_viewport_size = {1920.0f, 1080.0f};
+        bool m_viewport_focused   = false;
+
+        // ECS scene
+        std::shared_ptr<Scene> m_scene;
+        Entity m_backpack_entity;
 
         // 点光源
         glm::vec3 lightPos        = {-2.0f, 3.0f, -1.0f};
