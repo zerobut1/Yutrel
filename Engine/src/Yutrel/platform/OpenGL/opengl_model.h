@@ -20,7 +20,7 @@ namespace Yutrel
     public:
         OpenGLModel(std::string const &path);
 
-        virtual void Draw() override;
+        virtual void Render() override;
 
     private:
         void loadModel(std::string const &path);

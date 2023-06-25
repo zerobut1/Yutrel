@@ -34,10 +34,10 @@ namespace Yutrel
         processNode(scene->mRootNode, scene);
     }
 
-    void OpenGLModel::Draw()
+    void OpenGLModel::Render()
     {
         for (auto &mesh : m_meshes)
-            mesh->Draw();
+            mesh->Render();
     }
 
     void OpenGLModel::processNode(aiNode *node, const aiScene *scene)

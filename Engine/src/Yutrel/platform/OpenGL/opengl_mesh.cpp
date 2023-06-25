@@ -22,7 +22,7 @@ namespace Yutrel
         m_VAO->setIndexBuffer(EBO);
     }
 
-    void OpenGLMesh::Draw()
+    void OpenGLMesh::Render()
     {
         for (unsigned int i = 0; i < textures.size(); i++)
         {

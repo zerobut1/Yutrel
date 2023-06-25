@@ -207,7 +207,7 @@ namespace Yutrel
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, m_rendererID, 0);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            m_hdr_model->Draw();
+            m_hdr_model->Render();
         }
         m_hdr_framebuffer->Unbind();
         // 清除

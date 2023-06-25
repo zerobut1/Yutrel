@@ -137,7 +137,7 @@ namespace Yutrel
         m_shadow_shader->setMat4("model", model);
         glBindTextureUnit(0, m_shadowmap_framebuffer->getColorAttachmentRendererID());
         m_plane_texture->Bind(1);
-        m_plane_model->Draw();
+        m_plane_model->Render();
 
         //------------bunny--------------
         // model = glm::mat4(1.0f);
@@ -153,7 +153,7 @@ namespace Yutrel
         model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
         m_shadow_shader->setMat4("model", model);
         glBindTextureUnit(0, m_shadowmap_framebuffer->getColorAttachmentRendererID());
-        m_backpack_model->Draw();
+        m_backpack_model->Render();
 
         //------------light cube-----------
         m_lightcube_shader->Use();
@@ -163,7 +163,7 @@ namespace Yutrel
         m_lightcube_shader->setMat4("model", model);
         m_lightcube_shader->setMat4("view", view);
         m_lightcube_shader->setMat4("projection", projection);
-        m_lightcube_model->Draw();
+        m_lightcube_model->Render();
         // m_lightcube_shader->unUse();
 
         //---------skybox--------------
@@ -173,7 +173,7 @@ namespace Yutrel
         m_skybox_shader->setMat4("view", view);
         m_skybox_shader->setMat4("projection", projection);
         m_skybox_texture->Bind();
-        m_skybox_model->Draw();
+        m_skybox_model->Render();
         m_skybox_shader->unUse();
         glDepthFunc(GL_LESS);
 
@@ -189,7 +189,7 @@ namespace Yutrel
         model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
         model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
         shader->setMat4("model", model);
-        m_plane_model->Draw();
+        m_plane_model->Render();
 
         //------------bunny--------------
         // model = glm::mat4(1.0f);
@@ -201,7 +201,7 @@ namespace Yutrel
         //---------backpack---------------
         model = glm::mat4(1.0f);
         shader->setMat4("model", model);
-        m_backpack_model->Draw();
+        m_backpack_model->Render();
 
         // shader->unUse();
     }

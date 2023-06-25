@@ -22,7 +22,7 @@ namespace Yutrel
     public:
         OpenGLMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures);
 
-        virtual void Draw() override;
+        virtual void Render() override;
 
     private:
         void setupMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures);

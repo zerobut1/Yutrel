@@ -1,7 +1,10 @@
 #pragma once
 
+#include "Yutrel/function/render/model.h"
+
 #include <glm/glm.hpp>
 
+#include <memory>
 #include <string>
 
 namespace Yutrel
@@ -37,6 +40,16 @@ namespace Yutrel
         SpriteRendererComponent(const SpriteRendererComponent &) = default;
         SpriteRendererComponent(const glm::vec4 &color)
             : Color(color) {}
+    };
+
+    struct ModelRenderComponent
+    {
+        std::shared_ptr<Model> model;
+
+        ModelRenderComponent()                             = default;
+        ModelRenderComponent(const ModelRenderComponent &) = default;
+        ModelRenderComponent(const std::shared_ptr<Model> model)
+            : model(model) {}
     };
 
 } // namespace Yutrel

@@ -22,6 +22,8 @@ namespace Yutrel
         virtual void clear()                                           = 0;
         virtual void tick(float delta_time)                            = 0;
 
+        // virtual void DrawModel(std::shared_ptr<Model> model,)
+
         // ui
         virtual void initializeUIRender(WindowUI *window_ui) = 0;
         virtual void renderUI(std::shared_ptr<WindowUI> ui)  = 0;

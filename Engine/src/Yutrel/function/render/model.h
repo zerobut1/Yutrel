@@ -16,7 +16,7 @@ namespace Yutrel
 
         virtual ~Model() = default;
 
-        virtual void Draw() = 0;
+        virtual void Render() = 0;
 
     protected:
         std::vector<std::shared_ptr<Mesh>> m_meshes;

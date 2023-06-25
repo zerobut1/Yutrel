@@ -14,7 +14,7 @@ namespace Yutrel
     public:
         virtual ~Mesh() = default;
 
-        virtual void Draw() = 0;
+        virtual void Render() = 0;
 
         static std::shared_ptr<Mesh> Create(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures);
     };
