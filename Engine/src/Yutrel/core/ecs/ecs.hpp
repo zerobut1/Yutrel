@@ -45,10 +45,10 @@ namespace Yutrel
     class EventStaging final
     {
     public:
-        static void Set(const T &t) { event_ = t; }
-        static void Set(T &&t) { event_ = std::move(t); }
+        static void Set(const T& t) { event_ = t; }
+        static void Set(T&& t) { event_ = std::move(t); }
 
-        static T &Get() { return *event_; }
+        static T& Get() { return *event_; }
 
         static bool Has() { return event_ != std::nullopt; }
 
@@ -64,7 +64,7 @@ namespace Yutrel
     public:
         bool Has() const { return EventStaging<T>::Has(); }
 
-        const T &Read() { return EventStaging<T>::Get(); }
+        const T& Read() { return EventStaging<T>::Get(); }
 
         void Clear() { EventStaging<T>::Clear(); }
     };
@@ -112,11 +112,11 @@ namespace Yutrel
     class EventWriter final
     {
     public:
-        EventWriter(Events &e) : events_(e) {}
-        void Write(const T &t);
+        EventWriter(Events& e) : events_(e) {}
+        void Write(const T& t);
 
     private:
-        Events &events_;
+        Events& events_;
     };
 
     template <typename T>
@@ -134,7 +134,7 @@ namespace Yutrel
     }
 
     template <typename T>
-    void EventWriter<T>::Write(const T &t)
+    void EventWriter<T>::Write(const T& t)
     {
         events_.addEventFuncs_.push_back([=]()
                                          { EventStaging<T>::Set(t); });
@@ -144,10 +144,10 @@ namespace Yutrel
 
     class Commands;
     class Resources;
-    class Queryer;
+    class Querier;
 
-    using UpdateSystem  = void (*)(Commands &, Queryer, Resources, Events &);
-    using StartupSystem = void (*)(Commands &, Resources);
+    using UpdateSystem  = void (*)(Commands&, Querier, Resources, Events&);
+    using StartupSystem = void (*)(Commands&, Resources);
 
     // todo plugins move to engine-app
     class Plugins
@@ -155,8 +155,8 @@ namespace Yutrel
     public:
         virtual ~Plugins() = default;
 
-        virtual void Build(World *world) = 0;
-        virtual void Quit(World *world)  = 0;
+        virtual void Build(World* world) = 0;
+        virtual void Quit(World* world)  = 0;
     };
 
     class World final
@@ -164,21 +164,21 @@ namespace Yutrel
     public:
         friend class Commands;
         friend class Resources;
-        friend class Queryer;
-        using ComponentContainer = std::unordered_map<ComponentID, void *>;
+        friend class Querier;
+        using ComponentContainer = std::unordered_map<ComponentID, void*>;
 
-        World()                         = default;
-        World(const World &)            = delete;
-        World &operator=(const World &) = delete;
+        World()                        = default;
+        World(const World&)            = delete;
+        World& operator=(const World&) = delete;
 
-        World &AddStartupSystem(StartupSystem sys)
+        World& AddStartupSystem(StartupSystem sys)
         {
             startupSystems_.push_back(sys);
 
             return *this;
         }
 
-        World &AddSystem(UpdateSystem sys)
+        World& AddSystem(UpdateSystem sys)
         {
             updateSystems_.push_back(sys);
 
@@ -186,13 +186,13 @@ namespace Yutrel
         }
 
         template <typename T>
-        World &SetResource(T &&resource);
+        World& SetResource(T&& resource);
 
         template <typename T>
-        T *GetResource();
+        T* GetResource();
 
         template <typename T, typename... Args>
-        World &AddPlugins(Args &&...args)
+        World& AddPlugins(Args&&... args)
         {
             static_assert(std::is_base_of_v<Plugins, T>);
             pluginsList_.push_back(std::make_unique<T>(std::forward<Args>(args)...));
@@ -206,7 +206,7 @@ namespace Yutrel
             entities_.clear();
             resources_.clear();
             componentMap_.clear();
-            for (auto &plugin : pluginsList_)
+            for (auto& plugin : pluginsList_)
             {
                 plugin->Quit(this);
             }
@@ -215,11 +215,11 @@ namespace Yutrel
     private:
         struct Pool final
         {
-            std::vector<void *> instances;
-            std::vector<void *> cache;
+            std::vector<void*> instances;
+            std::vector<void*> cache;
 
-            using CreateFunc  = void *(*)(void);
-            using DestroyFunc = void (*)(void *);
+            using CreateFunc  = void* (*)(void);
+            using DestroyFunc = void (*)(void*);
 
             CreateFunc create;
             DestroyFunc destroy;
@@ -231,7 +231,7 @@ namespace Yutrel
                 assertm("you must give a non-nullptr destroy func", create);
             }
 
-            void *Create()
+            void* Create()
             {
                 if (!cache.empty())
                 {
@@ -245,7 +245,7 @@ namespace Yutrel
                 return instances.back();
             }
 
-            void Destroy(void *elem)
+            void Destroy(void* elem)
             {
                 if (auto it = std::find(instances.begin(), instances.end(), elem);
                     it != instances.end())
@@ -278,8 +278,8 @@ namespace Yutrel
 
         struct ResourceInfo
         {
-            void *resource      = nullptr;
-            using DestroyFunc   = void (*)(void *);
+            void* resource      = nullptr;
+            using DestroyFunc   = void (*)(void*);
             DestroyFunc destroy = nullptr;
 
             ResourceInfo(DestroyFunc destroy) : destroy(destroy)
@@ -298,10 +298,10 @@ namespace Yutrel
     class Commands final
     {
     public:
-        Commands(World &world) : world_(world) {}
+        Commands(World& world) : world_(world) {}
 
         template <typename... ComponentTypes>
-        Commands &Spawn(ComponentTypes &&...components)
+        Commands& Spawn(ComponentTypes&&... components)
         {
             SpawnAndReturn<ComponentTypes...>(
                 std::forward<ComponentTypes>(components)...);
@@ -309,7 +309,7 @@ namespace Yutrel
         }
 
         template <typename... ComponentTypes>
-        Entity SpawnAndReturn(ComponentTypes &&...components)
+        Entity SpawnAndReturn(ComponentTypes&&... components)
         {
             EntitySpawnInfo info;
             info.entity = EntityGenerator::Gen();
@@ -319,7 +319,7 @@ namespace Yutrel
             return info.entity;
         }
 
-        Commands &Destroy(Entity entity)
+        Commands& Destroy(Entity entity)
         {
             destroyEntities_.push_back(entity);
 
@@ -327,7 +327,7 @@ namespace Yutrel
         }
 
         template <typename T>
-        Commands &SetResource(T &&resource)
+        Commands& SetResource(T&& resource)
         {
             auto index = IndexGetter::Get<T>();
             if (auto it = world_.resources_.find(index);
@@ -340,8 +340,8 @@ namespace Yutrel
             {
                 auto newIt = world_.resources_.emplace(
                     index,
-                    World::ResourceInfo([](void *elem)
-                                        { delete (T *)elem; }));
+                    World::ResourceInfo([](void* elem)
+                                        { delete (T*)elem; }));
                 newIt.first->second.resource = new T(std::move(std::forward<T>(resource)));
             }
 
@@ -349,19 +349,19 @@ namespace Yutrel
         }
 
         template <typename T>
-        Commands &RemoveResource()
+        Commands& RemoveResource()
         {
             auto index = IndexGetter::Get<T>();
             destroyResources_.push_back(
-                ResourceDestroyInfo(index, [](void *elem)
-                                    { delete (T *)elem; }));
+                ResourceDestroyInfo(index, [](void* elem)
+                                    { delete (T*)elem; }));
 
             return *this;
         }
 
         void Execute()
         {
-            for (auto &info : destroyResources_)
+            for (auto& info : destroyResources_)
             {
                 removeResource(info);
             }
@@ -370,12 +370,12 @@ namespace Yutrel
                 destroyEntity(e);
             }
 
-            for (auto &spawnInfo : spawnEntities_)
+            for (auto& spawnInfo : spawnEntities_)
             {
                 auto it                  = world_.entities_.emplace(spawnInfo.entity,
                                                    World::ComponentContainer{});
-                auto &componentContainer = it.first->second;
-                for (auto &componentInfo : spawnInfo.components)
+                auto& componentContainer = it.first->second;
+                for (auto& componentInfo : spawnInfo.components)
                 {
                     componentContainer[componentInfo.index] =
                         doSpawnWithoutType(spawnInfo.entity, componentInfo);
@@ -384,9 +384,9 @@ namespace Yutrel
         }
 
     private:
-        World &world_;
+        World& world_;
 
-        using DestroyFunc = void (*)(void *);
+        using DestroyFunc = void (*)(void*);
 
         struct ResourceDestroyInfo
         {
@@ -397,7 +397,7 @@ namespace Yutrel
                 : index(index), destroy(destroy) {}
         };
 
-        using AssignFunc = std::function<void(void *)>;
+        using AssignFunc = std::function<void(void*)>;
 
         struct ComponentSpawnInfo
         {
@@ -418,18 +418,18 @@ namespace Yutrel
         std::vector<EntitySpawnInfo> spawnEntities_;
 
         template <typename T, typename... Remains>
-        void doSpawn(std::vector<ComponentSpawnInfo> &spawnInfo,
-                     T &&component, Remains &&...remains)
+        void doSpawn(std::vector<ComponentSpawnInfo>& spawnInfo,
+                     T&& component, Remains&&... remains)
         {
             ComponentSpawnInfo info;
             info.index  = IndexGetter::Get<T>();
-            info.create = [](void) -> void *
+            info.create = [](void) -> void*
             { return new T; };
-            info.destroy = [](void *elem)
-            { delete (T *)elem; };
-            info.assign = [=](void *elem)
+            info.destroy = [](void* elem)
+            { delete (T*)elem; };
+            info.assign = [=](void* elem)
             {
-                *((T *)elem) = component;
+                *((T*)elem) = component;
             };
             spawnInfo.push_back(info);
 
@@ -440,7 +440,7 @@ namespace Yutrel
             }
         }
 
-        void *doSpawnWithoutType(Entity entity, ComponentSpawnInfo &info)
+        void* doSpawnWithoutType(Entity entity, ComponentSpawnInfo& info)
         {
             if (auto it = world_.componentMap_.find(info.index);
                 it == world_.componentMap_.end())
@@ -449,8 +449,8 @@ namespace Yutrel
                     info.index,
                     World::ComponentInfo(info.create, info.destroy));
             }
-            World::ComponentInfo &componentInfo = world_.componentMap_[info.index];
-            void *elem                          = componentInfo.pool.Create();
+            World::ComponentInfo& componentInfo = world_.componentMap_[info.index];
+            void* elem                          = componentInfo.pool.Create();
             info.assign(elem);
             componentInfo.sparseSet.Add(entity);
 
@@ -462,9 +462,9 @@ namespace Yutrel
             if (auto it = world_.entities_.find(entity);
                 it != world_.entities_.end())
             {
-                for (auto &[id, component] : it->second)
+                for (auto& [id, component] : it->second)
                 {
-                    auto &componentInfo = world_.componentMap_[id];
+                    auto& componentInfo = world_.componentMap_[id];
                     componentInfo.pool.Destroy(component);
                     componentInfo.sparseSet.Remove(entity);
                 }
@@ -472,7 +472,7 @@ namespace Yutrel
             }
         }
 
-        void removeResource(ResourceDestroyInfo &info)
+        void removeResource(ResourceDestroyInfo& info)
         {
             if (auto it = world_.resources_.find(info.index);
                 it != world_.resources_.end())
@@ -486,7 +486,7 @@ namespace Yutrel
     class Resources final
     {
     public:
-        Resources(World &world) : world_(world) {}
+        Resources(World& world) : world_(world) {}
 
         template <typename T>
         bool Has() const
@@ -497,20 +497,20 @@ namespace Yutrel
         }
 
         template <typename T>
-        T &Get()
+        T& Get()
         {
             auto index = IndexGetter::Get<T>();
-            return *((T *)world_.resources_[index].resource);
+            return *((T*)world_.resources_[index].resource);
         }
 
     private:
-        World &world_;
+        World& world_;
     };
 
-    class Queryer final
+    class Querier final
     {
     public:
-        Queryer(World &world) : world_(world) {}
+        Querier(World& world) : world_(world) {}
 
         template <typename... Components>
         std::vector<Entity> Query() const
@@ -530,20 +530,20 @@ namespace Yutrel
         }
 
         template <typename T>
-        T &Get(Entity entity)
+        T& Get(Entity entity)
         {
             auto index = IndexGetter::Get<T>();
-            return *((T *)world_.entities_[entity][index]);
+            return *((T*)world_.entities_[entity][index]);
         }
 
     private:
-        World &world_;
+        World& world_;
 
         template <typename T, typename... Remains>
-        void doQuery(std::vector<Entity> &outEntities) const
+        void doQuery(std::vector<Entity>& outEntities) const
         {
             auto index                 = IndexGetter::Get<T>();
-            World::ComponentInfo &info = world_.componentMap_[index];
+            World::ComponentInfo& info = world_.componentMap_[index];
 
             for (auto e : info.sparseSet)
             {
@@ -559,10 +559,10 @@ namespace Yutrel
         }
 
         template <typename T, typename... Remains>
-        void doQueryRemains(Entity entity, std::vector<Entity> &outEntities) const
+        void doQueryRemains(Entity entity, std::vector<Entity>& outEntities) const
         {
             auto index               = IndexGetter::Get<T>();
-            auto &componentContainer = world_.entities_[entity];
+            auto& componentContainer = world_.entities_[entity];
             if (auto it = componentContainer.find(index);
                 it == componentContainer.end())
             {
@@ -584,7 +584,7 @@ namespace Yutrel
     {
         std::vector<Commands> commandList;
 
-        for (auto &plugins : pluginsList_)
+        for (auto& plugins : pluginsList_)
         {
             plugins->Build(this);
         }
@@ -596,7 +596,7 @@ namespace Yutrel
             commandList.push_back(commands);
         }
 
-        for (auto &commands : commandList)
+        for (auto& commands : commandList)
         {
             commands.Execute();
         }
@@ -610,20 +610,20 @@ namespace Yutrel
         for (auto sys : updateSystems_)
         {
             Commands commands{*this};
-            sys(commands, Queryer{*this}, Resources{*this}, events);
+            sys(commands, Querier{*this}, Resources{*this}, events);
             commandList.push_back(commands);
         }
         events.removeAllEvents();
         events.addAllEvents();
 
-        for (auto &commands : commandList)
+        for (auto& commands : commandList)
         {
             commands.Execute();
         }
     }
 
     template <typename T>
-    World &World::SetResource(T &&resource)
+    World& World::SetResource(T&& resource)
     {
         Commands commands(*this);
         commands.SetResource(std::forward<T>(resource));
@@ -632,7 +632,7 @@ namespace Yutrel
     }
 
     template <typename T>
-    T *World::GetResource()
+    T* World::GetResource()
     {
         Resources resources(*this);
         if (!resources.Has<T>())

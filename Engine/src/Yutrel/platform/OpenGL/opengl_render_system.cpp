@@ -6,7 +6,7 @@
 
 #include "opengl_render_system.h"
 
-#include "Yutrel/function/window/window_system.h"
+#include "Yutrel/function/window/window.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -26,7 +26,7 @@ namespace Yutrel
     void OpenGLRenderSystem::initialize(RenderSystemInitInfo render_init_info)
     {
         // 窗口
-        glfwMakeContextCurrent(static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow()));
+        // glfwMakeContextCurrent(static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow()));
 
         // 初始化GLAD
         gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -44,7 +44,7 @@ namespace Yutrel
 
     void OpenGLRenderSystem::initializeUIRender(WindowUI *window_ui)
     {
-        ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow()), true);
+        // ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow()), true);
         ImGui_ImplOpenGL3_Init("#version 460");
     }
 

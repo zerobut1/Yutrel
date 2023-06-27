@@ -1,20 +1,34 @@
 #include <Yutrel/Yutrel.h>
 
-int main()
+#include <iostream>
+
+void test1(Yutrel::Commands& cmd,
+           Yutrel::Querier querier,
+           Yutrel::Resources resources,
+           Yutrel::Events& events)
 {
-    auto app = Yutrel::CreateApplication();
-
-    // app->AddSystem(XXXX)
-    // ->AddSystem(XXXX);
-
-    app->Init();
-
-    app->Run();
+    std::cout << "test1" << std::endl;
 }
 
-/*想要的启动方式
+void test2(Yutrel::Commands& cmd,
+           Yutrel::Querier querier,
+           Yutrel::Resources resources,
+           Yutrel::Events& events)
+{
+    std::cout << "test2" << std::endl;
+}
 
-#include <Yutrel.h>
+int main()
+{
+    Yutrel::Application app;
 
+    // app.GetWorld()
+        // .AddSystem(test1)
+        // .AddSystem(test2);
 
-*/
+    app.Init();
+
+    app.Run();
+
+    app.Shutdown();
+}

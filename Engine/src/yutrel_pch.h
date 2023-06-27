@@ -13,3 +13,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include "Yutrel/core/ecs/ecs.hpp"
+#include "Yutrel/core/log/log.hpp"

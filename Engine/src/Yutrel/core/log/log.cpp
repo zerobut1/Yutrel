@@ -1,13 +1,13 @@
 #include "yutrel_pch.h"
 
-#include "log_system.h"
+#include "log.hpp"
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace Yutrel
 {
-    LogSystem::LogSystem()
+    Log::Log()
     {
         std::vector<spdlog::sink_ptr> logSinks;
         logSinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
@@ -20,7 +20,7 @@ namespace Yutrel
         m_logger->flush_on(spdlog::level::trace);
     }
 
-    LogSystem::~LogSystem()
+    Log::~Log()
     {
         m_logger->flush();
         spdlog::drop_all();

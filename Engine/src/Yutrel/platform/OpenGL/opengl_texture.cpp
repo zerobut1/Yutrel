@@ -7,6 +7,8 @@
 #include "Yutrel/function/render/framebuffer.h"
 #include "Yutrel/function/render/model.h"
 #include "Yutrel/function/render/shader.h"
+#include "Yutrel/core/log/log.hpp"
+
 
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
