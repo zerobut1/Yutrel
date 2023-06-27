@@ -10,7 +10,7 @@ namespace Yutrel
 {
     void WindowsInputSystem::initialize()
     {
-        m_window = static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow());
+        // m_window = static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow());
     }
 
     bool WindowsInputSystem::IsKeyPressed(const KeyCode key)

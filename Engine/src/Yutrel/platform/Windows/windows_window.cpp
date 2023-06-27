@@ -1,22 +1,17 @@
 #include "yutrel_pch.h"
 
-#include "windows_window_system.h"
+#include "windows_window.hpp"
 
+#include "Yutrel/core/log/log.hpp"
 #include "Yutrel/function/global/global_context.h"
 
 #include <GLFW/glfw3.h>
 
 namespace Yutrel
 {
-    Windows_WindowSystem::~Windows_WindowSystem()
-    {
-        glfwDestroyWindow(m_window);
-        glfwTerminate();
-    }
 
-    void Windows_WindowSystem::initialize(WindowCreateInfo create_info)
+    WindowsWindow::WindowsWindow(std::string title, uint32_t width, uint32_t height)
     {
-
         if (!glfwInit())
         {
             LOG_ERROR("failed to initialize GLFW");
@@ -27,9 +22,9 @@ namespace Yutrel
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-        m_width  = create_info.width;
-        m_height = create_info.height;
-        m_window = glfwCreateWindow(m_width, m_height, create_info.title, nullptr, nullptr);
+        m_width  = width;
+        m_height = height;
+        m_window = glfwCreateWindow(m_width, m_height, title.c_str(), nullptr, nullptr);
 
         if (!m_window)
         {
@@ -52,28 +47,34 @@ namespace Yutrel
         glfwSetWindowCloseCallback(m_window, windowCloseCallback);
     }
 
-    void Windows_WindowSystem::tick() const
+    WindowsWindow::~WindowsWindow()
+    {
+        glfwDestroyWindow(m_window);
+        glfwTerminate();
+    }
+
+    void WindowsWindow::tick() const
     {
         glfwPollEvents();
         glfwSwapBuffers(m_window);
     }
 
-    bool Windows_WindowSystem::shouldClose() const
+    bool WindowsWindow::shouldClose() const
     {
         return glfwWindowShouldClose(m_window);
     }
 
-    std::array<int, 2> Windows_WindowSystem::getWindowSize() const
+    std::array<int, 2> WindowsWindow::getWindowSize() const
     {
         return std::array<int, 2>({m_width, m_height});
     }
 
-    void *Windows_WindowSystem::getWindow() const
+    void* WindowsWindow::getWindow() const
     {
         return m_window;
     }
 
-    void Windows_WindowSystem::setTitle(const char *title)
+    void WindowsWindow::setTitle(const char* title)
     {
         glfwSetWindowTitle(m_window, title);
     }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Yutrel/function/ui/window_ui.h"
-#include "Yutrel/function/window/window_system.h"
+#include "Yutrel/function/window/window.hpp"
 
 #include <memory>
 
@@ -9,7 +9,7 @@ namespace Yutrel
 {
     struct RenderSystemInitInfo
     {
-        std::shared_ptr<WindowSystem> window_system;
+        std::shared_ptr<Window> window_system;
     };
 
     // 最主要的渲染系统

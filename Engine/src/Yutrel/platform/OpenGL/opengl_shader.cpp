@@ -2,7 +2,8 @@
 
 #include "opengl_shader.h"
 
-#include "Yutrel/function/global/global_context.h"
+#include "Yutrel/core/log/log.hpp"
+
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>

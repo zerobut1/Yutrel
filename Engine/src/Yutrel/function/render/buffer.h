@@ -1,6 +1,8 @@
 #pragma once
 
-#include "Yutrel/function/global/global_context.h"
+// #include "Yutrel/core/application/application.hpp"
+
+#include "Yutrel/core/log/log.hpp"
 
 #include <cassert>
 #include <memory>
@@ -69,7 +71,7 @@ namespace Yutrel
 
         BufferElement() = default;
 
-        BufferElement(ShaderDataType type, const std::string &name, bool normalized = false)
+        BufferElement(ShaderDataType type, const std::string& name, bool normalized = false)
             : Name(name), Type(type), Size(ShaderDataTypeSize(type)), Offset(0), Normalized(normalized)
         {
         }
@@ -114,14 +116,14 @@ namespace Yutrel
     public:
         BufferLayout() = default;
 
-        BufferLayout(const std::initializer_list<BufferElement> &elements)
+        BufferLayout(const std::initializer_list<BufferElement>& elements)
             : m_Elements(elements)
         {
             calculateOffsetsAndStride();
         }
 
         inline uint32_t getStride() const { return m_Stride; }
-        inline const std::vector<BufferElement> &getElements() const { return m_Elements; }
+        inline const std::vector<BufferElement>& getElements() const { return m_Elements; }
 
         std::vector<BufferElement>::iterator begin() { return m_Elements.begin(); }
         std::vector<BufferElement>::iterator end() { return m_Elements.end(); }
@@ -133,7 +135,7 @@ namespace Yutrel
         {
             size_t offset = 0;
             m_Stride      = 0;
-            for (auto &element : m_Elements)
+            for (auto& element : m_Elements)
             {
                 element.Offset = offset;
                 offset += element.Size;
@@ -149,22 +151,22 @@ namespace Yutrel
     class VertexBuffer
     {
     public:
-        static std::shared_ptr<VertexBuffer> Create(float *vertices, uint32_t size);
+        static std::shared_ptr<VertexBuffer> Create(float* vertices, uint32_t size);
 
         virtual ~VertexBuffer() = default;
 
         virtual void Bind() const   = 0;
         virtual void Unbind() const = 0;
 
-        virtual void setLayout(const BufferLayout &layout) = 0;
-        virtual const BufferLayout &getLayout() const      = 0;
+        virtual void setLayout(const BufferLayout& layout) = 0;
+        virtual const BufferLayout& getLayout() const      = 0;
     };
 
     // 索引缓冲(opengl的元素缓冲)
     class IndexBuffer
     {
     public:
-        static std::shared_ptr<IndexBuffer> Create(uint32_t *indices, uint32_t count);
+        static std::shared_ptr<IndexBuffer> Create(uint32_t* indices, uint32_t count);
 
         virtual ~IndexBuffer() = default;
 

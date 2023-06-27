@@ -1,32 +1,33 @@
 #pragma once
 
+#include "Yutrel/core/ecs/ecs.hpp"
+
 #include <functional>
+#include <iostream>
 #include <memory>
+#include <stdint.h>
+#include <string>
 #include <vector>
 
 struct GLFWwindow;
 
 namespace Yutrel
 {
-    struct WindowCreateInfo
-    {
-        int width;
-        int height;
-        const char *title;
-        bool is_fullscreen = false;
-    };
+    void UpdateWindow(Commands& cmd,
+                      Querier querier,
+                      Resources resources,
+                      Events& events);
 
-    class WindowSystem
+    class Window
     {
     public:
-        static std::shared_ptr<WindowSystem> Create();
+        static Window* Create(std::string title, uint32_t width, uint32_t height);
 
-        virtual void initialize(WindowCreateInfo create_info) = 0;
-        virtual void tick() const                             = 0;
-        virtual void setTitle(const char *title)              = 0;
-        virtual bool shouldClose() const                      = 0;
-        virtual void *getWindow() const                       = 0;
-        virtual std::array<int, 2> getWindowSize() const      = 0;
+        virtual void tick() const                        = 0;
+        virtual void setTitle(const char* title)         = 0;
+        virtual bool shouldClose() const                 = 0;
+        virtual void* getWindow() const                  = 0;
+        virtual std::array<int, 2> getWindowSize() const = 0;
 
     protected:
         int m_width;
@@ -42,7 +43,7 @@ namespace Yutrel
         typedef std::function<void(double, double)> onCursorPosFunc;
         typedef std::function<void(int)> onCursorEnterFunc;
         typedef std::function<void(double, double)> onScrollFunc;
-        typedef std::function<void(int, const char **)> onDropFunc;
+        typedef std::function<void(int, const char**)> onDropFunc;
         typedef std::function<void(int, int)> onWindowSizeFunc;
         typedef std::function<void()> onWindowCloseFunc;
 
@@ -73,52 +74,52 @@ namespace Yutrel
     protected:
         void onReset()
         {
-            for (auto &func : m_onResetFunc)
+            for (auto& func : m_onResetFunc)
                 func();
         }
         void onKey(int key, int scancode, int action, int mods)
         {
-            for (auto &func : m_onKeyFunc)
+            for (auto& func : m_onKeyFunc)
                 func(key, scancode, action, mods);
         }
         void onChar(unsigned int codepoint)
         {
-            for (auto &func : m_onCharFunc)
+            for (auto& func : m_onCharFunc)
                 func(codepoint);
         }
         void onCharMods(int codepoint, unsigned int mods)
         {
-            for (auto &func : m_onCharModsFunc)
+            for (auto& func : m_onCharModsFunc)
                 func(codepoint, mods);
         }
         void onMouseButton(int button, int action, int mods)
         {
-            for (auto &func : m_onMouseButtonFunc)
+            for (auto& func : m_onMouseButtonFunc)
                 func(button, action, mods);
         }
         void onCursorPos(double xpos, double ypos)
         {
-            for (auto &func : m_onCursorPosFunc)
+            for (auto& func : m_onCursorPosFunc)
                 func(xpos, ypos);
         }
         void onCursorEnter(int entered)
         {
-            for (auto &func : m_onCursorEnterFunc)
+            for (auto& func : m_onCursorEnterFunc)
                 func(entered);
         }
         void onScroll(double xoffset, double yoffset)
         {
-            for (auto &func : m_onScrollFunc)
+            for (auto& func : m_onScrollFunc)
                 func(xoffset, yoffset);
         }
-        void onDrop(int count, const char **paths)
+        void onDrop(int count, const char** paths)
         {
-            for (auto &func : m_onDropFunc)
+            for (auto& func : m_onDropFunc)
                 func(count, paths);
         }
         void onWindowSize(int width, int height)
         {
-            for (auto &func : m_onWindowSizeFunc)
+            for (auto& func : m_onWindowSizeFunc)
                 func(width, height);
         }
     };

@@ -7,20 +7,38 @@ namespace Yutrel
     class Application
     {
     public:
-        Application()          = default;
+        Application();
         virtual ~Application() = default;
+
+        static inline Application& Get() { return *s_instance; }
+
+        World& GetWorld() { return m_world; }
 
         void Init();
         void Run();
         void Shutdown();
 
-        void AddSystem();
-
     private:
         World m_world;
+
+        bool m_running = true;
+
+        static Application* s_instance;
     };
 
-    Application *CreateApplication();
+    class ExitTrigger final
+    {
+    public:
+        bool ShouldExit() const { return m_should_exit; }
+
+        void Exit() { m_should_exit = true; }
+
+        static void DetectShouldExit(Commands& cmd, Querier querier,
+                                     Resources resources, Events& events);
+
+    private:
+        bool m_should_exit = false;
+    };
 
 } // namespace Yutrel
 

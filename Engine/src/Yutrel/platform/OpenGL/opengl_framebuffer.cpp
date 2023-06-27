@@ -2,6 +2,7 @@
 #include "yutrel_pch.h"
 
 #include "Yutrel/core/engine.h"
+#include "Yutrel/core/log/log.hpp"
 
 #include <glad/glad.h>
 
@@ -18,7 +19,7 @@ namespace Yutrel
             return multisampled ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
         }
 
-        static void CreateTextures(bool multisampled, uint32_t *outID, uint32_t count)
+        static void CreateTextures(bool multisampled, uint32_t* outID, uint32_t count)
         {
             glCreateTextures(TextureTarget(multisampled), count, outID);
         }
@@ -112,7 +113,7 @@ namespace Yutrel
 
     } // namespace Utils
 
-    OpenGLFramebuffer::OpenGLFramebuffer(const FramebufferSpecification &spec)
+    OpenGLFramebuffer::OpenGLFramebuffer(const FramebufferSpecification& spec)
         : m_Specification(spec)
     {
         for (auto spec : m_Specification.Attachments.Attachments)
@@ -252,7 +253,7 @@ namespace Yutrel
     {
         // HZ_CORE_ASSERT(attachmentIndex < m_ColorAttachments.size());
 
-        auto &spec = m_ColorAttachmentSpecifications[attachmentIndex];
+        auto& spec = m_ColorAttachmentSpecifications[attachmentIndex];
         glClearTexImage(m_ColorAttachments[attachmentIndex], 0, Utils::HazelFBTextureFormatToGL(spec.TextureFormat), GL_INT, &value);
     }
 
