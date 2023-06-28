@@ -1,4 +1,4 @@
-#include "yutrel_pch.h"
+#include "yutrel_pch.hpp"
 
 #include "window.hpp"
 
@@ -12,7 +12,7 @@ namespace Yutrel
                       Events& events)
     {
         auto window = resources.Get<Window*>();
-        window->tick();
+        window->Tick();
 
         // if(window.shouldClose()){
         //     events.Writer<QuitEvent>().Write()

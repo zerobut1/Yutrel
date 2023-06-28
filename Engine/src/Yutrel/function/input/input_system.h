@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Yutrel/core/inputcode/key_codes.h"
-#include "Yutrel/core/inputcode/mouse_codes.h"
+#include "inputcode/key_codes.h"
+#include "inputcode/mouse_codes.h"
 
 // 暂且使用glm
 #include <glm/glm.hpp>

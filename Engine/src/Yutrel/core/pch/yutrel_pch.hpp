@@ -16,3 +16,4 @@
 
 #include "Yutrel/core/ecs/ecs.hpp"
 #include "Yutrel/core/log/log.hpp"
+#include "Yutrel/core/macro.hpp"

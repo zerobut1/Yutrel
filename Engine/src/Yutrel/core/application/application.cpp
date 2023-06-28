@@ -1,47 +1,54 @@
-#include "yutrel_pch.h"
+#include "yutrel_pch.hpp"
 
 #include "application.hpp"
 
 #include "Yutrel/core/log/log.hpp"
 #include "Yutrel/function/window/window.hpp"
+#include "yutrel/function/render/renderer.hpp"
 #include <winuser.h>
 
 namespace Yutrel
 {
+    Application* CreateApplication()
+    {
+        return new Application;
+    }
 
+    // 用Get()获取
     Application* Application::s_instance = nullptr;
 
     Application::Application()
     {
         s_instance = this;
 
-        m_world.SetResource(ExitTrigger{})
+        m_world
+            .SetResource(ExitTrigger{})
             .SetResource(Log{})
-            .SetResource(Window::Create("Yutrel", 1024, 720))
+            .SetResource(Window::Create("Yutrel", 1920, 1080))
+            .SetResource(Renderer::Create(*m_world.GetResource<Window*>()))
             .AddSystem(UpdateWindow)
             .AddSystem(ExitTrigger::DetectShouldExit);
     }
 
     void Application::Init()
     {
+        LOG_INFO("Initlizing!");
+
         m_world.Startup();
         m_world.Update();
-
-        LOG_INFO("Initlizing!");
     }
 
     void Application::Run()
     {
+        LOG_INFO("Start Running!");
+
         Resources resources(m_world);
         auto& exit = resources.Get<ExitTrigger>();
 
-        LOG_INFO("Start Running!");
-
-        while (m_running)
+        // 主循环
+        while (!exit.ShouldExit())
         {
             m_world.Update();
-
-            m_running = !exit.ShouldExit();
         }
     }
 
@@ -57,9 +64,10 @@ namespace Yutrel
                                        Resources resources,
                                        Events& events)
     {
+        // 目前是直接检测window是否shouldclose
         auto& trigger = resources.Get<ExitTrigger>();
         auto window   = resources.Get<Window*>();
-        if (window->shouldClose())
+        if (window->ShouldClose())
         {
             trigger.Exit();
         }
@@ -67,7 +75,7 @@ namespace Yutrel
 
 } // namespace Yutrel
 
-// #include "yutrel_pch.h"
+// #include "yutrel_pch.hpp"
 
 // #include "application.h"
 
