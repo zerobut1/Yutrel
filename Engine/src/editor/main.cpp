@@ -20,15 +20,15 @@ void test2(Yutrel::Commands& cmd,
 
 int main()
 {
-    Yutrel::Application app;
+    auto app = Yutrel::CreateApplication();
 
-    // app.GetWorld()
-        // .AddSystem(test1)
-        // .AddSystem(test2);
+    // app->GetWorld()
+    // .AddSystem(test1)
+    // .AddSystem(test2);
 
-    app.Init();
+    app->Init();
 
-    app.Run();
+    app->Run();
 
-    app.Shutdown();
+    app->Shutdown();
 }

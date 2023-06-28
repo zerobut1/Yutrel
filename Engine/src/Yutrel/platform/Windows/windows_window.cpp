@@ -1,4 +1,4 @@
-#include "yutrel_pch.h"
+#include "yutrel_pch.hpp"
 
 #include "windows_window.hpp"
 
@@ -12,39 +12,36 @@ namespace Yutrel
 
     WindowsWindow::WindowsWindow(std::string title, uint32_t width, uint32_t height)
     {
-        if (!glfwInit())
+        LOG_INFO("Creating window {0} ({1},{2})", title, width, height);
+
         {
-            LOG_ERROR("failed to initialize GLFW");
-            assert(false);
+            int success = glfwInit();
+            YUTREL_ASSERT(success, "Could not initialize GLFW!");
+            glfwSetErrorCallback(GLFWErrorCallback);
         }
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+        // 创建窗口
         m_width  = width;
         m_height = height;
         m_window = glfwCreateWindow(m_width, m_height, title.c_str(), nullptr, nullptr);
-
-        if (!m_window)
-        {
-            LOG_ERROR("failed to create window");
-            assert(false);
-        }
+        YUTREL_ASSERT(m_window, "Failed to create window!");
 
         glfwSetWindowUserPointer(m_window, this);
-
         // 设置回调函数
-        glfwSetKeyCallback(m_window, keyCallback);
-        glfwSetCharCallback(m_window, charCallback);
-        glfwSetCharModsCallback(m_window, charModsCallback);
-        glfwSetMouseButtonCallback(m_window, mouseButtonCallback);
-        glfwSetCursorPosCallback(m_window, cursorPosCallback);
-        glfwSetCursorEnterCallback(m_window, cursorEnterCallback);
-        glfwSetScrollCallback(m_window, scrollCallback);
-        glfwSetDropCallback(m_window, dropCallback);
-        glfwSetWindowSizeCallback(m_window, windowSizeCallback);
-        glfwSetWindowCloseCallback(m_window, windowCloseCallback);
+        glfwSetKeyCallback(m_window, KeyCallback);
+        glfwSetCharCallback(m_window, CharCallback);
+        glfwSetCharModsCallback(m_window, CharModsCallback);
+        glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
+        glfwSetCursorPosCallback(m_window, CursorPosCallback);
+        glfwSetCursorEnterCallback(m_window, CursorEnterCallback);
+        glfwSetScrollCallback(m_window, ScrollCallback);
+        glfwSetDropCallback(m_window, DropCallback);
+        glfwSetWindowSizeCallback(m_window, WindowSizeCallback);
+        glfwSetWindowCloseCallback(m_window, WindowCloseCallback);
     }
 
     WindowsWindow::~WindowsWindow()
@@ -53,28 +50,28 @@ namespace Yutrel
         glfwTerminate();
     }
 
-    void WindowsWindow::tick() const
+    void WindowsWindow::Tick() const
     {
         glfwPollEvents();
         glfwSwapBuffers(m_window);
     }
 
-    bool WindowsWindow::shouldClose() const
+    bool WindowsWindow::ShouldClose() const
     {
         return glfwWindowShouldClose(m_window);
     }
 
-    std::array<int, 2> WindowsWindow::getWindowSize() const
+    std::pair<float, float> WindowsWindow::GetWindowSize() const
     {
-        return std::array<int, 2>({m_width, m_height});
+        return {m_width, m_height};
     }
 
-    void* WindowsWindow::getWindow() const
+    void* WindowsWindow::GetWindow() const
     {
         return m_window;
     }
 
-    void WindowsWindow::setTitle(const char* title)
+    void WindowsWindow::SetTitle(const char* title)
     {
         glfwSetWindowTitle(m_window, title);
     }

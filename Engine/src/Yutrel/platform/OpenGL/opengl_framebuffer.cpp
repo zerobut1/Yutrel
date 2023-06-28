@@ -1,5 +1,5 @@
 #include "opengl_framebuffer.h"
-#include "yutrel_pch.h"
+#include "yutrel_pch.hpp"
 
 #include "Yutrel/core/engine.h"
 #include "Yutrel/core/log/log.hpp"

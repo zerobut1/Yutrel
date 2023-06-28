@@ -7,120 +7,123 @@
 #include <memory>
 #include <stdint.h>
 #include <string>
+#include <utility>
 #include <vector>
 
 struct GLFWwindow;
 
 namespace Yutrel
 {
-    void UpdateWindow(Commands& cmd,
-                      Querier querier,
-                      Resources resources,
-                      Events& events);
+    // window update system
+    void UpdateWindow(Commands& cmd, Querier querier, Resources resources, Events& events);
 
+    /*
+     * 窗口
+     */
     class Window
     {
     public:
         static Window* Create(std::string title, uint32_t width, uint32_t height);
 
-        virtual void tick() const                        = 0;
-        virtual void setTitle(const char* title)         = 0;
-        virtual bool shouldClose() const                 = 0;
-        virtual void* getWindow() const                  = 0;
-        virtual std::array<int, 2> getWindowSize() const = 0;
+        virtual void Tick() const                             = 0;
+        virtual void SetTitle(const char* title)              = 0;
+        virtual bool ShouldClose() const                      = 0;
+        virtual void* GetWindow() const                       = 0;
+        virtual std::pair<float, float> GetWindowSize() const = 0;
 
-    protected:
-        int m_width;
-        int m_height;
-
-        //  Event也一并写到了window类中
+        /**
+         *  Event也一并写到了window类中
+         *  目前还是采用这一套event
+         *  ecs的event主要用于app内不同系统的通信
+         */
     public:
-        typedef std::function<void()> onResetFunc;
-        typedef std::function<void(int, int, int, int)> onKeyFunc;
-        typedef std::function<void(unsigned int)> onCharFunc;
-        typedef std::function<void(int, unsigned int)> onCharModsFunc;
-        typedef std::function<void(int, int, int)> onMouseButtonFunc;
-        typedef std::function<void(double, double)> onCursorPosFunc;
-        typedef std::function<void(int)> onCursorEnterFunc;
-        typedef std::function<void(double, double)> onScrollFunc;
-        typedef std::function<void(int, const char**)> onDropFunc;
-        typedef std::function<void(int, int)> onWindowSizeFunc;
-        typedef std::function<void()> onWindowCloseFunc;
+        typedef std::function<void()> OnResetFunc;
+        typedef std::function<void(int, int, int, int)> OnKeyFunc;
+        typedef std::function<void(unsigned int)> OnCharFunc;
+        typedef std::function<void(int, unsigned int)> OnCharModsFunc;
+        typedef std::function<void(int, int, int)> OnMouseButtonFunc;
+        typedef std::function<void(double, double)> OnCursorPosFunc;
+        typedef std::function<void(int)> OnCursorEnterFunc;
+        typedef std::function<void(double, double)> OnScrollFunc;
+        typedef std::function<void(int, const char**)> OnDropFunc;
+        typedef std::function<void(int, int)> OnWindowSizeFunc;
+        typedef std::function<void()> OnWindowCloseFunc;
 
-        std::vector<onResetFunc> m_onResetFunc;
-        std::vector<onKeyFunc> m_onKeyFunc;
-        std::vector<onCharFunc> m_onCharFunc;
-        std::vector<onCharModsFunc> m_onCharModsFunc;
-        std::vector<onMouseButtonFunc> m_onMouseButtonFunc;
-        std::vector<onCursorPosFunc> m_onCursorPosFunc;
-        std::vector<onCursorEnterFunc> m_onCursorEnterFunc;
-        std::vector<onScrollFunc> m_onScrollFunc;
-        std::vector<onDropFunc> m_onDropFunc;
-        std::vector<onWindowSizeFunc> m_onWindowSizeFunc;
-        std::vector<onWindowCloseFunc> m_onWindowCloseFunc;
-
-        void registerOnResetFunc(onResetFunc func) { m_onResetFunc.push_back(func); }
-        void registerOnKeyFunc(onKeyFunc func) { m_onKeyFunc.push_back(func); }
-        void registerOnCharFunc(onCharFunc func) { m_onCharFunc.push_back(func); }
-        void registerOnCharModsFunc(onCharModsFunc func) { m_onCharModsFunc.push_back(func); }
-        void registerOnMouseButtonFunc(onMouseButtonFunc func) { m_onMouseButtonFunc.push_back(func); }
-        void registerOnCursorPosFunc(onCursorPosFunc func) { m_onCursorPosFunc.push_back(func); }
-        void registerOnCursorEnterFunc(onCursorEnterFunc func) { m_onCursorEnterFunc.push_back(func); }
-        void registerOnScrollFunc(onScrollFunc func) { m_onScrollFunc.push_back(func); }
-        void registerOnDropFunc(onDropFunc func) { m_onDropFunc.push_back(func); }
-        void registerOnWindowSizeFunc(onWindowSizeFunc func) { m_onWindowSizeFunc.push_back(func); }
-        void registerOnWindowCloseFunc(onWindowCloseFunc func) { m_onWindowCloseFunc.push_back(func); }
+        void registerOnResetFunc(OnResetFunc func) { m_OnResetFunc.push_back(func); }
+        void registerOnKeyFunc(OnKeyFunc func) { m_OnKeyFunc.push_back(func); }
+        void registerOnCharFunc(OnCharFunc func) { m_OnCharFunc.push_back(func); }
+        void registerOnCharModsFunc(OnCharModsFunc func) { m_OnCharModsFunc.push_back(func); }
+        void registerOnMouseButtonFunc(OnMouseButtonFunc func) { m_OnMouseButtonFunc.push_back(func); }
+        void registerOnCursorPosFunc(OnCursorPosFunc func) { m_OnCursorPosFunc.push_back(func); }
+        void registerOnCursorEnterFunc(OnCursorEnterFunc func) { m_OnCursorEnterFunc.push_back(func); }
+        void registerOnScrollFunc(OnScrollFunc func) { m_OnScrollFunc.push_back(func); }
+        void registerOnDropFunc(OnDropFunc func) { m_OnDropFunc.push_back(func); }
+        void registerOnWindowSizeFunc(OnWindowSizeFunc func) { m_OnWindowSizeFunc.push_back(func); }
+        void registerOnWindowCloseFunc(OnWindowCloseFunc func) { m_OnWindowCloseFunc.push_back(func); }
 
     protected:
         void onReset()
         {
-            for (auto& func : m_onResetFunc)
+            for (auto& func : m_OnResetFunc)
                 func();
         }
         void onKey(int key, int scancode, int action, int mods)
         {
-            for (auto& func : m_onKeyFunc)
+            for (auto& func : m_OnKeyFunc)
                 func(key, scancode, action, mods);
         }
         void onChar(unsigned int codepoint)
         {
-            for (auto& func : m_onCharFunc)
+            for (auto& func : m_OnCharFunc)
                 func(codepoint);
         }
         void onCharMods(int codepoint, unsigned int mods)
         {
-            for (auto& func : m_onCharModsFunc)
+            for (auto& func : m_OnCharModsFunc)
                 func(codepoint, mods);
         }
         void onMouseButton(int button, int action, int mods)
         {
-            for (auto& func : m_onMouseButtonFunc)
+            for (auto& func : m_OnMouseButtonFunc)
                 func(button, action, mods);
         }
         void onCursorPos(double xpos, double ypos)
         {
-            for (auto& func : m_onCursorPosFunc)
+            for (auto& func : m_OnCursorPosFunc)
                 func(xpos, ypos);
         }
         void onCursorEnter(int entered)
         {
-            for (auto& func : m_onCursorEnterFunc)
+            for (auto& func : m_OnCursorEnterFunc)
                 func(entered);
         }
         void onScroll(double xoffset, double yoffset)
         {
-            for (auto& func : m_onScrollFunc)
+            for (auto& func : m_OnScrollFunc)
                 func(xoffset, yoffset);
         }
         void onDrop(int count, const char** paths)
         {
-            for (auto& func : m_onDropFunc)
+            for (auto& func : m_OnDropFunc)
                 func(count, paths);
         }
         void onWindowSize(int width, int height)
         {
-            for (auto& func : m_onWindowSizeFunc)
+            for (auto& func : m_OnWindowSizeFunc)
                 func(width, height);
         }
+
+    protected:
+        std::vector<OnResetFunc> m_OnResetFunc;
+        std::vector<OnKeyFunc> m_OnKeyFunc;
+        std::vector<OnCharFunc> m_OnCharFunc;
+        std::vector<OnCharModsFunc> m_OnCharModsFunc;
+        std::vector<OnMouseButtonFunc> m_OnMouseButtonFunc;
+        std::vector<OnCursorPosFunc> m_OnCursorPosFunc;
+        std::vector<OnCursorEnterFunc> m_OnCursorEnterFunc;
+        std::vector<OnScrollFunc> m_OnScrollFunc;
+        std::vector<OnDropFunc> m_OnDropFunc;
+        std::vector<OnWindowSizeFunc> m_OnWindowSizeFunc;
+        std::vector<OnWindowCloseFunc> m_OnWindowCloseFunc;
     };
 } // namespace Yutrel
