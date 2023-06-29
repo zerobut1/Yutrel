@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Yutrel/function/render/texture.h"
+#include "Yutrel/function/render/texture.hpp"
 
 #include <glad/glad.h>
 

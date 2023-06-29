@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Yutrel/function/render/mesh.h"
+#include "Yutrel/function/render/mesh.hpp"
 
 #include <memory>
 #include <string>
@@ -12,14 +12,14 @@ namespace Yutrel
     class Model
     {
     public:
-        static std::shared_ptr<Model> Create(std::string const &path);
+        static Model* Create(std::string const& path);
 
         virtual ~Model() = default;
 
         virtual void Render() = 0;
 
     protected:
-        std::vector<std::shared_ptr<Mesh>> m_meshes;
+        std::vector<Mesh*> m_meshes;
         std::string m_directory;
     };
 } // namespace Yutrel

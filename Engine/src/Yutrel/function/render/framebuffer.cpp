@@ -1,13 +1,14 @@
-#include "framebuffer.h"
 #include "yutrel_pch.hpp"
 
-#include "Yutrel/platform/OpenGL/opengl_framebuffer.h"
+#include "framebuffer.hpp"
+
+#include "Yutrel/platform/OpenGL/opengl_framebuffer.hpp"
 
 namespace Yutrel
 {
-    std::shared_ptr<Framebuffer> Framebuffer::Create(const FramebufferSpecification &spec)
+    Framebuffer* Framebuffer::Create(const FramebufferSpecification& spec)
     {
-        return std::make_shared<OpenGLFramebuffer>(spec);
+        return new OpenGLFramebuffer(spec);
     }
 
 } // namespace Yutrel

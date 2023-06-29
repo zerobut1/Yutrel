@@ -6,10 +6,7 @@
 
 namespace Yutrel
 {
-    void UpdateWindow(Commands& cmd,
-                      Querier querier,
-                      Resources resources,
-                      Events& events)
+    void UpdateWindow(Commands& cmd, Querier querier, Resources resources, Events& events)
     {
         auto window = resources.Get<Window*>();
         window->Tick();

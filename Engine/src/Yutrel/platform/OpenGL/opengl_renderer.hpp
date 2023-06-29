@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Yutrel/function/render/camera_controller.h"
+#include "Yutrel/function/render/camera_controller.hpp"
 #include "Yutrel/function/render/renderer.hpp"
-#include "Yutrel/platform/OpenGL/opengl_model.h"
-#include "Yutrel/platform/OpenGL/opengl_shader.h"
-#include "Yutrel/platform/OpenGL/opengl_texture.h"
+#include "Yutrel/platform/OpenGL/opengl_model.hpp"
+#include "Yutrel/platform/OpenGL/opengl_shader.hpp"
+#include "Yutrel/platform/OpenGL/opengl_texture.hpp"
 #include "Yutrel/platform/OpenGL/opengl_vertex_array.h"
 
 #include "GLFW/glfw3.h"
@@ -14,6 +14,9 @@
 
 namespace Yutrel
 {
+    /*
+     * OpenGL 渲染器的实现
+     */
     class OpenGLRenderer : public Renderer
     {
     public:

@@ -1,4 +1,4 @@
-#include "opengl_framebuffer.h"
+#include "opengl_framebuffer.hpp"
 #include "yutrel_pch.hpp"
 
 #include "Yutrel/core/engine.h"
@@ -8,7 +8,6 @@
 
 namespace Yutrel
 {
-
     static const uint32_t s_MaxFramebufferSize = 8192;
 
     namespace Utils

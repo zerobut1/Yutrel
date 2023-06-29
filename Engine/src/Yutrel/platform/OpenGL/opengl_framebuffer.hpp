@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Yutrel/function/render/framebuffer.h"
+#include "Yutrel/function/render/framebuffer.hpp"
 
 namespace Yutrel
 {
     class OpenGLFramebuffer : public Framebuffer
     {
     public:
-        OpenGLFramebuffer(const FramebufferSpecification &spec);
+        OpenGLFramebuffer(const FramebufferSpecification& spec);
         virtual ~OpenGLFramebuffer();
 
         void Invalidate();
@@ -26,7 +26,7 @@ namespace Yutrel
             return m_ColorAttachments[index];
         }
 
-        virtual const FramebufferSpecification &getSpecification() const override { return m_Specification; }
+        virtual const FramebufferSpecification& getSpecification() const override { return m_Specification; }
 
     private:
         uint32_t m_RendererID = 0;

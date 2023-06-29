@@ -1,30 +1,19 @@
-#include <Yutrel/Yutrel.h>
+#include <Yutrel/Yutrel.hpp>
+
+#include "sandbox.hpp"
 
 #include <iostream>
-
-void test1(Yutrel::Commands& cmd,
-           Yutrel::Querier querier,
-           Yutrel::Resources resources,
-           Yutrel::Events& events)
-{
-    std::cout << "test1" << std::endl;
-}
-
-void test2(Yutrel::Commands& cmd,
-           Yutrel::Querier querier,
-           Yutrel::Resources resources,
-           Yutrel::Events& events)
-{
-    std::cout << "test2" << std::endl;
-}
 
 int main()
 {
     auto app = Yutrel::CreateApplication();
 
-    // app->GetWorld()
-    // .AddSystem(test1)
-    // .AddSystem(test2);
+    app->GetWorld()
+        .AddStartupSystem(SpawnCamera)
+        .AddStartupSystem(SpawnFramebuffer)
+        .AddStartupSystem(SpawnTextureShader)
+        .AddStartupSystem(SpawnBackpack)
+        .AddSystem(DrawScene);
 
     app->Init();
 

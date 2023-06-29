@@ -13,9 +13,9 @@
 
 // namespace Yutrel
 // {
-//     YutrelEditor *YutrelEditor::s_instance = nullptr;
+//     YutrelEditor* YutrelEditor::s_instance = nullptr;
 
-//     YutrelEditor::YutrelEditor(YutrelEngine *engine)
+//     YutrelEditor::YutrelEditor(YutrelEngine* engine)
 //         : Application(engine)
 //     {
 //         s_instance = this;
@@ -180,6 +180,7 @@
 //         m_viewport_framebuffer->Unbind();
 //     }
 
+<<<<<<< HEAD
     void YutrelEditor::drawScene(std::shared_ptr<Shader> &shader)
     {
         glm::mat4 model = glm::mat4(1.0f);
@@ -190,6 +191,18 @@
         model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
         shader->setMat4("model", model);
         m_plane_model->Render();
+=======
+//     void YutrelEditor::drawScene(std::shared_ptr<Shader>& shader)
+//     {
+//         glm::mat4 model = glm::mat4(1.0f);
+//         shader->Use();
+//         //-----------plane--------------
+//         model = glm::mat4(1.0f);
+//         model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+//         model = glm::scale(model, glm::vec3(10.0f, 10.0f, 10.0f));
+//         shader->setMat4("model", model);
+//         m_plane_model->Render();
+>>>>>>> 5a05673 (初步测试渲染器各部分功能)
 
 //         //------------bunny--------------
 //         // model = glm::mat4(1.0f);
