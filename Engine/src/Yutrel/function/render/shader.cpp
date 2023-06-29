@@ -1,18 +1,18 @@
 #include "yutrel_pch.hpp"
 
-#include "shader.h"
+#include "shader.hpp"
 
-#include "Yutrel/platform/OpenGL/opengl_shader.h"
+#include "Yutrel/platform/OpenGL/opengl_shader.hpp"
 
 namespace Yutrel
 {
-    std::shared_ptr<Shader> Shader::Create(const std::string &vertex_path, const std::string &fragment_path)
+    Shader* Shader::Create(const std::string& vertex_path, const std::string& fragment_path)
     {
-        return std::make_shared<OpenGLShader>(vertex_path, fragment_path);
+        return new OpenGLShader(vertex_path, fragment_path);
     }
 
-    std::shared_ptr<Shader> Shader::Create(const std::string &name, const std::string &vertexSrc, const std::string &fragmentSrc)
+    Shader* Shader::Create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
     {
-        return std::make_shared<OpenGLShader>(name, vertexSrc, fragmentSrc);
+        return new OpenGLShader(name, vertexSrc, fragmentSrc);
     }
 } // namespace Yutrel

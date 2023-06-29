@@ -1,28 +1,28 @@
 #include "yutrel_pch.hpp"
 
-#include "texture.h"
+#include "texture.hpp"
 
-#include "Yutrel/platform/OpenGL/opengl_texture.h"
+#include "Yutrel/platform/OpenGL/opengl_texture.hpp"
 
 namespace Yutrel
 {
-    std::shared_ptr<Texture2D> Texture2D::Create(uint32_t width, uint32_t height)
+    Texture2D* Texture2D::Create(uint32_t width, uint32_t height)
     {
-        return std::make_shared<OpenGLTexture2D>(width, height);
+        return new OpenGLTexture2D(width, height);
     }
 
-    std::shared_ptr<Texture2D> Texture2D::Create(const std::string &path)
+    Texture2D* Texture2D::Create(const std::string& path)
     {
-        return std::make_shared<OpenGLTexture2D>(path);
+        return new OpenGLTexture2D(path);
     }
 
-    std::shared_ptr<TextureCubemaps> TextureCubemaps::Create(const std::vector<std::string> &paths)
+    TextureCubemaps* TextureCubemaps::Create(const std::vector<std::string>& paths)
     {
-        return std::make_shared<OpenGLTextureCubemaps>(paths);
+        return new OpenGLTextureCubemaps(paths);
     }
 
-    std::shared_ptr<TextureCubemaps> TextureCubemaps::Create(const std::string &path)
+    TextureCubemaps* TextureCubemaps::Create(const std::string& path)
     {
-        return std::make_shared<OpenGLTextureCubemaps>(path);
+        return new OpenGLTextureCubemaps(path);
     }
 } // namespace Yutrel

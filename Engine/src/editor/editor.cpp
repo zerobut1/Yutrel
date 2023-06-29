@@ -13,9 +13,9 @@
 
 // namespace Yutrel
 // {
-//     YutrelEditor *YutrelEditor::s_instance = nullptr;
+//     YutrelEditor* YutrelEditor::s_instance = nullptr;
 
-//     YutrelEditor::YutrelEditor(YutrelEngine *engine)
+//     YutrelEditor::YutrelEditor(YutrelEngine* engine)
 //         : Application(engine)
 //     {
 //         s_instance = this;
@@ -180,7 +180,7 @@
 //         m_viewport_framebuffer->Unbind();
 //     }
 
-//     void YutrelEditor::drawScene(std::shared_ptr<Shader> &shader)
+//     void YutrelEditor::drawScene(std::shared_ptr<Shader>& shader)
 //     {
 //         glm::mat4 model = glm::mat4(1.0f);
 //         shader->Use();

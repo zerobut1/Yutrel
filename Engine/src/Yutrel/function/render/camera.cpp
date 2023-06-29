@@ -1,6 +1,6 @@
 #include "yutrel_pch.hpp"
 
-#include "camera.h"
+#include "camera.hpp"
 
 // 暂时使用glm
 #include <glm/ext/matrix_clip_space.hpp>

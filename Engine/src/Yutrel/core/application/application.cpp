@@ -3,9 +3,9 @@
 #include "application.hpp"
 
 #include "Yutrel/core/log/log.hpp"
+#include "Yutrel/function/input/input.hpp"
+#include "Yutrel/function/render/renderer.hpp"
 #include "Yutrel/function/window/window.hpp"
-#include "yutrel/function/render/renderer.hpp"
-#include <winuser.h>
 
 namespace Yutrel
 {
@@ -25,6 +25,7 @@ namespace Yutrel
             .SetResource(ExitTrigger{})
             .SetResource(Log{})
             .SetResource(Window::Create("Yutrel", 1920, 1080))
+            .SetResource(Input::Create())
             .SetResource(Renderer::Create(*m_world.GetResource<Window*>()))
             .AddSystem(UpdateWindow)
             .AddSystem(ExitTrigger::DetectShouldExit);
@@ -59,10 +60,7 @@ namespace Yutrel
         m_world.Shutdown();
     }
 
-    void ExitTrigger::DetectShouldExit(Commands& cmd,
-                                       Querier querier,
-                                       Resources resources,
-                                       Events& events)
+    void ExitTrigger::DetectShouldExit(Commands& cmd, Querier querier, Resources resources, Events& events)
     {
         // 目前是直接检测window是否shouldclose
         auto& trigger = resources.Get<ExitTrigger>();

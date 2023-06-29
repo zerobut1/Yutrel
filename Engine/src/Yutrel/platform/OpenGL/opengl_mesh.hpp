@@ -1,7 +1,7 @@
 #pragma once
-#include "Yutrel/function/render/mesh.h"
+#include "Yutrel/function/render/mesh.hpp"
 
-#include "Yutrel/platform/OpenGL/opengl_texture.h"
+#include "Yutrel/platform/OpenGL/opengl_texture.hpp"
 #include "Yutrel/platform/OpenGL/opengl_vertex_array.h"
 
 #include <glad/glad.h> // holds all OpenGL type declarations
@@ -20,16 +20,16 @@ namespace Yutrel
     class OpenGLMesh : public Mesh
     {
     public:
-        OpenGLMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures);
+        OpenGLMesh(std::vector<float>& vertices, std::vector<uint32_t>& indices, std::vector<Texture*>& textures);
 
         virtual void Draw() override;
 
     private:
-        void setupMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures);
+        void setupMesh(std::vector<float>& vertices, std::vector<uint32_t>& indices, std::vector<Texture*>& textures);
 
     private:
         // 这样的格式不满足实时切换texture的需求,后面会更改
-        std::vector<std::shared_ptr<Texture>> textures;
+        std::vector<Texture*> textures;
 
         std::shared_ptr<VertexArray> m_VAO;
     };

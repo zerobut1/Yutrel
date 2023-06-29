@@ -1,13 +1,13 @@
 #include "yutrel_pch.hpp"
 
-#include "model.h"
+#include "model.hpp"
 
-#include "Yutrel/platform/OpenGL/opengl_model.h"
+#include "Yutrel/platform/OpenGL/opengl_model.hpp"
 
 namespace Yutrel
 {
-    std::shared_ptr<Model> Model::Create(std::string const &path)
+    Model* Model::Create(std::string const& path)
     {
-        return std::make_shared<OpenGLModel>(path);
+        return new OpenGLModel(path);
     }
 } // namespace Yutrel

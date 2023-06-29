@@ -1,16 +1,16 @@
 #include "yutrel_pch.hpp"
 
-#include "opengl_mesh.h"
+#include "opengl_mesh.hpp"
 
 namespace Yutrel
 {
-    OpenGLMesh::OpenGLMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures)
+    OpenGLMesh::OpenGLMesh(std::vector<float>& vertices, std::vector<uint32_t>& indices, std::vector<Texture*>& textures)
     {
         this->textures = textures;
         setupMesh(vertices, indices, textures);
     }
 
-    void OpenGLMesh::setupMesh(std::vector<float> &vertices, std::vector<uint32_t> &indices, std::vector<std::shared_ptr<Texture>> &textures)
+    void OpenGLMesh::setupMesh(std::vector<float>& vertices, std::vector<uint32_t>& indices, std::vector<Texture*>& textures)
     {
         m_VAO                             = VertexArray::Create();
         std::shared_ptr<VertexBuffer> VBO = VertexBuffer::Create(&vertices[0], vertices.size() * sizeof(float));
@@ -26,7 +26,7 @@ namespace Yutrel
     {
         for (unsigned int i = 0; i < textures.size(); i++)
         {
-            textures[i]->Bind(i+1);
+            textures[i]->Bind(i + 1);
         }
         m_VAO->Bind();
 

@@ -10,12 +10,11 @@
 
 namespace Yutrel
 {
-    class InputSystem
+    class Input
     {
     public:
-        static std::shared_ptr<InputSystem> Create();
+        static Input* Create();
 
-        virtual void initialize()                           = 0;
         virtual bool IsKeyPressed(KeyCode key)              = 0;
         virtual bool IsMouseButtonPressed(MouseCode button) = 0;
         virtual glm::vec2 GetMousePosition()                = 0;

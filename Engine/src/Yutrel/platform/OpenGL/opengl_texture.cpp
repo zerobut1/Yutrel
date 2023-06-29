@@ -1,14 +1,13 @@
 
 #include "yutrel_pch.hpp"
 
-#include "opengl_texture.h"
+#include "opengl_texture.hpp"
 
-#include "Yutrel/function/global/global_context.h"
-#include "Yutrel/function/render/framebuffer.h"
-#include "Yutrel/function/render/model.h"
-#include "Yutrel/function/render/shader.h"
 #include "Yutrel/core/log/log.hpp"
-
+#include "Yutrel/function/global/global_context.h"
+#include "Yutrel/function/render/framebuffer.hpp"
+#include "Yutrel/function/render/model.hpp"
+#include "Yutrel/function/render/shader.hpp"
 
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -32,12 +31,12 @@ namespace Yutrel
         glTextureParameteri(m_rendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
-    OpenGLTexture2D::OpenGLTexture2D(const std::string &path)
+    OpenGLTexture2D::OpenGLTexture2D(const std::string& path)
         : m_path(path)
     {
         int width, height, channels;
         stbi_set_flip_vertically_on_load(true);
-        stbi_uc *data = nullptr;
+        stbi_uc* data = nullptr;
         {
             data = stbi_load(path.c_str(), &width, &height, &channels, 0);
         }
@@ -78,7 +77,7 @@ namespace Yutrel
         glDeleteTextures(1, &m_rendererID);
     }
 
-    void OpenGLTexture2D::setData(void *data, uint32_t size)
+    void OpenGLTexture2D::setData(void* data, uint32_t size)
     {
         uint32_t bpp = m_data_format == GL_RGBA ? 4 : 3;
         // ENGINE_CORE_ASSERT(size == m_Width * m_Height * bpp, "Data must be entire texture!");
@@ -95,7 +94,7 @@ namespace Yutrel
      *这里的实现是比较早的opengl版本的实现
      *后面可能会更新
      */
-    OpenGLTextureCubemaps::OpenGLTextureCubemaps(const std::vector<std::string> &paths)
+    OpenGLTextureCubemaps::OpenGLTextureCubemaps(const std::vector<std::string>& paths)
     // : m_paths(paths)
     {
         // glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &m_rendererID);
@@ -105,7 +104,7 @@ namespace Yutrel
         for (unsigned int i = 0; i < paths.size(); i++)
         {
             int width, height, channels;
-            stbi_uc *data = stbi_load(paths[i].c_str(), &width, &height, &channels, 0);
+            stbi_uc* data = stbi_load(paths[i].c_str(), &width, &height, &channels, 0);
 
             m_width  = width;
             m_height = height;
@@ -137,12 +136,12 @@ namespace Yutrel
         glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     }
 
-    OpenGLTextureCubemaps::OpenGLTextureCubemaps(const std::string &path)
+    OpenGLTextureCubemaps::OpenGLTextureCubemaps(const std::string& path)
     {
         //---------读取hdr图片------------
         stbi_set_flip_vertically_on_load(true);
         int width, height, nrComponents;
-        float *data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
+        float* data = stbi_loadf(path.c_str(), &width, &height, &nrComponents, 0);
         unsigned int hdrTexture;
         if (data)
         {
@@ -188,11 +187,11 @@ namespace Yutrel
         fbSpec.Attachments = {FramebufferTextureFormat::DEPTH32};
         fbSpec.Width       = 1024;
         fbSpec.Height      = 1024;
-        std::shared_ptr<Framebuffer> m_hdr_framebuffer;
+        Framebuffer* m_hdr_framebuffer;
         m_hdr_framebuffer = Framebuffer::Create(fbSpec);
-        std::shared_ptr<Shader> m_hdr_shader;
+        Shader* m_hdr_shader;
         m_hdr_shader = Shader::Create("../Engine/asset/shader/hdr_to_cubemap.vert", "../Engine/asset/shader/hdr_to_cubemap.frag");
-        std::shared_ptr<Model> m_hdr_model;
+        Model* m_hdr_model;
         m_hdr_model = Model::Create("../resource/object/cube/cube.obj");
         m_hdr_shader->Use();
         m_hdr_shader->setInt("equirectangularMap", 0);
@@ -213,9 +212,6 @@ namespace Yutrel
         }
         m_hdr_framebuffer->Unbind();
         // 清除
-        m_hdr_framebuffer.reset();
-        m_hdr_shader.reset();
-        m_hdr_model.reset();
     }
 
     OpenGLTextureCubemaps::~OpenGLTextureCubemaps()

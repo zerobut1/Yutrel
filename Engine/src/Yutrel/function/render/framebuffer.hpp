@@ -66,9 +66,9 @@ namespace Yutrel
 
         virtual uint32_t getColorAttachmentRendererID(uint32_t index = 0) const = 0;
 
-        virtual const FramebufferSpecification &getSpecification() const = 0;
+        virtual const FramebufferSpecification& getSpecification() const = 0;
 
-        static std::shared_ptr<Framebuffer> Create(const FramebufferSpecification &spec);
+        static Framebuffer* Create(const FramebufferSpecification& spec);
     };
 
 } // namespace Yutrel
