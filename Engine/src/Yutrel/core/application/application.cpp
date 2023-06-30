@@ -3,6 +3,7 @@
 #include "application.hpp"
 
 #include "Yutrel/core/log/log.hpp"
+#include "Yutrel/core/time.hpp"
 #include "Yutrel/function/input/input.hpp"
 #include "Yutrel/function/render/renderer.hpp"
 #include "Yutrel/function/window/window.hpp"
@@ -26,6 +27,7 @@ namespace Yutrel
             .SetResource(Log{})
             .SetResource(Window::Create("Yutrel", 1920, 1080))
             .SetResource(Input::Create())
+            .SetResource(Time{})
             .SetResource(Renderer::Create(*m_world.GetResource<Window*>()))
             .AddSystem(UpdateWindow)
             .AddSystem(ExitTrigger::DetectShouldExit);

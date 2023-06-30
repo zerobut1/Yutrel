@@ -13,6 +13,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <memory>
 #include <stb_image.h>
+#include <stdint.h>
 
 namespace Yutrel
 {
@@ -199,6 +200,10 @@ namespace Yutrel
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, hdrTexture);
 
+        int cur_viewport[4] = {};
+        glGetIntegerv(GL_VIEWPORT, cur_viewport);
+        LOG_TRACE("{0},{1}", cur_viewport[2], cur_viewport[3]);
+
         // 渲染
         m_hdr_framebuffer->Bind();
         glViewport(0, 0, 1024, 1024);
@@ -210,6 +215,7 @@ namespace Yutrel
 
             m_hdr_model->Draw();
         }
+        glViewport(cur_viewport[0], cur_viewport[1], cur_viewport[2], cur_viewport[3]);
         m_hdr_framebuffer->Unbind();
         // 清除
     }
