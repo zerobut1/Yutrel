@@ -4,7 +4,7 @@
 #include "Yutrel/core/ecs/ecs.hpp"
 #include "Yutrel/core/log/log.hpp"
 #include "Yutrel/core/macro.hpp"
-#include "Yutrel/core/time.h"
+#include "Yutrel/core/time.hpp"
 #include "Yutrel/function/input/input.hpp"
 #include "Yutrel/function/render/camera.hpp"
 #include "Yutrel/function/render/camera_controller.hpp"
