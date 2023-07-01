@@ -1,6 +1,6 @@
 #include "yutrel_pch.hpp"
 
-#include "opengl_buffer.h"
+#include "opengl_buffer.hpp"
 
 #include <glad/glad.h>
 
@@ -9,7 +9,7 @@ namespace Yutrel
     //---------------------
     // VertexBuffer
     //---------------------
-    OpenGLVertexBuffer::OpenGLVertexBuffer(float *vertices, uint32_t size)
+    OpenGLVertexBuffer::OpenGLVertexBuffer(float* vertices, uint32_t size)
     {
         glCreateBuffers(1, &m_RendererID);
         glBindBuffer(GL_ARRAY_BUFFER, m_RendererID);
@@ -34,7 +34,7 @@ namespace Yutrel
     //---------------------
     // IndexBuffer
     //---------------------
-    OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t *indices, uint32_t count)
+    OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t* indices, uint32_t count)
         : m_Count(count)
     {
         glCreateBuffers(1, &m_RendererID);

@@ -7,6 +7,7 @@
 #include "Yutrel/function/global/global_context.h"
 #include "Yutrel/function/render/framebuffer.hpp"
 #include "Yutrel/function/render/model.hpp"
+#include "Yutrel/function/render/renderer.hpp"
 #include "Yutrel/function/render/shader.hpp"
 
 #include <glm/ext/matrix_clip_space.hpp>
@@ -193,7 +194,7 @@ namespace Yutrel
         Shader* m_hdr_shader;
         m_hdr_shader = Shader::Create("../Engine/asset/shader/hdr_to_cubemap.vert", "../Engine/asset/shader/hdr_to_cubemap.frag");
         Model* m_hdr_model;
-        m_hdr_model = Model::Create("../resource/object/cube/cube.obj");
+        m_hdr_model = Application::Get().GetWorld().GetResource<RenderData>()->skybox_model;
         m_hdr_shader->Use();
         m_hdr_shader->setInt("equirectangularMap", 0);
         m_hdr_shader->setMat4("projection", captureProjection);
@@ -202,7 +203,6 @@ namespace Yutrel
 
         int cur_viewport[4] = {};
         glGetIntegerv(GL_VIEWPORT, cur_viewport);
-        LOG_TRACE("{0},{1}", cur_viewport[2], cur_viewport[3]);
 
         // 渲染
         m_hdr_framebuffer->Bind();

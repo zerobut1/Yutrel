@@ -1,13 +1,13 @@
 #include "yutrel_pch.hpp"
 
-#include "vertex_array.h"
+#include "vertex_array.hpp"
 
-#include "Yutrel/platform/OpenGL/opengl_vertex_array.h"
+#include "Yutrel/platform/OpenGL/opengl_vertex_array.hpp"
 
 namespace Yutrel
 {
-    std::shared_ptr<VertexArray> VertexArray::Create()
+    VertexArray* VertexArray::Create()
     {
-        return std::make_shared<OpenGLVertexArray>();
+        return new OpenGLVertexArray();
     }
 } // namespace Yutrel

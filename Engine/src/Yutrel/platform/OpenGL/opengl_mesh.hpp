@@ -2,7 +2,7 @@
 #include "Yutrel/function/render/mesh.hpp"
 
 #include "Yutrel/platform/OpenGL/opengl_texture.hpp"
-#include "Yutrel/platform/OpenGL/opengl_vertex_array.h"
+#include "Yutrel/platform/OpenGL/opengl_vertex_array.hpp"
 
 #include <glad/glad.h> // holds all OpenGL type declarations
 #include <glm/glm.hpp>
@@ -25,13 +25,13 @@ namespace Yutrel
         virtual void Render() override;
 
     private:
-        void setupMesh(std::vector<float>& vertices, std::vector<uint32_t>& indices, std::vector<Texture*>& textures);
+        void SetupMesh(std::vector<float>& vertices, std::vector<uint32_t>& indices, std::vector<Texture*>& textures);
 
     private:
         // 这样的格式不满足实时切换texture的需求,后面会更改
         std::vector<Texture*> textures;
 
-        std::shared_ptr<VertexArray> m_VAO;
+        VertexArray* m_VAO;
     };
 
 } // namespace Yutrel

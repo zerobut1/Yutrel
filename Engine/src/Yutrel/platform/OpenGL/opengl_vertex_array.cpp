@@ -1,6 +1,6 @@
 #include "yutrel_pch.hpp"
 
-#include "opengl_vertex_array.h"
+#include "opengl_vertex_array.hpp"
 
 #include <glad/glad.h>
 
@@ -60,15 +60,15 @@ namespace Yutrel
         glBindVertexArray(0);
     }
 
-    void OpenGLVertexArray::addVertexBuffer(const std::shared_ptr<VertexBuffer> &vertexBuffer)
+    void OpenGLVertexArray::addVertexBuffer(VertexBuffer*& vertexBuffer)
     {
         // ENGINE_CORE_ASSERT(vertexBuffer->GetLayout().GetElements().size(), "Vertex Buffer has no layout!");
 
         glBindVertexArray(m_RendererID);
         vertexBuffer->Bind();
 
-        const auto &layout = vertexBuffer->getLayout();
-        for (const auto &element : layout)
+        const auto& layout = vertexBuffer->getLayout();
+        for (const auto& element : layout)
         {
             glEnableVertexAttribArray(m_VertexBufferIndex);
             glVertexAttribPointer(m_VertexBufferIndex,
@@ -76,14 +76,14 @@ namespace Yutrel
                                   ShaderDataTypeToOpenGLBaseType(element.Type),
                                   element.Normalized ? GL_TRUE : GL_FALSE,
                                   layout.getStride(),
-                                  (const void *)element.Offset);
+                                  (const void*)element.Offset);
             m_VertexBufferIndex++;
         }
         glEnableVertexAttribArray(0);
         m_VertexBuffers.emplace_back(vertexBuffer);
     }
 
-    void OpenGLVertexArray::setIndexBuffer(const std::shared_ptr<IndexBuffer> &indexBuffer)
+    void OpenGLVertexArray::setIndexBuffer(IndexBuffer* indexBuffer)
     {
         glBindVertexArray(m_RendererID);
         indexBuffer->Bind();

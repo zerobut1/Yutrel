@@ -29,7 +29,7 @@ namespace Yutrel
             .SetResource(Input::Create())
             .SetResource(Time{})
             .SetResource(Renderer::Create(*m_world.GetResource<Window*>()))
-            .AddSystem(UpdateWindow)
+            .AddSystem(Window::UpdateWindow)
             .AddSystem(ExitTrigger::DetectShouldExit);
     }
 
