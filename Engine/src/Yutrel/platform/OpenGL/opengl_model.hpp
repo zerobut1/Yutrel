@@ -23,10 +23,10 @@ namespace Yutrel
         virtual void Draw() override;
 
     private:
-        void loadModel(std::string const& path);
-        void processNode(aiNode* node, const aiScene* scene);
-        Mesh* processMesh(aiMesh* mesh, const aiScene* scene);
-        std::vector<Texture*> loadMaterialTextures(aiMaterial* mat, aiTextureType type);
+        void LoadModel(std::string const& path);
+        void ProcessNode(aiNode* node, const aiScene* scene);
+        Mesh* ProcessMesh(aiMesh* mesh, const aiScene* scene);
+        std::vector<Texture*> LoadMaterialTextures(aiMaterial* mat, aiTextureType type);
 
     private:
         std::unordered_map<std::string, Texture2D*> texture_loaded;

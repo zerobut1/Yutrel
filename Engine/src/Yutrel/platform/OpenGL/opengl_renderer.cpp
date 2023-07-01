@@ -20,6 +20,8 @@
 
 namespace Yutrel
 {
+    // extern RenderData
+
     OpenGLRenderer::OpenGLRenderer(Window* window)
     {
         Initialize(window);
@@ -38,6 +40,12 @@ namespace Yutrel
 
         // 初始化GLAD
         gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+
+        // 设置全局通用的数据
+        Application::Get().GetWorld().SetResource(
+            RenderData{
+                Model::Create("../resource/object/cube/cube.obj"),
+                Shader::Create("../Engine/asset/shader/skybox.vert", "../Engine/asset/shader/skybox.frag")});
     }
 
     void OpenGLRenderer::RenderUI(std::shared_ptr<WindowUI> ui)

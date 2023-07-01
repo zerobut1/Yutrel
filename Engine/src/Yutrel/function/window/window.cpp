@@ -6,11 +6,12 @@
 
 namespace Yutrel
 {
-    void UpdateWindow(Commands& cmd, Querier querier, Resources resources, Events& events)
+    void Window::UpdateWindow(Commands& cmd, Querier querier, Resources resources, Events& events)
     {
         auto window = resources.Get<Window*>();
         window->Tick();
 
+        // 后面可能改用ecs的event
         // if(window.shouldClose()){
         //     events.Writer<QuitEvent>().Write()
         // }

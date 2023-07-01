@@ -11,10 +11,10 @@ namespace Yutrel
 {
     OpenGLModel::OpenGLModel(std::string const& path)
     {
-        loadModel(path);
+        LoadModel(path);
     }
 
-    void OpenGLModel::loadModel(std::string const& path)
+    void OpenGLModel::LoadModel(std::string const& path)
     {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(
@@ -31,7 +31,7 @@ namespace Yutrel
         m_directory = path.substr(0, path.find_last_of('/') + 1);
 
         // process ASSIMP's root node recursively
-        processNode(scene->mRootNode, scene);
+        ProcessNode(scene->mRootNode, scene);
     }
 
     void OpenGLModel::Draw()
@@ -40,21 +40,21 @@ namespace Yutrel
             mesh->Draw();
     }
 
-    void OpenGLModel::processNode(aiNode* node, const aiScene* scene)
+    void OpenGLModel::ProcessNode(aiNode* node, const aiScene* scene)
     {
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
         {
             // 根据索引找到对应的mesh数据
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            m_meshes.emplace_back(processMesh(mesh, scene));
+            m_meshes.emplace_back(ProcessMesh(mesh, scene));
         }
         for (unsigned int i = 0; i < node->mNumChildren; i++)
         {
-            processNode(node->mChildren[i], scene);
+            ProcessNode(node->mChildren[i], scene);
         }
     }
 
-    Mesh* OpenGLModel::processMesh(aiMesh* mesh, const aiScene* scene)
+    Mesh* OpenGLModel::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     {
         std::vector<float> vertices;
         std::vector<uint32_t> indices;
@@ -102,22 +102,22 @@ namespace Yutrel
         // 这一部分后面要更改
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         // 1. diffuse maps
-        std::vector<Texture*> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE);
+        std::vector<Texture*> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE);
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
         // 2. specular maps
-        std::vector<Texture*> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR);
+        std::vector<Texture*> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR);
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
         // 3. normal maps
-        std::vector<Texture*> normalMaps = loadMaterialTextures(material, aiTextureType_NORMALS);
+        std::vector<Texture*> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS);
         textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
         // 4. height maps
-        std::vector<Texture*> heightMaps = loadMaterialTextures(material, aiTextureType_HEIGHT);
+        std::vector<Texture*> heightMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT);
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
         return Mesh::Create(vertices, indices, textures);
     }
 
-    std::vector<Texture*> OpenGLModel::loadMaterialTextures(aiMaterial* mat, aiTextureType type)
+    std::vector<Texture*> OpenGLModel::LoadMaterialTextures(aiMaterial* mat, aiTextureType type)
     {
         std::vector<Texture*> textures;
 

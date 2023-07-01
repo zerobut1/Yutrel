@@ -5,7 +5,7 @@
 #include "Yutrel/platform/OpenGL/opengl_model.hpp"
 #include "Yutrel/platform/OpenGL/opengl_shader.hpp"
 #include "Yutrel/platform/OpenGL/opengl_texture.hpp"
-#include "Yutrel/platform/OpenGL/opengl_vertex_array.h"
+#include "Yutrel/platform/OpenGL/opengl_vertex_array.hpp"
 
 #include "GLFW/glfw3.h"
 

@@ -38,61 +38,35 @@ void SpawnTextureShader(Yutrel::Commands& cmd, Yutrel::Resources resources)
         BackPack{});
 }
 
-// todo put into renderer
-struct SkyBox
-{};
-
 void SpawnSkybox(Yutrel::Commands& cmd, Yutrel::Resources resources)
 {
-    cmd.Spawn<Yutrel::Model*, Yutrel::Shader*, Yutrel::TextureCubemaps*, SkyBox>(
-        Yutrel::Model::Create("../resource/object/cube/cube.obj"),
-        Yutrel::Shader::Create("../Engine/asset/shader/skybox.vert", "../Engine/asset/shader/skybox.frag"),
-        Yutrel::TextureCubemaps::Create("../resource/texture/hdr/cayley_interior.hdr"),
-        SkyBox{});
+    cmd.Spawn<Yutrel::SkyBox>(
+        Yutrel::SkyBox{
+            Yutrel::TextureCubemaps::Create("../resource/texture/hdr/evening_road_01_puresky_4k.hdr")});
 };
 
 void DrawScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resources resources, Yutrel::Events& events)
 {
-    auto entities          = querier.Query<Yutrel::CameraController*>();
-    auto camera_controller = querier.Get<Yutrel::CameraController*>(entities[0]);
+    auto entity_camera_controller = querier.Query<Yutrel::CameraController*>()[0];
+    auto camera_controller        = querier.Get<Yutrel::CameraController*>(entity_camera_controller);
 
-    entities = querier.Query<Yutrel::Shader*>();
+    auto entities = querier.Query<Yutrel::Shader*>();
     Yutrel::Shader* backpack_shader;
-    Yutrel::Shader* skybox_shader;
     for (auto& entity : entities)
     {
         if (querier.Has<BackPack>(entity))
         {
             backpack_shader = querier.Get<Yutrel::Shader*>(entity);
         }
-        else if (querier.Has<SkyBox>(entity))
-        {
-            skybox_shader = querier.Get<Yutrel::Shader*>(entity);
-        }
     }
 
     entities = querier.Query<Yutrel::Model*>();
     Yutrel::Model* backpack_model;
-    Yutrel::Model* skybox_model;
     for (auto& entity : entities)
     {
         if (querier.Has<BackPack>(entity))
         {
             backpack_model = querier.Get<Yutrel::Model*>(entity);
-        }
-        else if (querier.Has<SkyBox>(entity))
-        {
-            skybox_model = querier.Get<Yutrel::Model*>(entity);
-        }
-    }
-
-    entities = querier.Query<Yutrel::TextureCubemaps*>();
-    Yutrel::TextureCubemaps* skybox_texture;
-    for (auto& entity : entities)
-    {
-        if (querier.Has<SkyBox>(entity))
-        {
-            skybox_texture = querier.Get<Yutrel::TextureCubemaps*>(entity);
         }
     }
 
@@ -113,14 +87,8 @@ void DrawScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resources
     backpack_shader->setMat4("projection", projection);
     backpack_model->Draw();
 
-    glDepthFunc(GL_LEQUAL);
-    skybox_shader->Use();
-    view = glm::mat4(glm::mat3(camera_controller->GetCamera().getViewMatrix()));
-    skybox_shader->setMat4("view", view);
-    skybox_shader->setMat4("projection", projection);
-    skybox_texture->Bind();
-    skybox_model->Draw();
-    glDepthFunc(GL_LESS);
+    auto entity_skybox = querier.Query<Yutrel::SkyBox>();
+    Yutrel::Renderer::RenderSkybox(entity_skybox[0], entity_camera_controller);
 
     // framebuffer->Unbind();
 }

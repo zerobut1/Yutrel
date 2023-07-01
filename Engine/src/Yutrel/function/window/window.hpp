@@ -14,9 +14,6 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
-    // window update system
-    void UpdateWindow(Commands& cmd, Querier querier, Resources resources, Events& events);
-
     /*
      * 窗口
      */
@@ -24,6 +21,7 @@ namespace Yutrel
     {
     public:
         static Window* Create(std::string title, uint32_t width, uint32_t height);
+        static void UpdateWindow(Commands& cmd, Querier querier, Resources resources, Events& events);
 
         virtual void Tick() const                             = 0;
         virtual void SetTitle(const char* title)              = 0;
