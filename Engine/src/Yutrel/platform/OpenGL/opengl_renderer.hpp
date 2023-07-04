@@ -2,7 +2,6 @@
 
 #include "Yutrel/function/render/camera_controller.hpp"
 #include "Yutrel/function/render/renderer.hpp"
-#include "Yutrel/platform/OpenGL/opengl_model.hpp"
 #include "Yutrel/platform/OpenGL/opengl_shader.hpp"
 #include "Yutrel/platform/OpenGL/opengl_texture.hpp"
 #include "Yutrel/platform/OpenGL/opengl_vertex_array.hpp"
@@ -27,12 +26,16 @@ namespace Yutrel
 
         // 现在是空函数，后面也许会有用
         virtual void Clear() override{};
-        virtual void Tick(float delta_time) override{};
+
+        virtual void RenderSkybox(Entity skybox, Entity camera_controller) override;
+        // virtual void RenderModel(const Model* model) override;
+
+        virtual void DrawIndexed(const VertexArray* vertexArray) override;
 
         // ui
-        virtual void InitializeUIRender(WindowUI* window_ui) override;
-        virtual void RenderUI(std::shared_ptr<WindowUI> ui) override;
-        virtual void ClearUIRender(WindowUI* window_ui) override;
+        // virtual void InitializeUIRender(WindowUI* window_ui) override;
+        // virtual void RenderUI(std::shared_ptr<WindowUI> ui) override;
+        // virtual void ClearUIRender(WindowUI* window_ui) override;
     };
 
 } // namespace Yutrel

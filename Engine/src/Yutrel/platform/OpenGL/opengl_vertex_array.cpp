@@ -60,14 +60,14 @@ namespace Yutrel
         glBindVertexArray(0);
     }
 
-    void OpenGLVertexArray::addVertexBuffer(VertexBuffer*& vertexBuffer)
+    void OpenGLVertexArray::AddVertexBuffer(VertexBuffer*& vertexBuffer)
     {
         // ENGINE_CORE_ASSERT(vertexBuffer->GetLayout().GetElements().size(), "Vertex Buffer has no layout!");
 
         glBindVertexArray(m_RendererID);
         vertexBuffer->Bind();
 
-        const auto& layout = vertexBuffer->getLayout();
+        const auto& layout = vertexBuffer->GetLayout();
         for (const auto& element : layout)
         {
             glEnableVertexAttribArray(m_VertexBufferIndex);
@@ -75,7 +75,7 @@ namespace Yutrel
                                   element.getComponentCount(),
                                   ShaderDataTypeToOpenGLBaseType(element.Type),
                                   element.Normalized ? GL_TRUE : GL_FALSE,
-                                  layout.getStride(),
+                                  layout.GetStride(),
                                   (const void*)element.Offset);
             m_VertexBufferIndex++;
         }
@@ -83,7 +83,7 @@ namespace Yutrel
         m_VertexBuffers.emplace_back(vertexBuffer);
     }
 
-    void OpenGLVertexArray::setIndexBuffer(IndexBuffer* indexBuffer)
+    void OpenGLVertexArray::SetIndexBuffer(IndexBuffer* indexBuffer)
     {
         glBindVertexArray(m_RendererID);
         indexBuffer->Bind();

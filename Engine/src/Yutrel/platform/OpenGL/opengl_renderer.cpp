@@ -48,27 +48,60 @@ namespace Yutrel
                 Shader::Create("../Engine/asset/shader/skybox.vert", "../Engine/asset/shader/skybox.frag")});
     }
 
-    void OpenGLRenderer::RenderUI(std::shared_ptr<WindowUI> ui)
+    // void OpenGLRenderer::RenderModel(const Model* model)
+    // {
+    //     for (auto mesh : model->GetMeshes())
+    //     {
+
+    //     }
+    // }
+
+    void OpenGLRenderer::RenderSkybox(Entity skybox, Entity camera_controller)
     {
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ui->preRender();
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        auto querier = Querier(Application::Get().GetWorld());
+        auto data    = Application::Get().GetWorld().GetResource<RenderData>();
+        auto texture = querier.Get<SkyBox>(skybox).texture;
+        auto shader  = data->skybox_shader;
+        auto model   = data->skybox_model;
+        auto camera  = querier.Get<CameraController*>(camera_controller)->GetCamera();
+
+        glDepthFunc(GL_LEQUAL);
+        shader->Use();
+        shader->setMat4("view", camera.getViewMatrix());
+        shader->setMat4("projection", camera.getProjectionMatrix());
+        texture->Bind();
+        model->Draw(shader);
+        glDepthFunc(GL_LESS);
     }
 
-    void OpenGLRenderer::InitializeUIRender(WindowUI* window_ui)
+    void OpenGLRenderer::DrawIndexed(const VertexArray* vertexArray)
     {
-        // ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow()), true);
-        ImGui_ImplOpenGL3_Init("#version 460");
+        vertexArray->Bind();
+        glDrawElements(GL_TRIANGLES, vertexArray->GetIndexBuffer()->GetCount(), GL_UNSIGNED_INT, nullptr);
+        vertexArray->Unbind();
     }
 
-    void OpenGLRenderer::ClearUIRender(WindowUI* window_ui)
-    {
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-    }
+    // void OpenGLRenderer::RenderUI(std::shared_ptr<WindowUI> ui)
+    // {
+    //     ImGui_ImplOpenGL3_NewFrame();
+    //     ImGui_ImplGlfw_NewFrame();
+    //     ImGui::NewFrame();
+    //     ui->preRender();
+    //     ImGui::Render();
+    //     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    // }
+
+    // void OpenGLRenderer::InitializeUIRender(WindowUI* window_ui)
+    // {
+    //     // ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow *>(g_runtime_global_context.m_window_system->getWindow()), true);
+    //     ImGui_ImplOpenGL3_Init("#version 460");
+    // }
+
+    // void OpenGLRenderer::ClearUIRender(WindowUI* window_ui)
+    // {
+    //     ImGui_ImplOpenGL3_Shutdown();
+    //     ImGui_ImplGlfw_Shutdown();
+    //     ImGui::DestroyContext();
+    // }
 
 } // namespace Yutrel

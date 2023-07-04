@@ -13,11 +13,11 @@ namespace Yutrel
         virtual void Bind() const override;
         virtual void Unbind() const override;
 
-        virtual void addVertexBuffer(VertexBuffer*& vertexBuffer) override;
-        virtual void setIndexBuffer(IndexBuffer* indexBuffer) override;
+        virtual void AddVertexBuffer(VertexBuffer*& vertexBuffer) override;
+        virtual void SetIndexBuffer(IndexBuffer* indexBuffer) override;
 
-        virtual const std::vector<VertexBuffer*>& getVectorBuffers() const override { return m_VertexBuffers; }
-        virtual const IndexBuffer* getIndexBuffer() const override { return m_IndexBuffer; }
+        virtual const std::vector<VertexBuffer*>& GetVectorBuffers() const override { return m_VertexBuffers; }
+        virtual const IndexBuffer* GetIndexBuffer() const override { return m_IndexBuffer; }
 
     private:
         uint32_t m_RendererID;

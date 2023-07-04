@@ -24,15 +24,17 @@ namespace Yutrel
     public:
         static Renderer* Create(Window* window);
 
-        static void RenderSkybox(Entity skybox, Entity camera_controller);
-
         virtual void Initialize(Window* window) = 0;
         virtual void Clear()                    = 0;
-        virtual void Tick(float delta_time)     = 0;
+
+        // virtual void RenderModel(const Model* model)                       = 0;
+        virtual void RenderSkybox(Entity skybox, Entity camera_controller) = 0;
+
+        virtual void DrawIndexed(const VertexArray* vertexArray) = 0;
 
         // ui
-        virtual void InitializeUIRender(WindowUI* window_ui) = 0;
-        virtual void RenderUI(std::shared_ptr<WindowUI> ui)  = 0;
-        virtual void ClearUIRender(WindowUI* window_ui)      = 0;
+        // virtual void InitializeUIRender(WindowUI* window_ui) = 0;
+        // virtual void RenderUI(std::shared_ptr<WindowUI> ui)  = 0;
+        // virtual void ClearUIRender(WindowUI* window_ui)      = 0;
     };
 } // namespace Yutrel
