@@ -1,4 +1,6 @@
 #include "sandbox.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/vector_float3.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -6,7 +8,9 @@
 void SpawnCamera(Yutrel::Commands& cmd, Yutrel::Resources resources)
 {
     cmd.Spawn<Yutrel::CameraController*>(
-        Yutrel::CameraController::Create((1920.0f / 1080.0f), glm::vec3(0.0f, 1.0f, 4.0f)));
+        Yutrel::CameraController::Create((1920.0f / 1080.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+
+    // todo set direction
 }
 
 void SpawnFramebuffer(Yutrel::Commands& cmd, Yutrel::Resources resources)
@@ -27,7 +31,10 @@ struct BackPack
 void SpawnBackpack(Yutrel::Commands& cmd, Yutrel::Resources resources)
 {
     cmd.Spawn<Yutrel::Model*, BackPack>(
-        Yutrel::Model::Create("../resource/object/backpack/backpack.obj"),
+        // Yutrel::Model::Create("../resource/object/backpack/backpack.obj"),
+        // Yutrel::Model::Create("../resource/object/nanosuit/nanosuit.obj"),
+        Yutrel::Model::Create("../resource/scene/cornell-box/cornell-box.obj"),
+        // Yutrel::Model::Create("../resource/scene/staircase/stairscase.obj"),
         BackPack{});
 }
 
@@ -78,6 +85,7 @@ void DrawScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resources
     glEnable(GL_DEPTH_TEST);
 
     glm::mat4 model      = glm::mat4(1.0f);
+    model                = glm::scale(model, glm::vec3{0.1f, 0.1f, 0.1f});
     glm::mat4 view       = camera_controller->GetCamera().getViewMatrix();
     glm::mat4 projection = camera_controller->GetCamera().getProjectionMatrix();
 
@@ -85,10 +93,11 @@ void DrawScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resources
     backpack_shader->setMat4("model", model);
     backpack_shader->setMat4("view", view);
     backpack_shader->setMat4("projection", projection);
-    backpack_model->Draw();
+    backpack_model->Draw(backpack_shader);
 
     auto entity_skybox = querier.Query<Yutrel::SkyBox>();
-    Yutrel::Renderer::RenderSkybox(entity_skybox[0], entity_camera_controller);
+    auto renderer      = resources.Get<Yutrel::Renderer*>();
+    renderer->RenderSkybox(entity_skybox[0], entity_camera_controller);
 
     // framebuffer->Unbind();
 }

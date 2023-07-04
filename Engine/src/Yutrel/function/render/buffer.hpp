@@ -119,11 +119,11 @@ namespace Yutrel
         BufferLayout(const std::initializer_list<BufferElement>& elements)
             : m_Elements(elements)
         {
-            calculateOffsetsAndStride();
+            CalculateOffsetsAndStride();
         }
 
-        inline uint32_t getStride() const { return m_Stride; }
-        inline const std::vector<BufferElement>& getElements() const { return m_Elements; }
+        inline uint32_t GetStride() const { return m_Stride; }
+        inline const std::vector<BufferElement>& GetElements() const { return m_Elements; }
 
         std::vector<BufferElement>::iterator begin() { return m_Elements.begin(); }
         std::vector<BufferElement>::iterator end() { return m_Elements.end(); }
@@ -131,7 +131,7 @@ namespace Yutrel
         std::vector<BufferElement>::const_iterator end() const { return m_Elements.end(); }
 
     private:
-        void calculateOffsetsAndStride()
+        void CalculateOffsetsAndStride()
         {
             size_t offset = 0;
             m_Stride      = 0;
@@ -158,8 +158,8 @@ namespace Yutrel
         virtual void Bind() const   = 0;
         virtual void Unbind() const = 0;
 
-        virtual void setLayout(const BufferLayout& layout) = 0;
-        virtual const BufferLayout& getLayout() const      = 0;
+        virtual void SetLayout(const BufferLayout& layout) = 0;
+        virtual const BufferLayout& GetLayout() const      = 0;
     };
 
     // 索引缓冲(opengl的元素缓冲)
@@ -173,6 +173,6 @@ namespace Yutrel
         virtual void Bind() const   = 0;
         virtual void Unbind() const = 0;
 
-        virtual uint32_t getCount() const = 0;
+        virtual uint32_t GetCount() const = 0;
     };
 } // namespace Yutrel
