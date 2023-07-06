@@ -5,7 +5,7 @@
 #include "Yutrel/function/render/framebuffer.hpp"
 #include "Yutrel/function/render/model.hpp"
 #include "Yutrel/function/render/shader.hpp"
-// #include "Yutrel/function/ui/window_ui.h"
+#include "Yutrel/function/ui/window_ui.hpp"
 #include "Yutrel/function/window/window.hpp"
 #include "glm/fwd.hpp"
 
@@ -19,10 +19,6 @@ namespace Yutrel
         Model* plane_model;
 
         Shader* skybox_shader;
-        Shader* shadowmap_shader;
-        Shader* shadow_shader;
-
-        Framebuffer* shadowmap_framebuffer;
     };
 
     struct Transform
@@ -51,14 +47,14 @@ namespace Yutrel
         virtual void Clear()                    = 0;
 
         // virtual void RenderModel(const Model* model)                       = 0;
-        virtual void RenderScene(Entity camera_controller)                 = 0;
-        virtual void RenderSkybox(Entity skybox, Entity camera_controller) = 0;
+        virtual void RenderScene(Entity shader_entity, Entity camera_controller_entity) = 0;
+        virtual void RenderSkybox(Entity skybox, Entity camera_controller_entity)       = 0;
 
         virtual void DrawIndexed(const VertexArray* vertexArray) = 0;
 
         // ui
-        // virtual void InitializeUIRender(WindowUI* window_ui) = 0;
-        // virtual void RenderUI(std::shared_ptr<WindowUI> ui)  = 0;
-        // virtual void ClearUIRender(WindowUI* window_ui)      = 0;
+        virtual void InitializeUIRender(WindowUI* window_ui) = 0;
+        virtual void RenderUI(WindowUI* ui)                  = 0;
+        virtual void ClearUIRender(WindowUI* window_ui)      = 0;
     };
 } // namespace Yutrel

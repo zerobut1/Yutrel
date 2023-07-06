@@ -9,8 +9,6 @@ namespace Yutrel
     class WindowUI
     {
     public:
-        virtual void initialize() = 0;
-        virtual void preRender()  = 0;
-        virtual void clear()      = 0;
+        virtual void RenderUI() = 0;
     };
 } // namespace Yutrel
