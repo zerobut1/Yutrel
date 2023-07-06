@@ -1,10 +1,13 @@
 #pragma once
 
+#include "Yutrel/function/render/camera_controller.hpp"
 #include "Yutrel/function/render/component.hpp"
+#include "Yutrel/function/render/framebuffer.hpp"
 #include "Yutrel/function/render/model.hpp"
 #include "Yutrel/function/render/shader.hpp"
-#include "Yutrel/function/ui/window_ui.h"
+// #include "Yutrel/function/ui/window_ui.h"
 #include "Yutrel/function/window/window.hpp"
+#include "glm/fwd.hpp"
 
 #include <memory>
 
@@ -12,9 +15,29 @@ namespace Yutrel
 {
     struct RenderData
     {
-        Model* skybox_model;
+        Model* cube_model;
+        Model* plane_model;
+
         Shader* skybox_shader;
+        Shader* shadowmap_shader;
+        Shader* shadow_shader;
+
+        Framebuffer* shadowmap_framebuffer;
     };
+
+    struct Transform
+    {
+        glm::mat4 model_matrix;
+    };
+
+    // 目前只是简单的定向光
+    struct Light
+    {
+        glm::vec3 light_pos;
+    };
+
+    struct Scene
+    {};
 
     /*
      * 渲染器
@@ -28,6 +51,7 @@ namespace Yutrel
         virtual void Clear()                    = 0;
 
         // virtual void RenderModel(const Model* model)                       = 0;
+        virtual void RenderScene(Entity camera_controller)                 = 0;
         virtual void RenderSkybox(Entity skybox, Entity camera_controller) = 0;
 
         virtual void DrawIndexed(const VertexArray* vertexArray) = 0;

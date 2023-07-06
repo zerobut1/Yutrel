@@ -11,8 +11,8 @@ int main()
     app->GetWorld()
         .AddStartupSystem(SpawnCamera)
         // .AddStartupSystem(SpawnFramebuffer)
-        .AddStartupSystem(SpawnTextureShader)
-        .AddStartupSystem(SpawnBackpack)
+        .AddStartupSystem(SpawnLight)
+        .AddStartupSystem(SpawnScene)
         .AddStartupSystem(SpawnSkybox)
         .AddSystem(DrawScene);
 
