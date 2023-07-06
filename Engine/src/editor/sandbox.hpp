@@ -3,11 +3,11 @@
 
 void SpawnCamera(Yutrel::Commands& cmd, Yutrel::Resources resources);
 
-void SpawnBackpack(Yutrel::Commands& cmd, Yutrel::Resources resources);
-
 void SpawnFramebuffer(Yutrel::Commands& cmd, Yutrel::Resources resources);
 
-void SpawnTextureShader(Yutrel::Commands& cmd, Yutrel::Resources resources);
+void SpawnLight(Yutrel::Commands& cmd, Yutrel::Resources resources);
+
+void SpawnScene(Yutrel::Commands& cmd, Yutrel::Resources resources);
 
 void SpawnSkybox(Yutrel::Commands& cmd, Yutrel::Resources resources);
 

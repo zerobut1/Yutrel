@@ -194,19 +194,19 @@ namespace Yutrel
         Shader* m_hdr_shader;
         m_hdr_shader = Shader::Create("../Engine/asset/shader/hdr_to_cubemap.vert", "../Engine/asset/shader/hdr_to_cubemap.frag");
         Model* m_hdr_model;
-        m_hdr_model = Application::Get().GetWorld().GetResource<RenderData>()->skybox_model;
+        m_hdr_model = Application::Get().GetWorld().GetResource<RenderData>()->cube_model;
         m_hdr_shader->Use();
         m_hdr_shader->setInt("equirectangularMap", 0);
         m_hdr_shader->setMat4("projection", captureProjection);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, hdrTexture);
 
-        int cur_viewport[4] = {};
-        glGetIntegerv(GL_VIEWPORT, cur_viewport);
+        // int cur_viewport[4] = {};
+        // glGetIntegerv(GL_VIEWPORT, cur_viewport);
 
         // 渲染
         m_hdr_framebuffer->Bind();
-        glViewport(0, 0, 1024, 1024);
+        // glViewport(0, 0, 1024, 1024);
         for (unsigned int i = 0; i < 6; ++i)
         {
             m_hdr_shader->setMat4("view", captureViews[i]);
@@ -215,7 +215,7 @@ namespace Yutrel
 
             m_hdr_model->Render();
         }
-        glViewport(cur_viewport[0], cur_viewport[1], cur_viewport[2], cur_viewport[3]);
+        // glViewport(cur_viewport[0], cur_viewport[1], cur_viewport[2], cur_viewport[3]);
         m_hdr_framebuffer->Unbind();
         // 清除
     }
