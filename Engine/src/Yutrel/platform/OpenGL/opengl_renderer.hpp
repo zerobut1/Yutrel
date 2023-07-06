@@ -28,16 +28,15 @@ namespace Yutrel
         // 现在是空函数，后面也许会有用
         virtual void Clear() override{};
 
-        virtual void RenderScene(Entity camera_controller) override;
-        virtual void RenderSkybox(Entity skybox, Entity camera_controller) override;
-        // virtual void RenderModel(const Model* model) override;
+        virtual void RenderScene(Entity shader_entity, Entity camera_controller_entity) override;
+        virtual void RenderSkybox(Entity skybox, Entity camera_controller_entity) override;
 
         virtual void DrawIndexed(const VertexArray* vertexArray) override;
 
         // ui
-        // virtual void InitializeUIRender(WindowUI* window_ui) override;
-        // virtual void RenderUI(std::shared_ptr<WindowUI> ui) override;
-        // virtual void ClearUIRender(WindowUI* window_ui) override;
+        virtual void InitializeUIRender(WindowUI* window_ui) override;
+        virtual void RenderUI(WindowUI* ui) override;
+        virtual void ClearUIRender(WindowUI* window_ui) override;
     };
 
 } // namespace Yutrel

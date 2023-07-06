@@ -9,12 +9,16 @@ int main()
     auto app = Yutrel::CreateApplication();
 
     app->GetWorld()
+        .AddStartupSystem(SpawnViewport)
         .AddStartupSystem(SpawnCamera)
-        // .AddStartupSystem(SpawnFramebuffer)
         .AddStartupSystem(SpawnLight)
         .AddStartupSystem(SpawnScene)
         .AddStartupSystem(SpawnSkybox)
-        .AddSystem(DrawScene);
+        .AddStartupSystem(SpawnShadowmap)
+        .AddStartupSystem(SpawnUI)
+        .AddSystem(UpdateScene)
+        .AddSystem(DrawScene)
+        .AddSystem(DrawUI);
 
     app->Init();
 
