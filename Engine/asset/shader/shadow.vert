@@ -10,6 +10,7 @@ out VS_OUT {
     vec3 Normal;
     vec2 TexCoords;
     vec4 FragPosLightSpace;
+    vec3 TangentNormal;
     vec3 TangentLightPos;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
@@ -38,6 +39,7 @@ void main() {
     vs_out.TangentLightPos = TBN * u_lightPos;
     vs_out.TangentViewPos = TBN * u_viewPos;
     vs_out.TangentFragPos = TBN * vs_out.FragPos;
+    vs_out.TangentNormal = TBN * vs_out.Normal;
 
     gl_Position = u_projection * u_view * u_model * vec4(a_Pos, 1.0);
 }

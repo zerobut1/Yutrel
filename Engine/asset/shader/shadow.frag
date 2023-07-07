@@ -6,6 +6,7 @@ in VS_OUT {
     vec3 Normal;
     vec2 TexCoords;
     vec4 FragPosLightSpace;
+    vec3 TangentNormal;
     vec3 TangentLightPos;
     vec3 TangentViewPos;
     vec3 TangentFragPos;
@@ -61,10 +62,13 @@ float ShadowCalculation(vec4 fragPosLightSpace) {
     return shadow;
 }
 
+uniform vec3 u_lightPos;
+
+
 void main() {
 
     vec3 normal = texture(u_TextureNormals, fs_in.TexCoords).rgb;
-    normal = u_NormalsTexToggle > 0.5 ? normalize(normal * 2.0 - 1.0) : normalize(fs_in.Normal);
+    normal = u_NormalsTexToggle > 0.5 ? normalize(normal * 2.0 - 1.0) : normalize(fs_in.TangentNormal);
     // vec3 normal = normalize(fs_in.Normal);
 
     vec3 lightColor = vec3(1.0);
@@ -77,7 +81,7 @@ void main() {
     vec3 diffuse = diff * material_diffuse * lightColor;
 
     // specular
-    vec3 material_specular = u_SpecularTexToggle > 0.5 ? texture(u_TextureSpecular, fs_in.TexCoords).rgb : u_SpecularColor;
+    vec3 material_specular = u_SpecularTexToggle > 0.5 ? texture(u_TextureSpecular, fs_in.TexCoords).rrr : u_SpecularColor;
     vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
@@ -88,6 +92,8 @@ void main() {
     vec3 lighting = ambient + (1.0 - shadow) * (diffuse + specular);
 
     FragColor = vec4(lighting, 1.0);
+    // FragColor = vec4(fs_in.T, 1.0);
+    // FragColor = vec4(u_lightPos, 1.0);
     // FragColor = vec4(material_ambient, 1.0);
     // FragColor = vec4(material_diffuse, 1.0);
     // FragColor = vec4(ambient + diffuse + specular, 1.0);
