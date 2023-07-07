@@ -5,10 +5,34 @@
 #include <imgui.h>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 namespace Yutrel
+=======
+EditorUI::EditorUI()
+>>>>>>> 41d5f2d913b1cd99d802037860fdc7eb579aecd9
 {
-    void EditorUI::initialize()
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    io.ConfigDockingAlwaysTabBar         = true;
+    io.ConfigWindowsMoveFromTitleBarOnly = true;
+
+    // 暂时用比较暴力的方法设置字体
+    io.Fonts->AddFontFromFileTTF(
+        "C:\\Windows\\Fonts\\msyh.ttc",
+        32.0f);
+
+    // todo :搞一个好看的UI
+    ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
+<<<<<<< HEAD
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 =======
@@ -57,6 +81,29 @@ void EditorUI::RenderUI()
     ShowEditorUI();
 }
 
+=======
+        style.WindowRounding              = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
+
+    Yutrel::Resources resources = Yutrel::Resources(Yutrel::Application::Get().GetWorld());
+    auto renderer               = resources.Get<Yutrel::Renderer*>();
+    renderer->InitializeUIRender(this);
+}
+
+EditorUI::~EditorUI()
+{
+    Yutrel::Resources resources = Yutrel::Resources(Yutrel::Application::Get().GetWorld());
+    auto renderer               = resources.Get<Yutrel::Renderer*>();
+    renderer->ClearUIRender(this);
+}
+
+void EditorUI::RenderUI()
+{
+    ShowEditorUI();
+}
+
+>>>>>>> 41d5f2d913b1cd99d802037860fdc7eb579aecd9
 void EditorUI::ShowEditorUI()
 {
     // 暂时只显示这三部分
@@ -133,16 +180,22 @@ void EditorUI::ShowGameViewport(bool* p_open)
     ImGui::Begin("Viewport");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         YutrelEditor::get().m_viewport_focused = ImGui::IsWindowFocused();
 
         ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 =======
+=======
+>>>>>>> 41d5f2d913b1cd99d802037860fdc7eb579aecd9
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
     Yutrel::Querier querier  = Yutrel::Querier(Yutrel::Application::Get().GetWorld());
     auto entities            = querier.Query<Viewport>();
     auto& viewport           = querier.Get<Viewport>(entities[0]);
     auto framebuffer         = querier.Get<Yutrel::Framebuffer*>(entities[0]);
+<<<<<<< HEAD
 >>>>>>> 787a764 (1.添加UI)
+=======
+>>>>>>> 41d5f2d913b1cd99d802037860fdc7eb579aecd9
 
     viewport.width  = viewportPanelSize.x;
     viewport.height = viewportPanelSize.y;

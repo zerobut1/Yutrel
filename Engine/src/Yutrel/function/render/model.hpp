@@ -36,10 +36,14 @@ namespace Yutrel
         virtual ~Model() = default;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         virtual void Render() = 0;
 =======
         // std::vector<Mesh*> GetMeshes() const { return m_meshes; }
 >>>>>>> b8bc66d (修改model和mesh)
+=======
+        // std::vector<Mesh*> GetMeshes() const { return m_meshes; }
+>>>>>>> 41d5f2d913b1cd99d802037860fdc7eb579aecd9
 
         void Draw();
         void Draw(Shader* shader);
