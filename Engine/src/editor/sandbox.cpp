@@ -16,12 +16,14 @@ void SpawnCamera(Yutrel::Commands& cmd, Yutrel::Resources resources)
     // todo set direction
 }
 
+// 目前只是一个平行光，有待更新
 void SpawnLight(Yutrel::Commands& cmd, Yutrel::Resources resources)
 {
     cmd.Spawn<Yutrel::Light>(
         Yutrel::Light{glm::vec3(2.0f, 4.0f, 1.0f)});
 }
 
+// 产生场景
 void SpawnScene(Yutrel::Commands& cmd, Yutrel::Resources resources)
 {
     // shader
@@ -58,6 +60,8 @@ void SpawnSkybox(Yutrel::Commands& cmd, Yutrel::Resources resources)
             Yutrel::TextureCubemaps::Create("../resource/texture/hdr/evening_road_01_puresky_4k.hdr")});
 };
 
+// 这里之所以不把frambuffer和shader放进去
+// 是因为renderer需要接收一个有shader component的entity
 struct Shadowmap
 {};
 
@@ -106,7 +110,6 @@ void UpdateScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resourc
 
 void DrawScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resources resources, Yutrel::Events& events)
 {
-
     // 获取摄像机
     auto camera_controller_entity = querier.Query<Yutrel::CameraController*>()[0];
     auto camera_controller        = querier.Get<Yutrel::CameraController*>(camera_controller_entity);

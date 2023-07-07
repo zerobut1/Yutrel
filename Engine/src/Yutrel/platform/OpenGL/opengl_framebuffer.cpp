@@ -1,7 +1,6 @@
 #include "opengl_framebuffer.hpp"
 #include "yutrel_pch.hpp"
 
-#include "Yutrel/core/engine.h"
 #include "Yutrel/core/log/log.hpp"
 
 #include <glad/glad.h>

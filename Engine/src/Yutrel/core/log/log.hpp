@@ -20,11 +20,6 @@ namespace Yutrel
             return m_logger;
         }
 
-        void test()
-        {
-            std::cout << "test log" << std::endl;
-        }
-
     private:
         std::shared_ptr<spdlog::logger> m_logger;
     };

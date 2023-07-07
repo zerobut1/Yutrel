@@ -4,7 +4,6 @@
 #include "opengl_texture.hpp"
 
 #include "Yutrel/core/log/log.hpp"
-#include "Yutrel/function/global/global_context.h"
 #include "Yutrel/function/render/framebuffer.hpp"
 #include "Yutrel/function/render/model.hpp"
 #include "Yutrel/function/render/renderer.hpp"
