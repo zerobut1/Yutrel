@@ -21,8 +21,6 @@ namespace Yutrel
         Mesh(std::vector<float>& vertices, std::vector<uint32_t>& indices, std::vector<Material*>& materials);
         virtual ~Mesh() = default;
 
-        // void Draw(Shader* shader);
-
     private:
         std::vector<Material*> m_materials;
 

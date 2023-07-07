@@ -73,8 +73,8 @@ namespace Yutrel
 
         auto shader = querier.Get<Shader*>(shader_entity);
         shader->Use();
-        shader->setMat4("view", view);
-        shader->setMat4("projection", projection);
+        shader->setMat4("u_view", view);
+        shader->setMat4("u_projection", projection);
 
         auto scene_entities = querier.Query<Scene>();
         for (auto entity : scene_entities)
@@ -83,7 +83,7 @@ namespace Yutrel
             {
                 auto model        = querier.Get<Model*>(entity);
                 auto model_matrix = querier.Get<Transform>(entity).model_matrix;
-                shader->setMat4("model", model_matrix);
+                shader->setMat4("u_model", model_matrix);
                 model->Draw(shader);
             }
         }

@@ -28,18 +28,4 @@ namespace Yutrel
         m_VAO->SetIndexBuffer(EBO);
     }
 
-    // void Mesh::Draw(Shader* shader)
-    // {
-    //     for (unsigned int i = 0; i < m_materials.size(); i++)
-    //     {
-    //         shader->setFloat("u_" + m_materials[i].type + "Toggle", m_materials[i].is_texture);
-            
-    //         // textures[i]->Bind(i + 1);
-    //     }
-
-    //     Resources resource = Resources(Application::Get().GetWorld());
-    //     auto renderer      = resource.Get<Renderer*>();
-    //     renderer->DrawIndexed(m_VAO);
-    // }
-
 } // namespace Yutrel

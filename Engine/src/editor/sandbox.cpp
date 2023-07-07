@@ -133,7 +133,7 @@ void DrawScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resources
     glm::mat4 light_view         = glm::lookAt(directional_light.light_pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 light_projection   = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.01f, 100.0f);
     glm::mat4 light_space_matrix = light_projection * light_view;
-    shadowmap_shader->setMat4("lightSpaceMatrix", light_space_matrix);
+    shadowmap_shader->setMat4("u_lightSpaceMatrix", light_space_matrix);
     renderer->RenderScene(shadowmap_entity, camera_controller_entity);
     shadowmap_framebuffer->Unbind();
 
@@ -162,9 +162,9 @@ void DrawScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resources
     }
     auto shader = querier.Get<Yutrel::Shader*>(shader_entity);
     shader->Use();
-    shader->setMat4("lightSpaceMatrix", light_space_matrix);
-    shader->setFloat3("viewPos", camera_controller->GetCamera().getPosition());
-    shader->setFloat3("lightPos", directional_light.light_pos);
+    shader->setMat4("u_lightSpaceMatrix", light_space_matrix);
+    shader->setFloat3("u_viewPos", camera_controller->GetCamera().getPosition());
+    shader->setFloat3("u_lightPos", directional_light.light_pos);
     glBindTextureUnit(4, shadowmap_framebuffer->getColorAttachmentRendererID());
 
     renderer->RenderScene(shader_entity, camera_controller_entity);
