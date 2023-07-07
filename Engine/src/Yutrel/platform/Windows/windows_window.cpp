@@ -3,7 +3,6 @@
 #include "windows_window.hpp"
 
 #include "Yutrel/core/log/log.hpp"
-#include "Yutrel/function/global/global_context.h"
 
 #include <GLFW/glfw3.h>
 
