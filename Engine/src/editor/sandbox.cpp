@@ -131,7 +131,7 @@ void DrawScene(Yutrel::Commands& cmd, Yutrel::Querier querier, Yutrel::Resources
     auto light_entities          = querier.Query<Yutrel::Light>();
     auto directional_light       = querier.Get<Yutrel::Light>(light_entities[0]);
     glm::mat4 light_view         = glm::lookAt(directional_light.light_pos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 light_projection   = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.01f, 100.0f);
+    glm::mat4 light_projection   = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 10.0f);
     glm::mat4 light_space_matrix = light_projection * light_view;
     shadowmap_shader->setMat4("u_lightSpaceMatrix", light_space_matrix);
     renderer->RenderScene(shadowmap_entity, camera_controller_entity);
