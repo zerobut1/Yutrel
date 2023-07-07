@@ -7,8 +7,7 @@ target("Yutrel_Editor")
     -- tmp
     add_packages("glfw","glad","assimp","entt")
 
-    add_headerfiles("**.h")
-    -- add_headerfiles("**.hpp")
+    add_headerfiles("**.hpp")
     add_files("**.cpp")
 
     add_includedirs("../")

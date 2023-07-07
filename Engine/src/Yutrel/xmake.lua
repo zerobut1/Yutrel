@@ -5,7 +5,6 @@ target("Yutrel")
 
     add_packages("glfw","glad","glm","assimp","spdlog","imgui","entt")
 
-    add_headerfiles("**.h")
     add_headerfiles("**.hpp")
     add_headerfiles("$(projectdir)/Engine/vendor/stb_image/*.h")
     add_files("**.cpp")

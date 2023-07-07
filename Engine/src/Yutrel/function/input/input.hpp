@@ -1,7 +1,7 @@
 #pragma once
 
-#include "inputcode/key_codes.h"
-#include "inputcode/mouse_codes.h"
+#include "inputcode/key_codes.hpp"
+#include "inputcode/mouse_codes.hpp"
 
 // 暂且使用glm
 #include <glm/glm.hpp>
