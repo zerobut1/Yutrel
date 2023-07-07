@@ -123,7 +123,7 @@ namespace Yutrel
         materials.emplace_back(LoadMaterial(ai_material, "Ambient", aiTextureType_AMBIENT));
         materials.emplace_back(LoadMaterial(ai_material, "Diffuse", aiTextureType_DIFFUSE));
         materials.emplace_back(LoadMaterial(ai_material, "Specular", aiTextureType_SPECULAR));
-        materials.emplace_back(LoadMaterial(ai_material, "Normals", aiTextureType_NORMALS));
+        materials.emplace_back(LoadMaterial(ai_material, "Normals", aiTextureType_HEIGHT));//Assimp加载obj用HEIGHT读取Normal 很神秘
 
         return Mesh::Create(vertices, indices, materials);
     }
@@ -150,9 +150,6 @@ namespace Yutrel
             case aiTextureType_SPECULAR:
                 mat->Get(AI_MATKEY_COLOR_SPECULAR, ai_color);
                 material->color = glm::vec3(ai_color.r, ai_color.g, ai_color.b);
-                break;
-            case aiTextureType_NORMALS:
-                material->color = glm::vec3(0.0f, 1.0f, 0.0f);
                 break;
             default:
                 break;
