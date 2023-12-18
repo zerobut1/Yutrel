@@ -12,7 +12,9 @@ namespace Yutrel
 {
     void VulkanRHI::Init(RHIInitInfo info)
     {
-        InitVulkan(info.raw_window);
+        InitVulkan(info.raw_window, info.width, info.height);
+
+        InitSwapchain();
     }
 
     void VulkanRHI::Clear()
@@ -33,9 +35,13 @@ namespace Yutrel
         vkDestroyInstance(m_instance, nullptr);
     }
 
-    void VulkanRHI::InitVulkan(GLFWwindow* raw_window)
+    void VulkanRHI::InitVulkan(GLFWwindow* raw_window, uint32_t width, uint32_t height)
     {
         LOG_INFO("Initialize Vulkan RHI");
+
+        // 记录交换范围大小
+        m_window_extent.width  = width;
+        m_window_extent.height = height;
 
         // vkb创建器
         vkb::InstanceBuilder builder;
@@ -99,6 +105,33 @@ namespace Yutrel
         main_deletion_queue
             .PushFunction([=]()
                           { vmaDestroyAllocator(allocator); });
+    }
+
+    void VulkanRHI::InitSwapchain()
+    {
+        // vkb创建交换链
+        vkb::SwapchainBuilder swapchain_builder{m_physical_device, m_device, m_surface};
+
+        vkb::Swapchain vkb_swapchain =
+            swapchain_builder
+                .use_default_format_selection()
+                // 设为FIFO，使其限制为显示器帧数
+                .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+                .set_desired_extent(m_window_extent.width, m_window_extent.height)
+                .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+                .build()
+                .value();
+
+        // 获取交换链和图像
+        m_swapchain              = vkb_swapchain.swapchain;
+        m_swapchain_image_format = vkb_swapchain.image_format;
+        m_swapchain_images       = vkb_swapchain.get_images().value();
+        m_swapchain_image_views  = vkb_swapchain.get_image_views().value();
+
+        // 放入删除队列
+        main_deletion_queue
+            .PushFunction([=]()
+                          { vkDestroySwapchainKHR(m_device, m_swapchain, nullptr); });
     }
 
 } // namespace Yutrel

@@ -46,6 +46,8 @@ namespace Yutrel
         // 初始化renderer
         RendererInitInfo info{};
         info.raw_window = static_cast<GLFWwindow*>(window->GetWindow()->GetRaw());
+        info.width      = window->GetWidth();
+        info.height     = window->GetHeight();
 
         render->m_renderer->Init(info);
     }

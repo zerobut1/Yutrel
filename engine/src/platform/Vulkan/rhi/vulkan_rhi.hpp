@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <functional>
+#include <stdint.h>
 
 struct GLFWwindow;
 
@@ -19,7 +20,7 @@ namespace Yutrel
 
     private:
         //--------初始化----------
-        void InitVulkan(GLFWwindow* raw_window);
+        void InitVulkan(GLFWwindow* raw_window, uint32_t width, uint32_t height);
         // 交换链
         void InitSwapchain();
         // renderpass
@@ -64,6 +65,9 @@ namespace Yutrel
     private:
         bool m_enable_validation_layers{true};
 
+        // vulkan交换范围
+        VkExtent2D m_window_extent;
+
         // vulkan实例
         VkInstance m_instance;
         // vulkan DebugMessenger
@@ -79,5 +83,12 @@ namespace Yutrel
         // 队列
         VkQueue m_graphics_queue;
         uint32_t m_graphics_queue_family;
+
+        // 交换链
+        VkSwapchainKHR m_swapchain;
+        VkFormat m_swapchain_image_format;
+        // 交换链图像
+        std::vector<VkImage> m_swapchain_images;
+        std::vector<VkImageView> m_swapchain_image_views;
     };
 } // namespace Yutrel

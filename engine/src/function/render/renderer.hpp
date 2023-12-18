@@ -80,6 +80,8 @@ namespace Yutrel
     struct RendererInitInfo
     {
         GLFWwindow* raw_window;
+        uint32_t width;
+        uint32_t height;
     };
 
     class Renderer

@@ -11,6 +11,8 @@ namespace Yutrel
         // 初始化RHI
         RHIInitInfo rhi_init_info;
         rhi_init_info.raw_window = info.raw_window;
+        rhi_init_info.width      = info.width;
+        rhi_init_info.height     = info.height;
 
         m_rhi = CreateRef<VulkanRHI>();
         m_rhi->Init(rhi_init_info);

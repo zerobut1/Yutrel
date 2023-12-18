@@ -14,6 +14,7 @@
 #include <gecs/gecs.hpp>
 
 #include <functional>
+#include <stdint.h>
 #include <string>
 
 namespace Yutrel
@@ -136,6 +137,9 @@ namespace Yutrel
         ~WindowResource();
 
         Ref<Window> GetWindow() const { return m_window; }
+
+        uint32_t GetWidth() const { return m_window->Getwidth(); }
+        uint32_t GetHeight() const { return m_window->GetHeight(); }
 
     private:
         Ref<Window> m_window;

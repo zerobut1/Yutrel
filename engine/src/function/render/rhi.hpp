@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 struct GLFWwindow;
 
 namespace Yutrel
@@ -7,6 +9,8 @@ namespace Yutrel
     struct RHIInitInfo
     {
         GLFWwindow* raw_window;
+        uint32_t width;
+        uint32_t height;
     };
 
     class RHI
