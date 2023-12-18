@@ -1,0 +1,11 @@
+.vscode
+.xmake
+.VSCodeCounter
+build
+vsxmake2022
+resource
+.clang-format
+
+todo.md
+
+!Engine/src/resource
