@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "engine"
+		},
+		{
+			"path": "sandbox"
+		}
+	],
+	"settings": {}
+}
