@@ -18,6 +18,10 @@ namespace Yutrel
 
         InitCommands();
 
+        InitDescriptorPool();
+
+        InitSyncStructures();
+
         // InitSwapchain();
     }
 
@@ -140,10 +144,9 @@ namespace Yutrel
 
     void VulkanRHI::InitCommands()
     {
-        // 创建指令池
+        // 为并行的每一帧分别创建指令池
         VkCommandPoolCreateInfo cmd_pool_info = vkinit::CommandPoolCreateInfo(m_graphics_queue_family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-        // 为并行的每一帧分别创建指令池
         for (int i = 0; i < FRAME_OVERLAP; i++)
         {
             YUTREL_ASSERT(vkCreateCommandPool(m_device, &cmd_pool_info, nullptr, &m_frames[i].command_pool) == VK_SUCCESS, "Failed to create command pool");
@@ -159,19 +162,71 @@ namespace Yutrel
                               { vkDestroyCommandPool(m_device, m_frames[i].command_pool, nullptr); });
         }
 
-        // 创建上传指令池
+        // 创建单次指令指令池
         VkCommandPoolCreateInfo upload_command_pool_info = vkinit::CommandPoolCreateInfo(m_graphics_queue_family, 0);
 
-        YUTREL_ASSERT(vkCreateCommandPool(m_device, &upload_command_pool_info, nullptr, &m_upload_context.command_pool) == VK_SUCCESS, "Failed to create upload command pool");
+        YUTREL_ASSERT(vkCreateCommandPool(m_device, &upload_command_pool_info, nullptr, &m_rhi_command_pool) == VK_SUCCESS, "Failed to create upload command pool");
 
         main_deletion_queue
             .PushFunction([=]()
-                          { vkDestroyCommandPool(m_device, m_upload_context.command_pool, nullptr); });
+                          { vkDestroyCommandPool(m_device, m_rhi_command_pool, nullptr); });
+    }
 
-        // 分配上传指令缓冲
-        VkCommandBufferAllocateInfo cmd_alloc_info = vkinit::CommandBufferAllocateInfo(m_upload_context.command_pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    void VulkanRHI::InitDescriptorPool()
+    {
+        // 创建描述符池
+        // todo 控制描述符池大小
+        std::vector<VkDescriptorPoolSize> sizes{
+            // 支持十个uniform buffer
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10},
+            // 支持十个dynamic uniform buffer
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10},
+            // 支持十个SSBO
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10},
+            // image采样
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10},
+        };
 
-        YUTREL_ASSERT(vkAllocateCommandBuffers(m_device, &cmd_alloc_info, &m_upload_context.command_buffer) == VK_SUCCESS, "Failed to allocate upload command buffer");
+        VkDescriptorPoolCreateInfo pool_create_info{};
+        pool_create_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_create_info.flags         = 0;
+        pool_create_info.maxSets       = 10;
+        pool_create_info.poolSizeCount = static_cast<uint32_t>(sizes.size());
+        pool_create_info.pPoolSizes    = sizes.data();
+
+        YUTREL_ASSERT(vkCreateDescriptorPool(m_device, &pool_create_info, nullptr, &m_descriptor_pool) == VK_SUCCESS, "Failed to create descriptor pool");
+
+        // 加入删除队列
+        main_deletion_queue
+            .PushFunction([&]()
+                          { vkDestroyDescriptorPool(m_device, m_descriptor_pool, nullptr); });
+    }
+
+    void VulkanRHI::InitSyncStructures()
+    {
+        // 同步设施创建信息
+        auto fence_create_info     = vkinit::FenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
+        auto semaphore_create_info = vkinit::SemaphoreCreateInfo(0);
+
+        // 为并行的每一帧创建
+        for (int i = 0; i < FRAME_OVERLAP; i++)
+        {
+            YUTREL_ASSERT(vkCreateFence(m_device, &fence_create_info, nullptr, &m_frames[i].render_fence) == VK_SUCCESS, "Failed to create fence");
+
+            // 放入删除队列
+            main_deletion_queue
+                .PushFunction([=]()
+                              { vkDestroyFence(m_device, m_frames[i].render_fence, nullptr); });
+
+            YUTREL_ASSERT(vkCreateSemaphore(m_device, &semaphore_create_info, nullptr, &m_frames[i].finished_for_presentation_semaphore) == VK_SUCCESS, "Failed to create semaphore");
+            YUTREL_ASSERT(vkCreateSemaphore(m_device, &semaphore_create_info, nullptr, &m_frames[i].available_for_render_semaphore) == VK_SUCCESS, "Failed to create semaphore");
+
+            // 放入删除队列
+            main_deletion_queue
+                .PushFunction([=]()
+                              { vkDestroySemaphore(m_device, m_frames[i].finished_for_presentation_semaphore, nullptr);
+                          vkDestroySemaphore(m_device, m_frames[i].available_for_render_semaphore, nullptr); });
+        }
     }
 
 } // namespace Yutrel

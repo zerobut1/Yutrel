@@ -32,10 +32,10 @@ namespace Yutrel
         void InitSwapchain();
         // 指令池与指令缓冲
         void InitCommands();
+        // 描述符
+        void InitDescriptorPool();
         // 同步设施
         void InitSyncStructures();
-        // 描述符
-        void InitDescriptors();
         //------------------------
 
     public:
@@ -94,17 +94,20 @@ namespace Yutrel
         VkQueue m_graphics_queue;
         uint32_t m_graphics_queue_family;
 
+        // 单次指令的指令池
+        VkCommandPool m_rhi_command_pool;
+
+        // 帧数据
+        std::array<FrameData, FRAME_OVERLAP> m_frames;
+
+        // 描述符池
+        VkDescriptorPool m_descriptor_pool;
+
         // 交换链
         VkSwapchainKHR m_swapchain;
         VkFormat m_swapchain_image_format;
         // 交换链图像
         std::vector<VkImage> m_swapchain_images;
         std::vector<VkImageView> m_swapchain_image_views;
-
-        // 帧数据
-        std::array<FrameData, FRAME_OVERLAP> m_frames;
-
-        // 上传数据相关的结构
-        UploadContext m_upload_context;
     };
 } // namespace Yutrel

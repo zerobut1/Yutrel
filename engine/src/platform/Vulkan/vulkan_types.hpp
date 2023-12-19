@@ -27,24 +27,16 @@ namespace Yutrel
         VkCommandBuffer main_command_buffer;
 
         // 同步
-        VkSemaphore swapchain_semaphore, render_semaphore;
+        VkSemaphore finished_for_presentation_semaphore, available_for_render_semaphore;
         VkFence render_fence;
 
-        // 摄像机缓冲
-        AllocatedBuffer camera_buffer;
-        VkDescriptorSet global_descriptor;
+        // // 摄像机缓冲
+        // AllocatedBuffer camera_buffer;
+        // VkDescriptorSet global_descriptor;
 
-        // 对象缓冲
-        AllocatedBuffer object_buffer;
-        VkDescriptorSet object_descriptor;
-    };
-
-    // 上传指令的结构
-    struct UploadContext
-    {
-        VkFence upload_fence;
-        VkCommandPool command_pool;
-        VkCommandBuffer command_buffer;
+        // // 对象缓冲
+        // AllocatedBuffer object_buffer;
+        // VkDescriptorSet object_descriptor;
     };
 
 } // namespace Yutrel
