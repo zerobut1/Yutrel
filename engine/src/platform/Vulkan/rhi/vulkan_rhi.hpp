@@ -3,6 +3,7 @@
 #include "function/render/rhi.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
 
+#include <array>
 #include <deque>
 #include <functional>
 #include <stdint.h>
@@ -19,14 +20,16 @@ namespace Yutrel
         virtual void Clear() override;
 
     private:
+        // 获取当前帧
+        FrameData& GetCurrentFrame()
+        {
+            return m_frames[m_cur_frame % FRAME_OVERLAP];
+        }
+
         //--------初始化----------
         void InitVulkan(GLFWwindow* raw_window, uint32_t width, uint32_t height);
         // 交换链
         void InitSwapchain();
-        // renderpass
-        void InitDefaultRenderPass();
-        // 帧缓冲
-        void InitFramebuffers();
         // 指令池与指令缓冲
         void InitCommands();
         // 同步设施
@@ -63,7 +66,14 @@ namespace Yutrel
         DeletionQueue main_deletion_queue;
 
     private:
+        // 同时渲染的帧数
+        static constexpr uint8_t FRAME_OVERLAP{2};
+
+        // 允许验证层
         bool m_enable_validation_layers{true};
+
+        // 当前帧数
+        uint32_t m_cur_frame{0};
 
         // vulkan交换范围
         VkExtent2D m_window_extent;
@@ -90,5 +100,11 @@ namespace Yutrel
         // 交换链图像
         std::vector<VkImage> m_swapchain_images;
         std::vector<VkImageView> m_swapchain_image_views;
+
+        // 帧数据
+        std::array<FrameData, FRAME_OVERLAP> m_frames;
+
+        // 上传数据相关的结构
+        UploadContext m_upload_context;
     };
 } // namespace Yutrel

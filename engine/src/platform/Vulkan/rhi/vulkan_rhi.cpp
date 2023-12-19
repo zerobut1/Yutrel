@@ -2,6 +2,8 @@
 
 #include "vulkan_rhi.hpp"
 
+#include "platform/Vulkan/initializers/initializers.hpp"
+
 #include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
 
@@ -14,7 +16,9 @@ namespace Yutrel
     {
         InitVulkan(info.raw_window, info.width, info.height);
 
-        InitSwapchain();
+        InitCommands();
+
+        // InitSwapchain();
     }
 
     void VulkanRHI::Clear()
@@ -132,6 +136,42 @@ namespace Yutrel
         main_deletion_queue
             .PushFunction([=]()
                           { vkDestroySwapchainKHR(m_device, m_swapchain, nullptr); });
+    }
+
+    void VulkanRHI::InitCommands()
+    {
+        // 创建指令池
+        VkCommandPoolCreateInfo cmd_pool_info = vkinit::CommandPoolCreateInfo(m_graphics_queue_family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+        // 为并行的每一帧分别创建指令池
+        for (int i = 0; i < FRAME_OVERLAP; i++)
+        {
+            YUTREL_ASSERT(vkCreateCommandPool(m_device, &cmd_pool_info, nullptr, &m_frames[i].command_pool) == VK_SUCCESS, "Failed to create command pool");
+
+            // 分配指令缓冲
+            auto cmd_alloc_info = vkinit::CommandBufferAllocateInfo(m_frames[i].command_pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+            YUTREL_ASSERT(vkAllocateCommandBuffers(m_device, &cmd_alloc_info, &m_frames[i].main_command_buffer) == VK_SUCCESS, "Failed to allocate command buffer");
+
+            // 放入删除队列
+            main_deletion_queue
+                .PushFunction([=]()
+                              { vkDestroyCommandPool(m_device, m_frames[i].command_pool, nullptr); });
+        }
+
+        // 创建上传指令池
+        VkCommandPoolCreateInfo upload_command_pool_info = vkinit::CommandPoolCreateInfo(m_graphics_queue_family, 0);
+
+        YUTREL_ASSERT(vkCreateCommandPool(m_device, &upload_command_pool_info, nullptr, &m_upload_context.command_pool) == VK_SUCCESS, "Failed to create upload command pool");
+
+        main_deletion_queue
+            .PushFunction([=]()
+                          { vkDestroyCommandPool(m_device, m_upload_context.command_pool, nullptr); });
+
+        // 分配上传指令缓冲
+        VkCommandBufferAllocateInfo cmd_alloc_info = vkinit::CommandBufferAllocateInfo(m_upload_context.command_pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+        YUTREL_ASSERT(vkAllocateCommandBuffers(m_device, &cmd_alloc_info, &m_upload_context.command_buffer) == VK_SUCCESS, "Failed to allocate upload command buffer");
     }
 
 } // namespace Yutrel
