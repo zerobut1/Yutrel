@@ -40,9 +40,15 @@ namespace Yutrel
         void InitDepthImage();
         //------------------------
 
-    public:
-        // 内存分配器
-        VmaAllocator allocator;
+    private:
+        // 同时渲染的帧数
+        static constexpr uint8_t FRAME_OVERLAP{2};
+
+        // 允许验证层
+        bool m_enable_validation_layers{true};
+
+        // 当前帧数
+        uint32_t m_cur_frame{0};
 
         // 删除队列
         struct DeletionQueue
@@ -65,17 +71,7 @@ namespace Yutrel
                 deletors.clear();
             }
         };
-        DeletionQueue main_deletion_queue;
-
-    private:
-        // 同时渲染的帧数
-        static constexpr uint8_t FRAME_OVERLAP{2};
-
-        // 允许验证层
-        bool m_enable_validation_layers{true};
-
-        // 当前帧数
-        uint32_t m_cur_frame{0};
+        DeletionQueue m_main_deletion_queue;
 
         // vulkan交换范围
         VkExtent2D m_window_extent;
@@ -95,6 +91,8 @@ namespace Yutrel
         // 队列
         VkQueue m_graphics_queue;
         uint32_t m_graphics_queue_family;
+        // 内存分配器
+        VmaAllocator m_allocator;
 
         // 单次指令的指令池
         VkCommandPool m_rhi_command_pool;

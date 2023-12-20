@@ -31,7 +31,7 @@ namespace Yutrel
     void VulkanRHI::Clear()
     {
         // 删除队列清空
-        main_deletion_queue.flush();
+        m_main_deletion_queue.flush();
 
         // 销毁窗口表面
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
@@ -110,12 +110,12 @@ namespace Yutrel
         allocator_info.physicalDevice = m_physical_device;
         allocator_info.device         = m_device;
         allocator_info.instance       = m_instance;
-        vmaCreateAllocator(&allocator_info, &allocator);
+        vmaCreateAllocator(&allocator_info, &m_allocator);
 
         // 加入销毁队列
-        main_deletion_queue
+        m_main_deletion_queue
             .PushFunction([=]()
-                          { vmaDestroyAllocator(allocator); });
+                          { vmaDestroyAllocator(m_allocator); });
     }
 
     void VulkanRHI::InitCommands()
@@ -133,7 +133,7 @@ namespace Yutrel
             YUTREL_ASSERT(vkAllocateCommandBuffers(m_device, &cmd_alloc_info, &m_frames[i].main_command_buffer) == VK_SUCCESS, "Failed to allocate command buffer");
 
             // 放入删除队列
-            main_deletion_queue
+            m_main_deletion_queue
                 .PushFunction([=]()
                               { vkDestroyCommandPool(m_device, m_frames[i].command_pool, nullptr); });
         }
@@ -143,7 +143,7 @@ namespace Yutrel
 
         YUTREL_ASSERT(vkCreateCommandPool(m_device, &upload_command_pool_info, nullptr, &m_rhi_command_pool) == VK_SUCCESS, "Failed to create upload command pool");
 
-        main_deletion_queue
+        m_main_deletion_queue
             .PushFunction([=]()
                           { vkDestroyCommandPool(m_device, m_rhi_command_pool, nullptr); });
     }
@@ -173,7 +173,7 @@ namespace Yutrel
         YUTREL_ASSERT(vkCreateDescriptorPool(m_device, &pool_create_info, nullptr, &m_descriptor_pool) == VK_SUCCESS, "Failed to create descriptor pool");
 
         // 加入删除队列
-        main_deletion_queue
+        m_main_deletion_queue
             .PushFunction([&]()
                           { vkDestroyDescriptorPool(m_device, m_descriptor_pool, nullptr); });
     }
@@ -190,7 +190,7 @@ namespace Yutrel
             YUTREL_ASSERT(vkCreateFence(m_device, &fence_create_info, nullptr, &m_frames[i].render_fence) == VK_SUCCESS, "Failed to create fence");
 
             // 放入删除队列
-            main_deletion_queue
+            m_main_deletion_queue
                 .PushFunction([=]()
                               { vkDestroyFence(m_device, m_frames[i].render_fence, nullptr); });
 
@@ -198,7 +198,7 @@ namespace Yutrel
             YUTREL_ASSERT(vkCreateSemaphore(m_device, &semaphore_create_info, nullptr, &m_frames[i].available_for_render_semaphore) == VK_SUCCESS, "Failed to create semaphore");
 
             // 放入删除队列
-            main_deletion_queue
+            m_main_deletion_queue
                 .PushFunction([=]()
                               { vkDestroySemaphore(m_device, m_frames[i].finished_for_presentation_semaphore, nullptr);
                           vkDestroySemaphore(m_device, m_frames[i].available_for_render_semaphore, nullptr); });
@@ -227,7 +227,7 @@ namespace Yutrel
         m_swapchain_image_views  = vkb_swapchain.get_image_views().value();
 
         // 放入删除队列
-        main_deletion_queue
+        m_main_deletion_queue
             .PushFunction([=]()
                           {
             vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
@@ -243,7 +243,7 @@ namespace Yutrel
         m_depth_format = VK_FORMAT_D32_SFLOAT;
 
         m_depth_image =
-            vkutil::CreateImage(allocator,
+            vkutil::CreateImage(m_allocator,
                                 m_window_extent.width,
                                 m_window_extent.height,
                                 m_depth_format,
@@ -257,11 +257,11 @@ namespace Yutrel
         m_depth_image_view = vkutil::CreateImageView(m_device, m_depth_image.image, m_depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1, 1);
 
         // 加入删除队列
-        main_deletion_queue
+        m_main_deletion_queue
             .PushFunction([=]()
                           {
                         vkDestroyImageView(m_device, m_depth_image_view, nullptr);
-                        vmaDestroyImage(allocator, m_depth_image.image, m_depth_image.allocation); });
+                        vmaDestroyImage(m_allocator, m_depth_image.image, m_depth_image.allocation); });
     }
 
 } // namespace Yutrel
