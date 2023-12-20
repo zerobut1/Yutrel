@@ -5,6 +5,7 @@
 namespace Yutrel
 {
     class RHI;
+    class RenderPipeline;
 
     class VulkanRenderer : public Renderer
     {
@@ -15,6 +16,6 @@ namespace Yutrel
 
     private:
         Ref<RHI> m_rhi;
-        // todo Pipeline
+        Ref<RenderPipeline> m_render_pipeline;
     };
 } // namespace Yutrel

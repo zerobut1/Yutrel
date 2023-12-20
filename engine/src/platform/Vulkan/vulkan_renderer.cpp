@@ -2,6 +2,7 @@
 
 #include "vulkan_renderer.hpp"
 
+#include "platform/Vulkan/pipeline/vulkan_pipeline.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 
 namespace Yutrel
@@ -17,7 +18,11 @@ namespace Yutrel
         m_rhi = CreateRef<VulkanRHI>();
         m_rhi->Init(rhi_init_info);
 
-        // todo 初始化pipeline
+        // 初始化pipeline
+        RenderPipelineInitInfo pipeline_init_info{};
+        m_render_pipeline = CreateRef<VulkanPipeline>();
+        m_render_pipeline->SetRHI(m_rhi);
+        m_render_pipeline->Init(pipeline_init_info);
     }
 
     void VulkanRenderer::Clear()
@@ -28,6 +33,13 @@ namespace Yutrel
             m_rhi->Clear();
         }
         m_rhi.reset();
+
+        // 清除Pipeline
+        if (m_render_pipeline)
+        {
+            m_render_pipeline->Clear();
+        }
+        m_render_pipeline.reset();
     }
 
 } // namespace Yutrel
