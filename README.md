@@ -1,5 +1,18 @@
 # Yutrel
-个人所制作的一个小渲染器，也可以认为是小引擎的雏形，主要目的在于个人学习现代OpenGL、C++11/c++17，以及加深对游戏引擎架构的理解，同时方便个人学习并实现诸多图形学算法。
+个人所制作的一个小渲染器，也可以认为是小引擎的雏形，主要目的在于个人学习OpenGL、Vulkan、c++17，以及加深对游戏引擎架构的理解，同时方便个人学习并实现诸多图形学算法。
+
+## WIP
+
+目前已全面转向Vulkan，OpenGL的部分现已废弃，下方的部分作为历史留档，已不具备实际意义
+
+## 参考项目
+
+[bevy](https://github.com/bevyengine/bevy)
+[gecs](https://github.com/VisualGMQ/gecs)
+[Vulkan Guide](https://github.com/VisualGMQ/gecs)
+[Piccolo](https://github.com/BoomingTech/Piccolo)
+
+# 历史
 
 ## 特点
 
