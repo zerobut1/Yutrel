@@ -11,7 +11,7 @@
 
 [gecs](https://github.com/VisualGMQ/gecs)
 
-[Vulkan Guide](https://github.com/VisualGMQ/gecs)
+[Vulkan Guide](https://github.com/vblanco20-1/vulkan-guide)
 
 [Piccolo](https://github.com/BoomingTech/Piccolo)
 

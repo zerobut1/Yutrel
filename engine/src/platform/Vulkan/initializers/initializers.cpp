@@ -50,5 +50,21 @@ namespace Yutrel
 
             return info;
         }
+
+        VkFramebufferCreateInfo FramebufferCreateInfo(VkRenderPass render_pass, VkExtent2D extent)
+        {
+            VkFramebufferCreateInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            info.pNext = nullptr;
+
+            info.renderPass      = render_pass;
+            info.attachmentCount = 1;
+            info.width           = extent.width;
+            info.height          = extent.height;
+            info.layers          = 1;
+
+            return info;
+        }
+
     } // namespace vkinit
 } // namespace Yutrel

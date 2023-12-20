@@ -3,6 +3,7 @@
 #include "vulkan_rhi.hpp"
 
 #include "platform/Vulkan/initializers/initializers.hpp"
+#include "platform/Vulkan/utils/vulkan_utils.hpp"
 
 #include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
@@ -23,6 +24,8 @@ namespace Yutrel
         InitSyncStructures();
 
         InitSwapchain();
+
+        InitDepthImage();
     }
 
     void VulkanRHI::Clear()
@@ -178,8 +181,8 @@ namespace Yutrel
     void VulkanRHI::InitSyncStructures()
     {
         // 同步设施创建信息
-        auto fence_create_info     = vkinit::FenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
-        auto semaphore_create_info = vkinit::SemaphoreCreateInfo(0);
+        VkFenceCreateInfo fence_create_info         = vkinit::FenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
+        VkSemaphoreCreateInfo semaphore_create_info = vkinit::SemaphoreCreateInfo(0);
 
         // 为并行的每一帧创建
         for (int i = 0; i < FRAME_OVERLAP; i++)
@@ -233,6 +236,32 @@ namespace Yutrel
             {
                 vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
             } });
+    }
+
+    void VulkanRHI::InitDepthImage()
+    {
+        m_depth_format = VK_FORMAT_D32_SFLOAT;
+
+        m_depth_image =
+            vkutil::CreateImage(allocator,
+                                m_window_extent.width,
+                                m_window_extent.height,
+                                m_depth_format,
+                                VK_IMAGE_TILING_OPTIMAL,
+                                VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                0,
+                                1,
+                                1);
+
+        m_depth_image_view = vkutil::CreateImageView(m_device, m_depth_image.image, m_depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1, 1);
+
+        // 加入删除队列
+        main_deletion_queue
+            .PushFunction([=]()
+                          {
+                        vkDestroyImageView(m_device, m_depth_image_view, nullptr);
+                        vmaDestroyImage(allocator, m_depth_image.image, m_depth_image.allocation); });
     }
 
 } // namespace Yutrel

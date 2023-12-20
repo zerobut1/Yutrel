@@ -17,6 +17,10 @@ namespace Yutrel
 
         // 信号量创建信息
         VkSemaphoreCreateInfo SemaphoreCreateInfo(VkSemaphoreCreateFlags flags);
+
+        // 帧缓冲创建信息
+        VkFramebufferCreateInfo FramebufferCreateInfo(VkRenderPass render_pass, VkExtent2D extent);
+        
     } // namespace vkinit
 
 } // namespace Yutrel

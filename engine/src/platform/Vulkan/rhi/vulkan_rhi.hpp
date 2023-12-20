@@ -37,7 +37,7 @@ namespace Yutrel
         // 同步设施
         void InitSyncStructures();
         // 帧缓冲
-        // void InitFramebuffers();
+        void InitDepthImage();
         //------------------------
 
     public:
@@ -111,5 +111,10 @@ namespace Yutrel
         // 交换链图像
         std::vector<VkImage> m_swapchain_images;
         std::vector<VkImageView> m_swapchain_image_views;
+
+        // 深度图像
+        AllocatedImage m_depth_image;
+        VkImageView m_depth_image_view;
+        VkFormat m_depth_format;
     };
 } // namespace Yutrel
