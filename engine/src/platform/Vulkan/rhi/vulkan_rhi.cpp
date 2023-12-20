@@ -22,7 +22,7 @@ namespace Yutrel
 
         InitSyncStructures();
 
-        // InitSwapchain();
+        InitSwapchain();
     }
 
     void VulkanRHI::Clear()
@@ -115,33 +115,6 @@ namespace Yutrel
                           { vmaDestroyAllocator(allocator); });
     }
 
-    void VulkanRHI::InitSwapchain()
-    {
-        // vkb创建交换链
-        vkb::SwapchainBuilder swapchain_builder{m_physical_device, m_device, m_surface};
-
-        vkb::Swapchain vkb_swapchain =
-            swapchain_builder
-                .use_default_format_selection()
-                // 设为FIFO，使其限制为显示器帧数
-                .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-                .set_desired_extent(m_window_extent.width, m_window_extent.height)
-                .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-                .build()
-                .value();
-
-        // 获取交换链和图像
-        m_swapchain              = vkb_swapchain.swapchain;
-        m_swapchain_image_format = vkb_swapchain.image_format;
-        m_swapchain_images       = vkb_swapchain.get_images().value();
-        m_swapchain_image_views  = vkb_swapchain.get_image_views().value();
-
-        // 放入删除队列
-        main_deletion_queue
-            .PushFunction([=]()
-                          { vkDestroySwapchainKHR(m_device, m_swapchain, nullptr); });
-    }
-
     void VulkanRHI::InitCommands()
     {
         // 为并行的每一帧分别创建指令池
@@ -227,6 +200,39 @@ namespace Yutrel
                               { vkDestroySemaphore(m_device, m_frames[i].finished_for_presentation_semaphore, nullptr);
                           vkDestroySemaphore(m_device, m_frames[i].available_for_render_semaphore, nullptr); });
         }
+    }
+
+    void VulkanRHI::InitSwapchain()
+    {
+        // vkb创建交换链
+        vkb::SwapchainBuilder swapchain_builder{m_physical_device, m_device, m_surface};
+
+        vkb::Swapchain vkb_swapchain =
+            swapchain_builder
+                .use_default_format_selection()
+                .set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
+                .set_desired_extent(m_window_extent.width, m_window_extent.height)
+                .add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+                // .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+                .build()
+                .value();
+
+        // 获取交换链和图像
+        m_swapchain              = vkb_swapchain.swapchain;
+        m_swapchain_image_format = vkb_swapchain.image_format;
+        m_swapchain_images       = vkb_swapchain.get_images().value();
+        m_swapchain_image_views  = vkb_swapchain.get_image_views().value();
+
+        // 放入删除队列
+        main_deletion_queue
+            .PushFunction([=]()
+                          {
+            vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+            
+            for(int i=0;i<m_swapchain_image_views.size();i++)
+            {
+                vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
+            } });
     }
 
 } // namespace Yutrel

@@ -36,6 +36,8 @@ namespace Yutrel
         void InitDescriptorPool();
         // 同步设施
         void InitSyncStructures();
+        // 帧缓冲
+        // void InitFramebuffers();
         //------------------------
 
     public:
