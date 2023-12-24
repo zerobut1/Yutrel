@@ -51,8 +51,11 @@ namespace Yutrel
         LOG_INFO("Initialize Vulkan RHI");
 
         // 记录交换范围大小
-        m_window_extent.width  = width;
-        m_window_extent.height = height;
+        m_swapchain_extent.width  = width;
+        m_swapchain_extent.height = height;
+
+        m_viewport = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
+        m_scissor  = {{0, 0}, m_swapchain_extent};
 
         // vkb创建器
         vkb::InstanceBuilder builder;
@@ -214,7 +217,7 @@ namespace Yutrel
             swapchain_builder
                 .use_default_format_selection()
                 .set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
-                .set_desired_extent(m_window_extent.width, m_window_extent.height)
+                .set_desired_extent(m_swapchain_extent.width, m_swapchain_extent.height)
                 .add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
                 // .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
                 .build()
@@ -244,8 +247,8 @@ namespace Yutrel
 
         m_depth_image =
             vkutil::CreateImage(m_allocator,
-                                m_window_extent.width,
-                                m_window_extent.height,
+                                m_swapchain_extent.width,
+                                m_swapchain_extent.height,
                                 m_depth_format,
                                 VK_IMAGE_TILING_OPTIMAL,
                                 VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
@@ -266,12 +269,14 @@ namespace Yutrel
 
     RHISwapChainDesc VulkanRHI::GetSwapChainInfo()
     {
-        RHISwapChainDesc dese{};
-        dese.extent       = m_window_extent;
-        dese.image_format = m_swapchain_image_format;
-        dese.image_views  = &m_swapchain_image_views;
+        RHISwapChainDesc desc{};
+        desc.extent       = m_swapchain_extent;
+        desc.image_format = m_swapchain_image_format;
+        desc.viewport     = m_viewport;
+        desc.scissor      = m_scissor;
+        desc.image_views  = &m_swapchain_image_views;
 
-        return dese;
+        return desc;
     }
 
     bool VulkanRHI::CreateRenderPass(const VkRenderPassCreateInfo& info, VkRenderPass* render_pass)

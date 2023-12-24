@@ -86,9 +86,6 @@ namespace Yutrel
         };
         DeletionQueue m_main_deletion_queue;
 
-        // vulkan交换范围
-        VkExtent2D m_window_extent;
-
         // vulkan实例
         VkInstance m_instance;
         // vulkan DebugMessenger
@@ -116,9 +113,14 @@ namespace Yutrel
         // 描述符池
         VkDescriptorPool m_descriptor_pool;
 
+        // 视口和裁剪
+        VkViewport m_viewport;
+        VkRect2D m_scissor;
         // 交换链
         VkSwapchainKHR m_swapchain;
         VkFormat m_swapchain_image_format;
+        // 交换范围
+        VkExtent2D m_swapchain_extent;
         // 交换链图像
         std::vector<VkImage> m_swapchain_images;
         std::vector<VkImageView> m_swapchain_image_views;

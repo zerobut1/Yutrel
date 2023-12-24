@@ -1,3 +1,5 @@
+#include "yutrel_pch.hpp"
+
 #include "initializers.hpp"
 
 namespace Yutrel

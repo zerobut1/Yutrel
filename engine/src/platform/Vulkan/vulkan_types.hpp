@@ -47,7 +47,40 @@ namespace Yutrel
     {
         VkExtent2D extent;
         VkFormat image_format;
+        VkViewport viewport;
+        VkRect2D scissor;
         std::vector<VkImageView>* image_views;
+    };
+
+    // 图形管线创建信息
+    struct RHIGraphicsPipelineCreateInfo
+    {
+        // 视口
+        VkViewport viewport;
+
+        // 剪刀
+        VkRect2D scissor;
+
+        // 着色器阶段
+        std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+
+        // 顶点输入阶段
+        VkPipelineVertexInputStateCreateInfo vertex_input_info;
+
+        // 图元装配
+        VkPipelineInputAssemblyStateCreateInfo input_assembly;
+
+        // 光栅化阶段
+        VkPipelineRasterizationStateCreateInfo rasterizer;
+
+        // MSAA
+        VkPipelineMultisampleStateCreateInfo multisampling;
+
+        // 颜色混合
+        VkPipelineColorBlendAttachmentState color_blend_attachment;
+
+        // 渲染管线布局
+        VkPipelineLayout pipeline_layout;
     };
 
 } // namespace Yutrel

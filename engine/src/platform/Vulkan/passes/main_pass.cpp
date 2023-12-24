@@ -11,6 +11,7 @@ namespace Yutrel
     {
         InitRenderPass();
         InitFramebuffer();
+        InitPipeline();
     }
 
     void MainPass::InitRenderPass()
@@ -63,6 +64,12 @@ namespace Yutrel
 
             YUTREL_ASSERT(m_rhi->CreateFramebuffer(info, &m_swapchain_framebuffers[i]), "Failed to create framebuffer");
         }
+    }
+
+    void MainPass::InitPipeline()
+    {
+        RHIGraphicsPipelineCreateInfo pipeline_create_info{};
+
     }
 
 } // namespace Yutrel
