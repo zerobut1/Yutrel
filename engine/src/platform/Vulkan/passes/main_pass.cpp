@@ -2,6 +2,7 @@
 
 #include "main_pass.hpp"
 
+#include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 
 namespace Yutrel
@@ -9,6 +10,7 @@ namespace Yutrel
     void MainPass::Init(RenderPassInitInfo* info)
     {
         InitRenderPass();
+        InitFramebuffer();
     }
 
     void MainPass::InitRenderPass()
@@ -45,4 +47,22 @@ namespace Yutrel
 
         YUTREL_ASSERT(m_rhi->CreateRenderPass(render_pass_info, &m_render_pass), "Failed to create render pass");
     }
+
+    void MainPass::InitFramebuffer()
+    {
+        // 为交换链的每一个图像视图创建帧缓冲
+        const auto& swapchain_info = m_rhi->GetSwapChainInfo();
+
+        m_swapchain_framebuffers.resize(swapchain_info.image_views->size());
+
+        VkFramebufferCreateInfo info = vkinit::FramebufferCreateInfo(m_render_pass, swapchain_info.extent);
+
+        for (int i = 0; i < swapchain_info.image_views->size(); i++)
+        {
+            info.pAttachments = &(*swapchain_info.image_views)[i];
+
+            YUTREL_ASSERT(m_rhi->CreateFramebuffer(info, &m_swapchain_framebuffers[i]), "Failed to create framebuffer");
+        }
+    }
+
 } // namespace Yutrel

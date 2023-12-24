@@ -269,6 +269,7 @@ namespace Yutrel
         RHISwapChainDesc dese{};
         dese.extent       = m_window_extent;
         dese.image_format = m_swapchain_image_format;
+        dese.image_views  = &m_swapchain_image_views;
 
         return dese;
     }
@@ -280,6 +281,17 @@ namespace Yutrel
         m_main_deletion_queue
             .PushFunction([=]()
                           { vkDestroyRenderPass(m_device, *render_pass, nullptr); });
+
+        return result;
+    }
+
+    bool VulkanRHI::CreateFramebuffer(const VkFramebufferCreateInfo& info, VkFramebuffer* framebuffer)
+    {
+        bool result = vkCreateFramebuffer(m_device, &info, nullptr, framebuffer) == VK_SUCCESS;
+
+        m_main_deletion_queue
+            .PushFunction([=]()
+                          { vkDestroyFramebuffer(m_device, *framebuffer, nullptr); });
 
         return result;
     }

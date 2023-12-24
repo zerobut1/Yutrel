@@ -30,6 +30,7 @@ namespace Yutrel
 
         //---------创建对象------------
         bool CreateRenderPass(const VkRenderPassCreateInfo& info, VkRenderPass* render_pass);
+        bool CreateFramebuffer(const VkFramebufferCreateInfo& info, VkFramebuffer* framebuffer);
 
     private:
         // 获取当前帧

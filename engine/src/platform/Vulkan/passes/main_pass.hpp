@@ -14,7 +14,9 @@ namespace Yutrel
 
     private:
         void InitRenderPass();
+        void InitFramebuffer();
 
     private:
+        std::vector<VkFramebuffer> m_swapchain_framebuffers;
     };
 } // namespace Yutrel
