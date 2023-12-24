@@ -1,6 +1,5 @@
 #pragma once
 
-#include "function/render/rhi.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
 
 #include <array>
@@ -12,12 +11,25 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
-    class VulkanRHI : public RHI
+    struct RHIInitInfo
+    {
+        GLFWwindow* raw_window;
+        uint32_t width;
+        uint32_t height;
+    };
+
+    class VulkanRHI
     {
     public:
-        virtual void Init(RHIInitInfo info) override;
+        void Init(RHIInitInfo info);
 
-        virtual void Clear() override;
+        void Clear();
+
+        //---------获取信息------------
+        RHISwapChainDesc GetSwapChainInfo();
+
+        //---------创建对象------------
+        bool CreateRenderPass(const VkRenderPassCreateInfo& info, VkRenderPass* render_pass);
 
     private:
         // 获取当前帧

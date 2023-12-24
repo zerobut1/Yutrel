@@ -3,6 +3,9 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
+#include <string>
+#include <vector>
+
 namespace Yutrel
 {
     // 分配缓冲区
@@ -37,6 +40,13 @@ namespace Yutrel
         // // 对象缓冲
         // AllocatedBuffer object_buffer;
         // VkDescriptorSet object_descriptor;
+    };
+
+    // 交换链信息
+    struct RHISwapChainDesc
+    {
+        VkExtent2D extent;
+        VkFormat image_format;
     };
 
 } // namespace Yutrel

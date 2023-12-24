@@ -4,8 +4,8 @@
 
 namespace Yutrel
 {
-    class RHI;
-    class RenderPipeline;
+    class VulkanRHI;
+    class VulkanPipeline;
 
     class VulkanRenderer : public Renderer
     {
@@ -15,7 +15,7 @@ namespace Yutrel
         virtual void Clear() override;
 
     private:
-        Ref<RHI> m_rhi;
-        Ref<RenderPipeline> m_render_pipeline;
+        Ref<VulkanRHI> m_rhi;
+        Ref<VulkanPipeline> m_render_pipeline;
     };
 } // namespace Yutrel

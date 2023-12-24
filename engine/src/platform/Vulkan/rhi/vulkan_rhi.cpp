@@ -264,4 +264,24 @@ namespace Yutrel
                         vmaDestroyImage(m_allocator, m_depth_image.image, m_depth_image.allocation); });
     }
 
+    RHISwapChainDesc VulkanRHI::GetSwapChainInfo()
+    {
+        RHISwapChainDesc dese{};
+        dese.extent       = m_window_extent;
+        dese.image_format = m_swapchain_image_format;
+
+        return dese;
+    }
+
+    bool VulkanRHI::CreateRenderPass(const VkRenderPassCreateInfo& info, VkRenderPass* render_pass)
+    {
+        bool result = vkCreateRenderPass(m_device, &info, nullptr, render_pass) == VK_SUCCESS;
+
+        m_main_deletion_queue
+            .PushFunction([=]()
+                          { vkDestroyRenderPass(m_device, *render_pass, nullptr); });
+
+        return result;
+    }
+
 } // namespace Yutrel

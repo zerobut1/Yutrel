@@ -1,10 +1,11 @@
 #pragma once
 
 #include "core/macro.hpp"
+#include "platform/Vulkan/vulkan_types.hpp"
 
 namespace Yutrel
 {
-    class RHI;
+    class VulkanRHI;
 
     struct RenderPassInitInfo
     {};
@@ -14,9 +15,11 @@ namespace Yutrel
     public:
         virtual void Init(RenderPassInitInfo* info) = 0;
 
-        void SetRHI(Ref<RHI> rhi) { m_rhi = rhi; }
+        void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
 
     protected:
-        Ref<RHI> m_rhi;
+        Ref<VulkanRHI> m_rhi;
+
+        VkRenderPass m_render_pass;
     };
 } // namespace Yutrel

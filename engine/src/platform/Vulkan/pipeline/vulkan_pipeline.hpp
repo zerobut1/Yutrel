@@ -1,20 +1,28 @@
 #pragma once
 
 #include "core/macro.hpp"
-#include "function/render/pipeline.hpp"
 
 namespace Yutrel
 {
+    class VulkanRHI;
     class RenderPass;
 
-    class VulkanPipeline : public RenderPipeline
+    struct RenderPipelineInitInfo
+    {
+    };
+
+    class VulkanPipeline
     {
     public:
-        virtual void Init(RenderPipelineInitInfo info) override;
+        void Init(RenderPipelineInitInfo info);
 
-        virtual void Clear() override;
+        void Clear();
+
+        void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
 
     private:
+        Ref<VulkanRHI> m_rhi;
+
         Ref<RenderPass> m_main_pass;
     };
 } // namespace Yutrel

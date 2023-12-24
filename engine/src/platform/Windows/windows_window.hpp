@@ -22,7 +22,7 @@ namespace Yutrel
         virtual void Tick() const override;
         virtual void SetTitle(const std::string& title) override;
         virtual bool ShouldClose() const override;
-        virtual void* GetRaw() const override { return m_window; }
+        virtual GLFWwindow* GetRaw() const override { return m_window; }
         virtual uint32_t Getwidth() const override { return m_width; };
         virtual uint32_t GetHeight() const override { return m_height; };
 

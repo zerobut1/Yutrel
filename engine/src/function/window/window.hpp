@@ -17,6 +17,8 @@
 #include <stdint.h>
 #include <string>
 
+struct GLFWwindow;
+
 namespace Yutrel
 {
     class Window
@@ -25,7 +27,7 @@ namespace Yutrel
         virtual void Tick() const                       = 0;
         virtual void SetTitle(const std::string& title) = 0;
         virtual bool ShouldClose() const                = 0;
-        virtual void* GetRaw() const                    = 0;
+        virtual GLFWwindow* GetRaw() const              = 0;
         virtual uint32_t Getwidth() const               = 0;
         virtual uint32_t GetHeight() const              = 0;
 
