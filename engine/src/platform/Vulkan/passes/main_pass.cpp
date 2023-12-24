@@ -4,6 +4,7 @@
 
 #include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
+#include <vector>
 
 namespace Yutrel
 {
@@ -70,6 +71,30 @@ namespace Yutrel
     {
         RHIGraphicsPipelineCreateInfo pipeline_create_info{};
 
+        //-------------着色器模块-------------
+        std::vector<unsigned char> triangle_vert_code{
+#include "triangle.vert.spv.h"
+        };
+        std::vector<unsigned char> triangle_frag_code{
+#include "triangle.frag.spv.h"
+        };
+
+        // 因为着色器中出现错误很常见，所以此处不用assert
+        VkShaderModule triangle_vert_shader;
+        if (!m_rhi->CreateShaderModule(triangle_vert_code, &triangle_vert_shader))
+        {
+            LOG_ERROR("Failed to create triangle vert shader");
+        }
+
+        VkShaderModule triangle_frag_shader;
+        if (!m_rhi->CreateShaderModule(triangle_frag_code, &triangle_frag_shader))
+        {
+            LOG_ERROR("Failed to create triangle frag shader");
+        }
+
+        // 删除着色器模块
+        m_rhi->DestroyShaderModule(triangle_vert_shader);
+        m_rhi->DestroyShaderModule(triangle_frag_shader);
     }
 
 } // namespace Yutrel

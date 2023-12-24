@@ -279,26 +279,50 @@ namespace Yutrel
         return desc;
     }
 
-    bool VulkanRHI::CreateRenderPass(const VkRenderPassCreateInfo& info, VkRenderPass* render_pass)
+    bool VulkanRHI::CreateRenderPass(const VkRenderPassCreateInfo& info, VkRenderPass* out_render_pass)
     {
-        bool result = vkCreateRenderPass(m_device, &info, nullptr, render_pass) == VK_SUCCESS;
+        VkRenderPass render_pass;
+        bool result = vkCreateRenderPass(m_device, &info, nullptr, &render_pass) == VK_SUCCESS;
 
         m_main_deletion_queue
             .PushFunction([=]()
-                          { vkDestroyRenderPass(m_device, *render_pass, nullptr); });
+                          { vkDestroyRenderPass(m_device, render_pass, nullptr); });
 
+        *out_render_pass = render_pass;
         return result;
     }
 
-    bool VulkanRHI::CreateFramebuffer(const VkFramebufferCreateInfo& info, VkFramebuffer* framebuffer)
+    bool VulkanRHI::CreateFramebuffer(const VkFramebufferCreateInfo& info, VkFramebuffer* out_framebuffer)
     {
-        bool result = vkCreateFramebuffer(m_device, &info, nullptr, framebuffer) == VK_SUCCESS;
+        VkFramebuffer framebuffer;
+        bool result = vkCreateFramebuffer(m_device, &info, nullptr, &framebuffer) == VK_SUCCESS;
 
         m_main_deletion_queue
             .PushFunction([=]()
-                          { vkDestroyFramebuffer(m_device, *framebuffer, nullptr); });
+                          { vkDestroyFramebuffer(m_device, framebuffer, nullptr); });
 
+        *out_framebuffer = framebuffer;
         return result;
+    }
+
+    bool VulkanRHI::CreateShaderModule(const std::vector<unsigned char>& shader_code, VkShaderModule* out_shader_module)
+    {
+        VkShaderModuleCreateInfo create_info{};
+        create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        create_info.pNext    = nullptr;
+        create_info.codeSize = shader_code.size();
+        create_info.pCode    = reinterpret_cast<const uint32_t*>(shader_code.data());
+
+        VkShaderModule shader_module;
+        bool result = vkCreateShaderModule(m_device, &create_info, nullptr, &shader_module) == VK_SUCCESS;
+
+        *out_shader_module = shader_module;
+        return result;
+    }
+
+    void VulkanRHI::DestroyShaderModule(VkShaderModule shader)
+    {
+        vkDestroyShaderModule(m_device, shader, nullptr);
     }
 
 } // namespace Yutrel
