@@ -1,0 +1,79 @@
+---
+Language: Cpp
+
+BasedOnStyle: LLVM
+
+# Visual Studio的风格
+UseTab: Never
+IndentWidth: 4
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+ColumnLimit: 0
+
+# 开括号后的对齐
+AlignAfterOpenBracket: Align
+
+# 缩进宽度
+IndentWidth: 4
+
+# 大括号换行风格
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterCaseLabel: true
+    AfterClass: true
+    AfterControlStatement: Always
+    AfterEnum: true
+    AfterFunction: true
+    AfterNamespace: true
+    AfterStruct: true
+    AfterUnion: true
+    AfterExternBlock: true
+    BeforeCatch: true
+    BeforeElse: true
+    BeforeLambdaBody: true
+    SplitEmptyFunction: true
+    SplitEmptyRecord: false
+    SplitEmptyNamespace: false
+
+#行注释前缀空格
+SpacesInLineCommentPrefix:
+    Minimum: 1
+    Maximum: -1
+
+# 对齐连续赋值
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: false
+
+# 允许参数在下一行上
+AllowAllArgumentsOnNextLine: false
+
+# 参数打包
+BinPackArguments: false
+
+# 大括号列表风格
+Cpp11BracedListStyle: true
+
+# 对齐尾部注释
+AlignTrailingComments: true
+
+# 命名空间缩进
+NamespaceIndentation: All
+
+# 访问修饰符缩进
+IndentAccessModifiers: false
+
+# 访问性修饰符偏移
+AccessModifierOffset: -4
+
+# 指针对齐风格
+PointerAlignment: Left
+
+# 允许短匿Lambda函数在单行上
+AllowShortLambdasOnASingleLine: Empty
+
+# Lambda表达式主体缩进
+LambdaBodyIndentation: Signature

@@ -201,9 +201,11 @@ namespace Yutrel
         vmaCreateAllocator(&allocator_info, &m_allocator);
 
         // 加入销毁队列
-        m_main_deletion_queue
-            .PushFunction([=]()
-                          { vmaDestroyAllocator(m_allocator); });
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vmaDestroyAllocator(m_allocator);
+            });
     }
 
     void VulkanRHI::InitCommands()
@@ -221,9 +223,11 @@ namespace Yutrel
             YUTREL_ASSERT(vkAllocateCommandBuffers(m_device, &cmd_alloc_info, &m_frames[i].main_command_buffer) == VK_SUCCESS, "Failed to allocate command buffer");
 
             // 放入删除队列
-            m_main_deletion_queue
-                .PushFunction([=]()
-                              { vkDestroyCommandPool(m_device, m_frames[i].command_pool, nullptr); });
+            m_main_deletion_queue.PushFunction(
+                [=]()
+                {
+                    vkDestroyCommandPool(m_device, m_frames[i].command_pool, nullptr);
+                });
         }
 
         // 创建单次指令指令池
@@ -231,9 +235,11 @@ namespace Yutrel
 
         YUTREL_ASSERT(vkCreateCommandPool(m_device, &upload_command_pool_info, nullptr, &m_rhi_command_pool) == VK_SUCCESS, "Failed to create upload command pool");
 
-        m_main_deletion_queue
-            .PushFunction([=]()
-                          { vkDestroyCommandPool(m_device, m_rhi_command_pool, nullptr); });
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyCommandPool(m_device, m_rhi_command_pool, nullptr);
+            });
     }
 
     void VulkanRHI::InitDescriptorPool()
@@ -261,9 +267,11 @@ namespace Yutrel
         YUTREL_ASSERT(vkCreateDescriptorPool(m_device, &pool_create_info, nullptr, &m_descriptor_pool) == VK_SUCCESS, "Failed to create descriptor pool");
 
         // 加入删除队列
-        m_main_deletion_queue
-            .PushFunction([&]()
-                          { vkDestroyDescriptorPool(m_device, m_descriptor_pool, nullptr); });
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyDescriptorPool(m_device, m_descriptor_pool, nullptr);
+            });
     }
 
     void VulkanRHI::InitSyncStructures()
@@ -278,18 +286,22 @@ namespace Yutrel
             YUTREL_ASSERT(vkCreateFence(m_device, &fence_create_info, nullptr, &m_frames[i].render_fence) == VK_SUCCESS, "Failed to create fence");
 
             // 放入删除队列
-            m_main_deletion_queue
-                .PushFunction([=]()
-                              { vkDestroyFence(m_device, m_frames[i].render_fence, nullptr); });
+            m_main_deletion_queue.PushFunction(
+                [=]()
+                {
+                    vkDestroyFence(m_device, m_frames[i].render_fence, nullptr);
+                });
 
             YUTREL_ASSERT(vkCreateSemaphore(m_device, &semaphore_create_info, nullptr, &m_frames[i].finished_for_presentation_semaphore) == VK_SUCCESS, "Failed to create semaphore");
             YUTREL_ASSERT(vkCreateSemaphore(m_device, &semaphore_create_info, nullptr, &m_frames[i].available_for_render_semaphore) == VK_SUCCESS, "Failed to create semaphore");
 
             // 放入删除队列
-            m_main_deletion_queue
-                .PushFunction([=]()
-                              { vkDestroySemaphore(m_device, m_frames[i].finished_for_presentation_semaphore, nullptr);
-                          vkDestroySemaphore(m_device, m_frames[i].available_for_render_semaphore, nullptr); });
+            m_main_deletion_queue.PushFunction(
+                [=]()
+                {
+                    vkDestroySemaphore(m_device, m_frames[i].finished_for_presentation_semaphore, nullptr);
+                    vkDestroySemaphore(m_device, m_frames[i].available_for_render_semaphore, nullptr);
+                });
         }
     }
 
@@ -315,15 +327,16 @@ namespace Yutrel
         m_swapchain_image_views  = vkb_swapchain.get_image_views().value();
 
         // 放入删除队列
-        m_main_deletion_queue
-            .PushFunction([=]()
-                          {
-            vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-            
-            for(int i=0;i<m_swapchain_image_views.size();i++)
+        m_main_deletion_queue.PushFunction(
+            [=]()
             {
-                vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
-            } });
+                vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+
+                for (int i = 0; i < m_swapchain_image_views.size(); i++)
+                {
+                    vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
+                }
+            });
     }
 
     void VulkanRHI::InitDepthImage()
@@ -345,11 +358,12 @@ namespace Yutrel
         m_depth_image_view = vkutil::CreateImageView(m_device, m_depth_image.image, m_depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1, 1);
 
         // 加入删除队列
-        m_main_deletion_queue
-            .PushFunction([=]()
-                          {
-                        vkDestroyImageView(m_device, m_depth_image_view, nullptr);
-                        vmaDestroyImage(m_allocator, m_depth_image.image, m_depth_image.allocation); });
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyImageView(m_device, m_depth_image_view, nullptr);
+                vmaDestroyImage(m_allocator, m_depth_image.image, m_depth_image.allocation);
+            });
     }
 
     RHISwapChainDesc VulkanRHI::GetSwapChainInfo()
@@ -369,9 +383,11 @@ namespace Yutrel
         VkRenderPass render_pass;
         bool result = vkCreateRenderPass(m_device, info, nullptr, &render_pass) == VK_SUCCESS;
 
-        m_main_deletion_queue
-            .PushFunction([=]()
-                          { vkDestroyRenderPass(m_device, render_pass, nullptr); });
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyRenderPass(m_device, render_pass, nullptr);
+            });
 
         *out_render_pass = render_pass;
         return result;
@@ -382,9 +398,11 @@ namespace Yutrel
         VkFramebuffer framebuffer;
         bool result = vkCreateFramebuffer(m_device, info, nullptr, &framebuffer) == VK_SUCCESS;
 
-        m_main_deletion_queue
-            .PushFunction([=]()
-                          { vkDestroyFramebuffer(m_device, framebuffer, nullptr); });
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+            });
 
         *out_framebuffer = framebuffer;
         return result;
@@ -415,9 +433,11 @@ namespace Yutrel
         VkPipelineLayout layout;
         bool result = vkCreatePipelineLayout(m_device, info, nullptr, &layout) == VK_SUCCESS;
 
-        m_main_deletion_queue
-            .PushFunction([=]()
-                          { vkDestroyPipelineLayout(m_device, layout, nullptr); });
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyPipelineLayout(m_device, layout, nullptr);
+            });
 
         *out_layout = layout;
         return result;
@@ -446,9 +466,11 @@ namespace Yutrel
 
         bool result = vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline) == VK_SUCCESS;
 
-        m_main_deletion_queue
-            .PushFunction([=]()
-                          { vkDestroyPipeline(m_device, pipeline, nullptr); });
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyPipeline(m_device, pipeline, nullptr);
+            });
 
         *out_pipeline = pipeline;
         return result;
