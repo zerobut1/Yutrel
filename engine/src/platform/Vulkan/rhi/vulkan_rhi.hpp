@@ -30,10 +30,12 @@ namespace Yutrel
         RHISwapChainDesc GetSwapChainInfo();
 
         //---------创建对象------------
-        bool CreateRenderPass(const VkRenderPassCreateInfo& info, VkRenderPass* out_render_pass);
-        bool CreateFramebuffer(const VkFramebufferCreateInfo& info, VkFramebuffer* out_framebuffer);
+        bool CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass);
+        bool CreateFramebuffer(const VkFramebufferCreateInfo* info, VkFramebuffer* out_framebuffer);
         bool CreateShaderModule(const std::vector<unsigned char>& shader_code, VkShaderModule* out_shader_module);
         void DestroyShaderModule(VkShaderModule shader);
+        bool CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout);
+        bool CreateGraphicsPipeline(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline);
 
     private:
         // 获取当前帧

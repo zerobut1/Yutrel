@@ -279,10 +279,10 @@ namespace Yutrel
         return desc;
     }
 
-    bool VulkanRHI::CreateRenderPass(const VkRenderPassCreateInfo& info, VkRenderPass* out_render_pass)
+    bool VulkanRHI::CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass)
     {
         VkRenderPass render_pass;
-        bool result = vkCreateRenderPass(m_device, &info, nullptr, &render_pass) == VK_SUCCESS;
+        bool result = vkCreateRenderPass(m_device, info, nullptr, &render_pass) == VK_SUCCESS;
 
         m_main_deletion_queue
             .PushFunction([=]()
@@ -292,10 +292,10 @@ namespace Yutrel
         return result;
     }
 
-    bool VulkanRHI::CreateFramebuffer(const VkFramebufferCreateInfo& info, VkFramebuffer* out_framebuffer)
+    bool VulkanRHI::CreateFramebuffer(const VkFramebufferCreateInfo* info, VkFramebuffer* out_framebuffer)
     {
         VkFramebuffer framebuffer;
-        bool result = vkCreateFramebuffer(m_device, &info, nullptr, &framebuffer) == VK_SUCCESS;
+        bool result = vkCreateFramebuffer(m_device, info, nullptr, &framebuffer) == VK_SUCCESS;
 
         m_main_deletion_queue
             .PushFunction([=]()
@@ -323,6 +323,50 @@ namespace Yutrel
     void VulkanRHI::DestroyShaderModule(VkShaderModule shader)
     {
         vkDestroyShaderModule(m_device, shader, nullptr);
+    }
+
+    bool VulkanRHI::CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout)
+    {
+        VkPipelineLayout layout;
+        bool result = vkCreatePipelineLayout(m_device, info, nullptr, &layout) == VK_SUCCESS;
+
+        m_main_deletion_queue
+            .PushFunction([=]()
+                          { vkDestroyPipelineLayout(m_device, layout, nullptr); });
+
+        *out_layout = layout;
+        return result;
+    }
+
+    bool VulkanRHI::CreateGraphicsPipeline(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline)
+    {
+        VkPipeline pipeline;
+
+        VkGraphicsPipelineCreateInfo pipeline_info{};
+        pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipeline_info.pNext = nullptr;
+
+        pipeline_info.stageCount          = info.shader_stages.size();
+        pipeline_info.pStages             = info.shader_stages.data();
+        pipeline_info.pVertexInputState   = &info.vertex_input;
+        pipeline_info.pInputAssemblyState = &info.input_assembly;
+        pipeline_info.pViewportState      = &info.viewport_state;
+        pipeline_info.pRasterizationState = &info.rasterizer;
+        pipeline_info.pMultisampleState   = &info.multisampling;
+        pipeline_info.pColorBlendState    = &info.color_blend;
+        pipeline_info.layout              = info.pipeline_layout;
+        pipeline_info.renderPass          = info.render_pass;
+        pipeline_info.subpass             = 0;
+        pipeline_info.basePipelineHandle  = VK_NULL_HANDLE;
+
+        bool result = vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline) == VK_SUCCESS;
+
+        m_main_deletion_queue
+            .PushFunction([=]()
+                          { vkDestroyPipeline(m_device, pipeline, nullptr); });
+
+        *out_pipeline = pipeline;
+        return result;
     }
 
 } // namespace Yutrel

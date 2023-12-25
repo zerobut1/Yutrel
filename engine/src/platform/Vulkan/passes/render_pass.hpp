@@ -2,6 +2,7 @@
 
 #include "core/macro.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
+#include <vector>
 
 namespace Yutrel
 {
@@ -21,5 +22,12 @@ namespace Yutrel
         Ref<VulkanRHI> m_rhi;
 
         VkRenderPass m_render_pass;
+
+        struct RenderPipelineBase
+        {
+            VkPipelineLayout layout;
+            VkPipeline pipeline;
+        };
+        std::vector<RenderPipelineBase> m_render_pipelines;
     };
 } // namespace Yutrel

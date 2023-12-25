@@ -47,7 +47,7 @@ namespace Yutrel
         render_pass_info.subpassCount    = 1;
         render_pass_info.pSubpasses      = &subpass;
 
-        YUTREL_ASSERT(m_rhi->CreateRenderPass(render_pass_info, &m_render_pass), "Failed to create render pass");
+        YUTREL_ASSERT(m_rhi->CreateRenderPass(&render_pass_info, &m_render_pass), "Failed to create render pass");
     }
 
     void MainPass::InitFramebuffer()
@@ -63,21 +63,23 @@ namespace Yutrel
         {
             info.pAttachments = &(*swapchain_info.image_views)[i];
 
-            YUTREL_ASSERT(m_rhi->CreateFramebuffer(info, &m_swapchain_framebuffers[i]), "Failed to create framebuffer");
+            YUTREL_ASSERT(m_rhi->CreateFramebuffer(&info, &m_swapchain_framebuffers[i]), "Failed to create framebuffer");
         }
     }
 
     void MainPass::InitPipeline()
     {
-        RHIGraphicsPipelineCreateInfo pipeline_create_info{};
+        m_render_pipelines.resize(1);
 
         //-------------着色器模块-------------
+        // clang-format off
         std::vector<unsigned char> triangle_vert_code{
-#include "triangle.vert.spv.h"
+            #include "triangle.vert.spv.h"
         };
         std::vector<unsigned char> triangle_frag_code{
-#include "triangle.frag.spv.h"
+            #include "triangle.frag.spv.h"
         };
+        // clang-format on
 
         // 因为着色器中出现错误很常见，所以此处不用assert
         VkShaderModule triangle_vert_shader;
@@ -92,7 +94,61 @@ namespace Yutrel
             LOG_ERROR("Failed to create triangle frag shader");
         }
 
-        // 删除着色器模块
+        //-----------管线布局-------------
+        VkPipelineLayoutCreateInfo layout_info = vkinit::PipelineLayoutCreateInfo();
+
+        YUTREL_ASSERT(m_rhi->CreatePipelineLayout(&layout_info, &m_render_pipelines[0].layout), "Failed to create pipeline layout");
+
+        //-----------视口状态------------
+        VkPipelineViewportStateCreateInfo viewport_state_info{};
+        viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewport_state_info.pNext = nullptr;
+
+        // 暂时只有一个视口一个剪刀
+        auto swapchain_info               = m_rhi->GetSwapChainInfo();
+        viewport_state_info.viewportCount = 1;
+        viewport_state_info.pViewports    = &swapchain_info.viewport;
+        viewport_state_info.scissorCount  = 1;
+        viewport_state_info.pScissors     = &swapchain_info.scissor;
+
+        //------------颜色混合-------------
+        VkPipelineColorBlendAttachmentState color_blend_attachment = vkinit::ColorBlendAttachmentState();
+        // 暂设为不混合
+        VkPipelineColorBlendStateCreateInfo color_blending_info{};
+        color_blending_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        color_blending_info.pNext = nullptr;
+
+        color_blending_info.logicOpEnable   = VK_FALSE;
+        color_blending_info.logicOp         = VK_LOGIC_OP_COPY;
+        color_blending_info.attachmentCount = 1;
+        color_blending_info.pAttachments    = &color_blend_attachment;
+
+        //------------创建管线-----------
+        RHIGraphicsPipelineCreateInfo pipeline_create_info{};
+        // 布局
+        pipeline_create_info.pipeline_layout = m_render_pipelines[0].layout;
+        // 着色器
+        pipeline_create_info.shader_stages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, triangle_vert_shader));
+        pipeline_create_info.shader_stages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangle_frag_shader));
+        // 顶点输入
+        pipeline_create_info.vertex_input = vkinit::VertexInputStateCreateInfo();
+        // 图元装配
+        pipeline_create_info.input_assembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+        // 视口状态
+        pipeline_create_info.viewport_state = viewport_state_info;
+        // 光栅化
+        pipeline_create_info.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
+        // msaa
+        pipeline_create_info.multisampling = vkinit::MultiSamplingStateCreateInfo();
+        // 颜色混合
+        pipeline_create_info.color_blend = color_blending_info;
+        // render pass
+        pipeline_create_info.render_pass = m_render_pass;
+        pipeline_create_info.subpass     = 0;
+
+        YUTREL_ASSERT(m_rhi->CreateGraphicsPipeline(pipeline_create_info, &m_render_pipelines[0].pipeline), "Failed to create graphics pipeline");
+
+        //------------删除着色器模块--------------
         m_rhi->DestroyShaderModule(triangle_vert_shader);
         m_rhi->DestroyShaderModule(triangle_frag_shader);
     }
