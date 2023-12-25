@@ -12,6 +12,8 @@ namespace Yutrel
     public:
         virtual void Init(RendererInitInfo info) override;
 
+        virtual void Tick() override;
+
         virtual void Clear() override;
 
     private:

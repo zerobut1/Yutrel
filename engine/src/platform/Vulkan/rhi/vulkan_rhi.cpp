@@ -30,6 +30,9 @@ namespace Yutrel
 
     void VulkanRHI::Clear()
     {
+        // 确保GPU已经工作完
+        vkDeviceWaitIdle(m_device);
+
         // 删除队列清空
         m_main_deletion_queue.flush();
 
@@ -44,6 +47,88 @@ namespace Yutrel
 
         // 销毁vulkan实例
         vkDestroyInstance(m_instance, nullptr);
+    }
+
+    void VulkanRHI::PrepareContext()
+    {
+        m_cur_command_buffer = GetCurrentFrame().main_command_buffer;
+    }
+
+    void VulkanRHI::WaitForFences()
+    {
+        YUTREL_ASSERT(vkWaitForFences(m_device, 1, &GetCurrentFrame().render_fence, VK_TRUE, UINT64_MAX) == VK_SUCCESS, "Failed to synchronize");
+    }
+
+    void VulkanRHI::ResetCommandPool()
+    {
+        YUTREL_ASSERT(vkResetCommandPool(m_device, GetCurrentFrame().command_pool, 0) == VK_SUCCESS, "Failed to reset command pool");
+    }
+
+    void VulkanRHI::PrepareBeforePass()
+    {
+        // 请求图像索引
+        // todo recreate swapchain
+        YUTREL_ASSERT(vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, VK_NULL_HANDLE, &m_cur_swapchain_image_index) == VK_SUCCESS, "Failed to acquire next image KHR");
+
+        // 开始指令缓冲
+        VkCommandBufferBeginInfo cmd_begin_info = vkinit::CommandBufferBeginInfo(0);
+
+        YUTREL_ASSERT(vkBeginCommandBuffer(GetCurrentFrame().main_command_buffer, &cmd_begin_info) == VK_SUCCESS, "Failed to begin command buffer");
+    }
+
+    void VulkanRHI::SubmitRendering()
+    {
+        // 终止指令缓冲
+        YUTREL_ASSERT(vkEndCommandBuffer(m_cur_command_buffer) == VK_SUCCESS, "Failed to end command buffer");
+
+        // --------------提交指令---------
+        VkSubmitInfo submit_info         = vkinit::SubmitInfo(&m_cur_command_buffer);
+        VkPipelineStageFlags wait_stage  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        submit_info.pWaitDstStageMask    = &wait_stage;
+        submit_info.waitSemaphoreCount   = 1;
+        submit_info.pWaitSemaphores      = &GetCurrentFrame().available_for_render_semaphore;
+        submit_info.signalSemaphoreCount = 1;
+        submit_info.pSignalSemaphores    = &GetCurrentFrame().finished_for_presentation_semaphore;
+
+        // 重设fence
+        YUTREL_ASSERT(vkResetFences(m_device, 1, &GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to reset fence");
+
+        // 提交到队列
+        YUTREL_ASSERT(vkQueueSubmit(m_graphics_queue, 1, &submit_info, GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to submit command");
+
+        //--------------显示图像------------
+        VkPresentInfoKHR present_info = vkinit::PresentInfo();
+
+        present_info.pSwapchains        = &m_swapchain;
+        present_info.swapchainCount     = 1;
+        present_info.pWaitSemaphores    = &GetCurrentFrame().finished_for_presentation_semaphore;
+        present_info.waitSemaphoreCount = 1;
+        present_info.pImageIndices      = &m_cur_swapchain_image_index;
+
+        // todo recreate swapchain
+        YUTREL_ASSERT(vkQueuePresentKHR(m_graphics_queue, &present_info) == VK_SUCCESS, "Failed to present");
+
+        m_cur_frame++;
+    }
+
+    void VulkanRHI::CmdBeginRenderPass(VkCommandBuffer cmd_buffer, const VkRenderPassBeginInfo* info, VkSubpassContents contents)
+    {
+        vkCmdBeginRenderPass(cmd_buffer, info, contents);
+    }
+
+    void VulkanRHI::CmdBindPipeline(VkCommandBuffer cmd_buffer, VkPipelineBindPoint bind_point, VkPipeline pipeline)
+    {
+        vkCmdBindPipeline(cmd_buffer, bind_point, pipeline);
+    }
+
+    void VulkanRHI::CmdEndRenderPass(VkCommandBuffer cmd_buffer)
+    {
+        vkCmdEndRenderPass(cmd_buffer);
+    }
+
+    void VulkanRHI::CmdDraw(VkCommandBuffer cmd_buffer, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_isnstance)
+    {
+        vkCmdDraw(cmd_buffer, vertex_count, instance_count, first_vertex, first_isnstance);
     }
 
     void VulkanRHI::InitVulkan(GLFWwindow* raw_window, uint32_t width, uint32_t height)

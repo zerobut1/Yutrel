@@ -42,6 +42,18 @@ namespace Yutrel
         // 颜色混合
         VkPipelineColorBlendAttachmentState ColorBlendAttachmentState();
 
+        // 命令缓冲区开始信息
+        VkCommandBufferBeginInfo CommandBufferBeginInfo(VkCommandBufferUsageFlags flags);
+
+        // renderpass开始信息
+        VkRenderPassBeginInfo RenderPassBeginInfo(VkRenderPass render_pass, VkExtent2D window_extent, VkFramebuffer framebuffer);
+
+        // 提交信息
+        VkSubmitInfo SubmitInfo(VkCommandBuffer* cmd_buffer);
+
+        // 展示信息
+        VkPresentInfoKHR PresentInfo();
+
     } // namespace vkinit
 
 } // namespace Yutrel

@@ -2,6 +2,8 @@
 
 #include "platform/Vulkan/passes/render_pass.hpp"
 
+#include <stdint.h>
+
 namespace Yutrel
 {
     struct MainPassInitInfo : RenderPassInitInfo
@@ -11,6 +13,8 @@ namespace Yutrel
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;
+
+        void DrawForward();
 
     private:
         void InitRenderPass();

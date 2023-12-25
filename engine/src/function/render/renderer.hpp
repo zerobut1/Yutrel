@@ -89,6 +89,8 @@ namespace Yutrel
     public:
         virtual void Init(RendererInitInfo info) = 0;
 
+        virtual void Tick() = 0;
+
         virtual void Clear() = 0;
     };
 
@@ -100,6 +102,8 @@ namespace Yutrel
 
         static void Init(gecs::resource<RenderResource> render,
                          gecs::resource<WindowResource> window);
+
+        static void Update(gecs::resource<RenderResource> render);
 
     private:
         Ref<Renderer> m_renderer;

@@ -25,6 +25,13 @@ namespace Yutrel
         m_render_pipeline->Init(pipeline_init_info);
     }
 
+    void VulkanRenderer::Tick()
+    {
+        m_rhi->PrepareContext();
+
+        m_render_pipeline->ForwardRender();
+    }
+
     void VulkanRenderer::Clear()
     {
         // 清除RHI

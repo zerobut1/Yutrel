@@ -52,4 +52,9 @@ namespace Yutrel
         render->m_renderer->Init(info);
     }
 
+    void RenderResource::Update(gecs::resource<RenderResource> render)
+    {
+        render->m_renderer->Tick();
+    }
+
 } // namespace Yutrel

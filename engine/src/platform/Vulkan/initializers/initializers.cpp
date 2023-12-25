@@ -174,5 +174,66 @@ namespace Yutrel
             return color_blend_attachment;
         }
 
+        VkCommandBufferBeginInfo CommandBufferBeginInfo(VkCommandBufferUsageFlags flags)
+        {
+            VkCommandBufferBeginInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            info.pNext = nullptr;
+
+            info.pInheritanceInfo = nullptr;
+            info.flags            = flags;
+
+            return info;
+        }
+
+        VkRenderPassBeginInfo RenderPassBeginInfo(VkRenderPass render_pass, VkExtent2D window_extent, VkFramebuffer framebuffer)
+        {
+            VkRenderPassBeginInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+            info.pNext = nullptr;
+
+            info.renderPass          = render_pass;
+            info.renderArea.offset.x = 0;
+            info.renderArea.offset.y = 0;
+            info.renderArea.extent   = window_extent;
+            info.clearValueCount     = 1;
+            info.pClearValues        = nullptr;
+            info.framebuffer         = framebuffer;
+
+            return info;
+        }
+
+        VkSubmitInfo SubmitInfo(VkCommandBuffer* cmd_buffer)
+        {
+            VkSubmitInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            info.pNext = nullptr;
+
+            info.waitSemaphoreCount   = 0;
+            info.pWaitSemaphores      = nullptr;
+            info.pWaitDstStageMask    = nullptr;
+            info.commandBufferCount   = 1;
+            info.pCommandBuffers      = cmd_buffer;
+            info.signalSemaphoreCount = 0;
+            info.pSignalSemaphores    = nullptr;
+
+            return info;
+        }
+
+        VkPresentInfoKHR PresentInfo()
+        {
+            VkPresentInfoKHR info{};
+            info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            info.pNext = nullptr;
+
+            info.swapchainCount     = 0;
+            info.pSwapchains        = nullptr;
+            info.pWaitSemaphores    = nullptr;
+            info.waitSemaphoreCount = 0;
+            info.pImageIndices      = nullptr;
+
+            return info;
+        }
+
     } // namespace vkinit
 } // namespace Yutrel

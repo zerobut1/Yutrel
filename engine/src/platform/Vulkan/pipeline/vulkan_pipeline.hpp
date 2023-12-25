@@ -16,7 +16,9 @@ namespace Yutrel
     public:
         void Init(RenderPipelineInitInfo info);
 
-        void Clear();
+        void Clear() {}
+
+        void ForwardRender();
 
         void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
 

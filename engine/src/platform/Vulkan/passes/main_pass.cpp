@@ -15,6 +15,27 @@ namespace Yutrel
         InitPipeline();
     }
 
+    void MainPass::DrawForward()
+    {
+        // 设定清除颜色
+        VkClearValue clear_value;
+        float flash       = abs(sin(m_rhi->GetCurrentFrameCount() / 144.0f));
+        clear_value.color = {{0.0f, 0.0f, flash, 1.0f}};
+
+        //----------Renderpass--------------
+        VkRenderPassBeginInfo render_pass_info = vkinit::RenderPassBeginInfo(m_render_pass, m_rhi->GetSwapChainInfo().extent, m_swapchain_framebuffers[m_rhi->GetCurrentSwapchainImageIndex()]);
+        render_pass_info.clearValueCount       = 1;
+        render_pass_info.pClearValues          = &clear_value;
+
+        m_rhi->CmdBeginRenderPass(m_rhi->GetCurrentCommandBuffer(), &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+
+        m_rhi->CmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
+
+        m_rhi->CmdDraw(m_rhi->GetCurrentCommandBuffer(), 3, 1, 0, 0);
+
+        m_rhi->CmdEndRenderPass(m_rhi->GetCurrentCommandBuffer());
+    }
+
     void MainPass::InitRenderPass()
     {
         // renderpass的颜色附件

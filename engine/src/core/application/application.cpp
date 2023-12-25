@@ -52,7 +52,8 @@ namespace Yutrel
         // 默认系统
         reg.regist_startup_system<Input::Init>()
             .regist_startup_system<RenderResource::Init>()
-            .regist_update_system<WindowResource::Update>();
+            .regist_update_system<WindowResource::Update>()
+            .regist_update_system<RenderResource::Update>();
 
         return *this;
     }

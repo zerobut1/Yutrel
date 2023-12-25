@@ -26,8 +26,37 @@ namespace Yutrel
 
         void Clear();
 
+        //----------Tick---------
+        void PrepareContext();
+
+        void WaitForFences();
+
+        void ResetCommandPool();
+
+        void PrepareBeforePass();
+
+        void SubmitRendering();
+
+        // ---------指令--------------
+        void CmdBeginRenderPass(VkCommandBuffer cmd_buffer, const VkRenderPassBeginInfo* info, VkSubpassContents contents);
+
+        void CmdBindPipeline(VkCommandBuffer cmd_buffer, VkPipelineBindPoint bind_point, VkPipeline pipeline);
+
+        void CmdEndRenderPass(VkCommandBuffer cmd_buffer);
+
+        void CmdDraw(VkCommandBuffer cmd_buffer, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_isnstance);
+
         //---------获取信息------------
+        uint32_t GetCurrentFrameCount()
+        {
+            return m_cur_frame;
+        }
+
+        uint32_t GetCurrentSwapchainImageIndex() { return m_cur_swapchain_image_index; }
+
         RHISwapChainDesc GetSwapChainInfo();
+
+        VkCommandBuffer GetCurrentCommandBuffer() const { return m_cur_command_buffer; }
 
         //---------创建对象------------
         bool CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass);
@@ -134,5 +163,11 @@ namespace Yutrel
         AllocatedImage m_depth_image;
         VkImageView m_depth_image_view;
         VkFormat m_depth_format;
+
+        // 当前指令缓冲
+        VkCommandBuffer m_cur_command_buffer;
+
+        // 当前交换链图像索引
+        uint32_t m_cur_swapchain_image_index;
     };
 } // namespace Yutrel

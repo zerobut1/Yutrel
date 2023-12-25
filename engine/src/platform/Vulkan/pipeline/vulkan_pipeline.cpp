@@ -4,6 +4,7 @@
 
 #include "platform/Vulkan/passes/main_pass.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
+#include <memory>
 
 namespace Yutrel
 {
@@ -17,8 +18,18 @@ namespace Yutrel
         m_main_pass->Init(&main_init_info);
     }
 
-    void VulkanPipeline::Clear()
+    void VulkanPipeline::ForwardRender()
     {
-        
+        m_rhi->WaitForFences();
+
+        m_rhi->ResetCommandPool();
+
+        // todo recreate swapchian
+        m_rhi->PrepareBeforePass();
+
+        std::dynamic_pointer_cast<MainPass>(m_main_pass)->DrawForward();
+
+        m_rhi->SubmitRendering();
     }
+
 } // namespace Yutrel
