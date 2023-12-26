@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/macro.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
 
 #include <array>
@@ -12,6 +13,9 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
+    // todo 临时
+    struct Mesh;
+
     struct RHIInitInfo
     {
         GLFWwindow* raw_window;
@@ -25,6 +29,10 @@ namespace Yutrel
         void Init(RHIInitInfo info);
 
         void Clear();
+
+        // todo
+        //--------临时---------
+        void UploadMesh(Ref<Mesh> mesh);
 
         //----------Tick---------
         void PrepareContext();
@@ -40,9 +48,11 @@ namespace Yutrel
         // ---------指令--------------
         void CmdBeginRenderPass(VkCommandBuffer cmd_buffer, const VkRenderPassBeginInfo* info, VkSubpassContents contents);
 
+        void CmdEndRenderPass(VkCommandBuffer cmd_buffer);
+
         void CmdBindPipeline(VkCommandBuffer cmd_buffer, VkPipelineBindPoint bind_point, VkPipeline pipeline);
 
-        void CmdEndRenderPass(VkCommandBuffer cmd_buffer);
+        void CmdBindVertexBuffers(VkCommandBuffer cmd_buffer, uint32_t first_binding, uint32_t binding_count, const VkBuffer* p_buffers, const VkDeviceSize* p_offsets);
 
         void CmdDraw(VkCommandBuffer cmd_buffer, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_isnstance);
 

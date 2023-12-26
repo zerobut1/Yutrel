@@ -3,6 +3,7 @@
 #include "vulkan_rhi.hpp"
 
 #include "platform/Vulkan/initializers/initializers.hpp"
+#include "platform/Vulkan/mesh/mesh.hpp"
 #include "platform/Vulkan/utils/vulkan_utils.hpp"
 
 #include <GLFW/glfw3.h>
@@ -116,14 +117,19 @@ namespace Yutrel
         vkCmdBeginRenderPass(cmd_buffer, info, contents);
     }
 
+    void VulkanRHI::CmdEndRenderPass(VkCommandBuffer cmd_buffer)
+    {
+        vkCmdEndRenderPass(cmd_buffer);
+    }
+
     void VulkanRHI::CmdBindPipeline(VkCommandBuffer cmd_buffer, VkPipelineBindPoint bind_point, VkPipeline pipeline)
     {
         vkCmdBindPipeline(cmd_buffer, bind_point, pipeline);
     }
 
-    void VulkanRHI::CmdEndRenderPass(VkCommandBuffer cmd_buffer)
+    void VulkanRHI::CmdBindVertexBuffers(VkCommandBuffer cmd_buffer, uint32_t first_binding, uint32_t binding_count, const VkBuffer* p_buffers, const VkDeviceSize* p_offsets)
     {
-        vkCmdEndRenderPass(cmd_buffer);
+        vkCmdBindVertexBuffers(cmd_buffer, first_binding, binding_count, p_buffers, p_offsets);
     }
 
     void VulkanRHI::CmdDraw(VkCommandBuffer cmd_buffer, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_isnstance)
@@ -474,6 +480,35 @@ namespace Yutrel
 
         *out_pipeline = pipeline;
         return result;
+    }
+
+    void VulkanRHI::UploadMesh(Ref<Mesh> mesh)
+    {
+        // 创建缓冲区
+        VkBufferCreateInfo buffer_info{};
+        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        buffer_info.size  = mesh->vertices.size() * sizeof(Vertex);
+        buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+        // 内存由CPU写入，GPU读取
+        VmaAllocationCreateInfo vma_alloc_info{};
+        vma_alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+        // 内存分配
+        YUTREL_ASSERT(vmaCreateBuffer(m_allocator, &buffer_info, &vma_alloc_info, &mesh->vertex_buffer.buffer, &mesh->vertex_buffer.allocation, nullptr) == VK_SUCCESS, "Failed to create buffer");
+
+        // 加入销毁队列
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vmaDestroyBuffer(m_allocator, mesh->vertex_buffer.buffer, mesh->vertex_buffer.allocation);
+            });
+
+        // 将数据拷贝到缓冲区
+        void* data;
+        vmaMapMemory(m_allocator, mesh->vertex_buffer.allocation, &data);
+        memcpy(data, mesh->vertices.data(), mesh->vertices.size() * sizeof(Vertex));
+        vmaUnmapMemory(m_allocator, mesh->vertex_buffer.allocation);
     }
 
 } // namespace Yutrel

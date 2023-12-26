@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "sandbox"
+		},
+		{
+			"path": "engine/asset/shader"
 		}
 	],
 	"settings": {}
