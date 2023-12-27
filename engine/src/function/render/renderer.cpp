@@ -4,9 +4,13 @@
 
 #include "core/path/path.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
+#include "resource/asset/asset.hpp"
+#include "resource/component/component.hpp"
+
 // #include "platform/OpenGL/opengl_renderer.hpp"
 
 #include <GLFW/glfw3.h>
+#include <vector>
 
 namespace Yutrel
 {
@@ -27,19 +31,19 @@ namespace Yutrel
     //     m_render_data->brdf_LUT           = Texture::Create(paths.resource + "texture\\pbr\\brdf_lut.hdr", true);
     // }
 
-    RenderResource::RenderResource()
+    RendererResource::RendererResource()
     {
         m_renderer = CreateRef<VulkanRenderer>();
     }
 
-    RenderResource::~RenderResource()
+    RendererResource::~RendererResource()
     {
         m_renderer->Clear();
         LOG_INFO("Renderer Destroyed");
     }
 
-    void RenderResource::Init(gecs::resource<RenderResource> render,
-                              gecs::resource<WindowResource> window)
+    void RendererResource::Init(gecs::resource<RendererResource> render,
+                                gecs::resource<WindowResource> window)
     {
         LOG_INFO("Initialize Render Resource");
 
@@ -52,9 +56,25 @@ namespace Yutrel
         render->m_renderer->Init(info);
     }
 
-    void RenderResource::Update(gecs::resource<RenderResource> render)
+    void RendererResource::Update(gecs::querier<PbrBundle> pbrs,
+                                  gecs::resource<RendererResource> render,
+                                  gecs::resource<gecs::mut<AssetManager>> asset_manager)
     {
-        render->m_renderer->Tick();
+        auto render_data = CreateRef<RenderData>();
+        // std::vector<const PbrBundle*> render_data;
+        for (auto&& [entity, pbr_bundle] : pbrs)
+        {
+            if (!pbr_bundle.mesh.is_loaded)
+            {
+                if (!asset_manager->LoadFromFile(pbr_bundle.mesh))
+                {
+                    LOG_ERROR("Failed to load {}", pbr_bundle.mesh.path);
+                }
+            }
+
+            render_data->pbrs.push_back(&pbr_bundle);
+        }
+        render->m_renderer->Tick(render_data);
     }
 
 } // namespace Yutrel

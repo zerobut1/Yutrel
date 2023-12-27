@@ -2,8 +2,10 @@
 
 #include "vulkan_pipeline.hpp"
 
+#include "function/render/renderer.hpp"
 #include "platform/Vulkan/passes/main_pass.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
+
 #include <memory>
 
 namespace Yutrel
@@ -30,6 +32,11 @@ namespace Yutrel
         std::dynamic_pointer_cast<MainPass>(m_main_pass)->DrawForward();
 
         m_rhi->SubmitRendering();
+    }
+
+    void VulkanPipeline::PreparePassData(Ref<RenderData> render_data)
+    {
+        m_main_pass->PreparePassData(render_data);
     }
 
 } // namespace Yutrel

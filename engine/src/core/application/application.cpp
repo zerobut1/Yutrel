@@ -6,6 +6,8 @@
 #include "function/input/input.hpp"
 #include "function/render/renderer.hpp"
 #include "function/window/window.hpp"
+#include "resource/asset/asset.hpp"
+#include "resource/component/component.hpp"
 // #include "core/time/time.hpp"
 
 namespace Yutrel
@@ -47,13 +49,14 @@ namespace Yutrel
         auto cmds = reg.commands();
         cmds.emplace_resource<WindowResource>(title, width, height);
         cmds.emplace_resource<Input>();
-        cmds.emplace_resource<RenderResource>();
+        cmds.emplace_resource<RendererResource>();
+        cmds.emplace_resource<AssetManager>();
 
         // 默认系统
         reg.regist_startup_system<Input::Init>()
-            .regist_startup_system<RenderResource::Init>()
+            .regist_startup_system<RendererResource::Init>()
             .regist_update_system<WindowResource::Update>()
-            .regist_update_system<RenderResource::Update>();
+            .regist_update_system<RendererResource::Update>();
 
         return *this;
     }

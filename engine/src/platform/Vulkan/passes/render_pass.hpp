@@ -18,6 +18,8 @@ namespace Yutrel
     public:
         virtual void Init(RenderPassInitInfo* info) = 0;
 
+        virtual void PreparePassData(Ref<struct RenderData> render_data) = 0;
+
         void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
 
     public:

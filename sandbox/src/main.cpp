@@ -1,25 +1,17 @@
 // #include "scene_pbr.hpp"
 
 #include <Yutrel.hpp>
+#include <utility>
 
-void test1()
+void StartWorld(gecs::commands cmds,
+                gecs::resource<gecs::mut<Yutrel::AssetManager>> asset_manager)
 {
-    LOG_WARN("测试沙盒");
-}
-
-void test2(gecs::resource<Yutrel::Input> input)
-{
-    if (input->IsKeyPressed(Yutrel::Key::A))
-    {
-        LOG_WARN("A is Pressed");
-    }
-
-    if (input->IsMousePressed(Yutrel::Mouse::ButtonLeft))
-    {
-        LOG_WARN("按下左键");
-    }
-
-    // LOG_WARN("{0},{1}", input->GetCursorPos().x, input->GetCursorPos().y);
+    auto entity = cmds.create();
+    cmds.emplace<Yutrel::PbrBundle>(
+        entity,
+        Yutrel::PbrBundle{
+            asset_manager->LoadMesh("resource/lost_empire/lost_empire.obj"),
+        });
 }
 
 int main()
@@ -39,8 +31,7 @@ int main()
 
     Yutrel::Application::Create()
         .Init("Sandbox", 1920, 1080)
-        .AddStartupSystem<test1>()
-        .AddSystem<test2>()
+        .AddStartupSystem<StartWorld>()
         .Run();
 
     return 0;

@@ -18,9 +18,11 @@ namespace Yutrel
 
         void Clear() {}
 
+        void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
+
         void ForwardRender();
 
-        void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
+        void PreparePassData(Ref<struct RenderData> render_data);
 
     private:
         Ref<VulkanRHI> m_rhi;

@@ -3,7 +3,7 @@
 #include "vulkan_rhi.hpp"
 
 #include "platform/Vulkan/initializers/initializers.hpp"
-#include "platform/Vulkan/mesh/mesh.hpp"
+#include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/utils/vulkan_utils.hpp"
 
 #include <GLFW/glfw3.h>
@@ -482,12 +482,14 @@ namespace Yutrel
         return result;
     }
 
-    void VulkanRHI::UploadMesh(Ref<Mesh> mesh)
+    void VulkanRHI::UploadMesh(Mesh& mesh)
     {
+        mesh.vertex_buffer = CreateRef<AllocatedBuffer>();
+
         // 创建缓冲区
         VkBufferCreateInfo buffer_info{};
         buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        buffer_info.size  = mesh->vertices.size() * sizeof(Vertex);
+        buffer_info.size  = mesh.vertices->size() * sizeof(Vertex);
         buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 
         // 内存由CPU写入，GPU读取
@@ -495,20 +497,20 @@ namespace Yutrel
         vma_alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
         // 内存分配
-        YUTREL_ASSERT(vmaCreateBuffer(m_allocator, &buffer_info, &vma_alloc_info, &mesh->vertex_buffer.buffer, &mesh->vertex_buffer.allocation, nullptr) == VK_SUCCESS, "Failed to create buffer");
+        YUTREL_ASSERT(vmaCreateBuffer(m_allocator, &buffer_info, &vma_alloc_info, &mesh.vertex_buffer->buffer, &mesh.vertex_buffer->allocation, nullptr) == VK_SUCCESS, "Failed to create buffer");
 
         // 加入销毁队列
         m_main_deletion_queue.PushFunction(
             [=]()
             {
-                vmaDestroyBuffer(m_allocator, mesh->vertex_buffer.buffer, mesh->vertex_buffer.allocation);
+                vmaDestroyBuffer(m_allocator, mesh.vertex_buffer->buffer, mesh.vertex_buffer->allocation);
             });
 
         // 将数据拷贝到缓冲区
         void* data;
-        vmaMapMemory(m_allocator, mesh->vertex_buffer.allocation, &data);
-        memcpy(data, mesh->vertices.data(), mesh->vertices.size() * sizeof(Vertex));
-        vmaUnmapMemory(m_allocator, mesh->vertex_buffer.allocation);
+        vmaMapMemory(m_allocator, mesh.vertex_buffer->allocation, &data);
+        memcpy(data, mesh.vertices->data(), mesh.vertices->size() * sizeof(Vertex));
+        vmaUnmapMemory(m_allocator, mesh.vertex_buffer->allocation);
     }
 
 } // namespace Yutrel

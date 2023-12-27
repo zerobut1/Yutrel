@@ -8,14 +8,14 @@
 #pragma once
 
 #include "function/window/window.hpp"
+#include "resource/component/component.hpp"
+
+#include <vector>
 // #include "resource/asset/framebuffer.hpp"
 // #include "resource/asset/shader.hpp"
 // #include "resource/component/camera/camera_controller.hpp"
-// #include "resource/component/component.hpp"
 // #include "resource/component/model/model.hpp"
 // #include "resource/component/ui/window_ui.hpp"
-
-// #include "glm/glm.hpp"
 
 struct GLFWwindow;
 
@@ -84,26 +84,33 @@ namespace Yutrel
         uint32_t height;
     };
 
+    struct RenderData
+    {
+        std::vector<const PbrBundle*> pbrs;
+    };
+
     class Renderer
     {
     public:
         virtual void Init(RendererInitInfo info) = 0;
 
-        virtual void Tick() = 0;
+        virtual void Tick(Ref<RenderData> render_data) = 0;
 
         virtual void Clear() = 0;
     };
 
-    class RenderResource
+    class RendererResource
     {
     public:
-        RenderResource();
-        ~RenderResource();
+        RendererResource();
+        ~RendererResource();
 
-        static void Init(gecs::resource<RenderResource> render,
+        static void Init(gecs::resource<RendererResource> render,
                          gecs::resource<WindowResource> window);
 
-        static void Update(gecs::resource<RenderResource> render);
+        static void Update(gecs::querier<struct PbrBundle> pbrs,
+                           gecs::resource<RendererResource> render,
+                           gecs::resource<gecs::mut<class AssetManager>> asset_manager);
 
     private:
         Ref<Renderer> m_renderer;

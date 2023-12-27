@@ -2,8 +2,9 @@
 
 #include "main_pass.hpp"
 
+#include "function/render/renderer.hpp"
 #include "platform/Vulkan/initializers/initializers.hpp"
-#include "platform/Vulkan/mesh/mesh.hpp"
+#include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 
 #include <vector>
@@ -15,6 +16,11 @@ namespace Yutrel
         InitRenderPass();
         InitFramebuffer();
         InitPipeline();
+    }
+
+    void MainPass::PreparePassData(Ref<struct RenderData> render_data)
+    {
+        m_render_data = render_data;
     }
 
     void MainPass::DrawForward()
@@ -33,10 +39,13 @@ namespace Yutrel
 
         m_rhi->CmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
 
-        VkDeviceSize offset = 0;
-        m_rhi->CmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &m_triangle_mesh->vertex_buffer.buffer, &offset);
+        for (auto& pbr : m_render_data->pbrs)
+        {
+            VkDeviceSize offset = 0;
+            m_rhi->CmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh.vertex_buffer->buffer, &offset);
 
-        m_rhi->CmdDraw(m_rhi->GetCurrentCommandBuffer(), m_triangle_mesh->vertices.size(), 1, 0, 0);
+            m_rhi->CmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh.vertices->size(), 1, 0, 0);
+        }
 
         m_rhi->CmdEndRenderPass(m_rhi->GetCurrentCommandBuffer());
     }

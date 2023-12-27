@@ -1,36 +1,46 @@
-/**
- * 所有资产的基类
- * 包含每个资产唯一的id属性
- */
 #pragma once
 
+#include "resource/asset/mesh/mesh.hpp"
+
 #include <stdint.h>
+#include <string>
+#include <unordered_map>
 
 namespace Yutrel
 {
-
-    class Asset
+    class AssetManager
     {
-
     public:
-        uint32_t ID() const { return this->m_id; }
+        Mesh& LoadMesh(const std::string& path);
 
-    protected:
-        Asset()          = default;
-        virtual ~Asset() = default;
+        bool LoadFromFile(Mesh& mesh);
 
-        Asset(const Asset&)            = delete;
-        Asset& operator=(const Asset&) = delete;
-        Asset(Asset&& other) noexcept;
-        Asset& operator=(Asset&& other) noexcept;
-
-        virtual void Bind() const {}
-        virtual void Unbind() const {}
-
-        virtual void Bind(uint32_t index) const {}
-        virtual void Unbind(uint32_t index) const {}
-
-    protected:
-        uint32_t m_id;
+    private:
+        std::unordered_map<std::string, Mesh> m_meshes;
     };
+
+    // class Asset
+    // {
+
+    // public:
+    //     uint32_t ID() const { return this->m_id; }
+
+    // protected:
+    //     Asset()          = default;
+    //     virtual ~Asset() = default;
+
+    //     Asset(const Asset&)            = delete;
+    //     Asset& operator=(const Asset&) = delete;
+    //     Asset(Asset&& other) noexcept;
+    //     Asset& operator=(Asset&& other) noexcept;
+
+    //     virtual void Bind() const {}
+    //     virtual void Unbind() const {}
+
+    //     virtual void Bind(uint32_t index) const {}
+    //     virtual void Unbind(uint32_t index) const {}
+
+    // protected:
+    //     uint32_t m_id;
+    // };
 } // namespace Yutrel

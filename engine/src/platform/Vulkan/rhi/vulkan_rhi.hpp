@@ -30,10 +30,6 @@ namespace Yutrel
 
         void Clear();
 
-        // todo
-        //--------临时---------
-        void UploadMesh(Ref<Mesh> mesh);
-
         //----------Tick---------
         void PrepareContext();
 
@@ -75,6 +71,9 @@ namespace Yutrel
         void DestroyShaderModule(VkShaderModule shader);
         bool CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout);
         bool CreateGraphicsPipeline(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline);
+
+        //----------渲染资源----------
+        void UploadMesh(Mesh& mesh);
 
     private:
         // 获取当前帧
