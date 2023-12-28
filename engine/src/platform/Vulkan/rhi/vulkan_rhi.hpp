@@ -53,12 +53,11 @@ namespace Yutrel
         void CmdDraw(VkCommandBuffer cmd_buffer, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_isnstance);
 
         //---------获取信息------------
-        uint32_t GetCurrentFrameCount()
-        {
-            return m_cur_frame;
-        }
+        uint32_t GetCurrentFrameCount() { return m_cur_frame; }
 
         uint32_t GetCurrentSwapchainImageIndex() { return m_cur_swapchain_image_index; }
+
+        VkImage GetCurrentSwapchainImage() { return m_swapchain_images[m_cur_swapchain_image_index]; }
 
         RHISwapChainDesc GetSwapChainInfo();
 
@@ -75,6 +74,9 @@ namespace Yutrel
         //----------渲染资源----------
         void UploadMesh(Mesh& mesh);
 
+        // 转换图像布局
+        void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout);
+
     private:
         // 获取当前帧
         FrameData& GetCurrentFrame()
@@ -83,15 +85,15 @@ namespace Yutrel
         }
 
         //--------初始化----------
-        void InitVulkan(GLFWwindow* raw_window, uint32_t width, uint32_t height);
-        // 交换链
-        void InitSwapchain();
+        void InitVulkan(GLFWwindow* raw_window);
         // 指令池与指令缓冲
         void InitCommands();
         // 描述符
         void InitDescriptorPool();
         // 同步设施
         void InitSyncStructures();
+        // 交换链
+        void InitSwapchain(uint32_t width, uint32_t height);
         // 帧缓冲
         void InitDepthImage();
         //------------------------
@@ -135,8 +137,6 @@ namespace Yutrel
         VkDebugUtilsMessengerEXT m_debug_messenger;
         // 物理设备
         VkPhysicalDevice m_physical_device;
-        // 物理设备信息
-        VkPhysicalDeviceProperties m_physical_device_properties;
         // 逻辑设备
         VkDevice m_device;
         // 窗口表面

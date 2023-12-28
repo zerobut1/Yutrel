@@ -6,10 +6,10 @@
 
 namespace Yutrel
 {
-    struct MainPassInitInfo : RenderPassInitInfo
+    struct TestPassInitInfo : RenderPassInitInfo
     {};
 
-    class MainPass : public RenderPass
+    class TestPass : public RenderPass
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;
@@ -24,7 +24,6 @@ namespace Yutrel
         void InitPipeline();
 
     private:
-        VkRenderPass m_render_pass;
 
         std::vector<VkFramebuffer> m_swapchain_framebuffers;
 

@@ -18,6 +18,7 @@ namespace Yutrel
 
     bool AssetManager::LoadFromFile(Mesh& mesh)
     {
+        LOG_INFO("Load model from {}", mesh.path);
         mesh.vertices = CreateRef<std::vector<Vertex>>();
 
         tinyobj::attrib_t attrib;

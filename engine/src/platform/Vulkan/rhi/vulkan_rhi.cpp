@@ -16,7 +16,7 @@ namespace Yutrel
 {
     void VulkanRHI::Init(RHIInitInfo info)
     {
-        InitVulkan(info.raw_window, info.width, info.height);
+        InitVulkan(info.raw_window);
 
         InitCommands();
 
@@ -24,7 +24,7 @@ namespace Yutrel
 
         InitSyncStructures();
 
-        InitSwapchain();
+        InitSwapchain(info.width, info.height);
 
         InitDepthImage();
     }
@@ -58,6 +58,9 @@ namespace Yutrel
     void VulkanRHI::WaitForFences()
     {
         YUTREL_ASSERT(vkWaitForFences(m_device, 1, &GetCurrentFrame().render_fence, VK_TRUE, UINT64_MAX) == VK_SUCCESS, "Failed to synchronize");
+
+        // 重设fence
+        YUTREL_ASSERT(vkResetFences(m_device, 1, &GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to reset fence");
     }
 
     void VulkanRHI::ResetCommandPool()
@@ -71,10 +74,13 @@ namespace Yutrel
         // todo recreate swapchain
         YUTREL_ASSERT(vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, VK_NULL_HANDLE, &m_cur_swapchain_image_index) == VK_SUCCESS, "Failed to acquire next image KHR");
 
+        // 重置命令缓冲
+        YUTREL_ASSERT(vkResetCommandBuffer(m_cur_command_buffer, 0) == VK_SUCCESS, "Failed to reset command buffer");
+
         // 开始指令缓冲
         VkCommandBufferBeginInfo cmd_begin_info = vkinit::CommandBufferBeginInfo(0);
 
-        YUTREL_ASSERT(vkBeginCommandBuffer(GetCurrentFrame().main_command_buffer, &cmd_begin_info) == VK_SUCCESS, "Failed to begin command buffer");
+        YUTREL_ASSERT(vkBeginCommandBuffer(m_cur_command_buffer, &cmd_begin_info) == VK_SUCCESS, "Failed to begin command buffer");
     }
 
     void VulkanRHI::SubmitRendering()
@@ -83,27 +89,23 @@ namespace Yutrel
         YUTREL_ASSERT(vkEndCommandBuffer(m_cur_command_buffer) == VK_SUCCESS, "Failed to end command buffer");
 
         // --------------提交指令---------
-        VkSubmitInfo submit_info         = vkinit::SubmitInfo(&m_cur_command_buffer);
-        VkPipelineStageFlags wait_stage  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        submit_info.pWaitDstStageMask    = &wait_stage;
-        submit_info.waitSemaphoreCount   = 1;
-        submit_info.pWaitSemaphores      = &GetCurrentFrame().available_for_render_semaphore;
-        submit_info.signalSemaphoreCount = 1;
-        submit_info.pSignalSemaphores    = &GetCurrentFrame().finished_for_presentation_semaphore;
+        VkCommandBufferSubmitInfo cmd_info = vkinit::CommandBufferSubmitInfo(m_cur_command_buffer);
 
-        // 重设fence
-        YUTREL_ASSERT(vkResetFences(m_device, 1, &GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to reset fence");
+        VkSemaphoreSubmitInfo wait_info   = vkinit::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, GetCurrentFrame().available_for_render_semaphore);
+        VkSemaphoreSubmitInfo signal_info = vkinit::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, GetCurrentFrame().finished_for_presentation_semaphore);
+
+        VkSubmitInfo2 submit_info = vkinit::SubmitInfo2(&cmd_info, &signal_info, &wait_info);
 
         // 提交到队列
-        YUTREL_ASSERT(vkQueueSubmit(m_graphics_queue, 1, &submit_info, GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to submit command");
+        YUTREL_ASSERT(vkQueueSubmit2(m_graphics_queue, 1, &submit_info, GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to submit command");
 
         //--------------显示图像------------
         VkPresentInfoKHR present_info = vkinit::PresentInfo();
 
-        present_info.pSwapchains        = &m_swapchain;
         present_info.swapchainCount     = 1;
-        present_info.pWaitSemaphores    = &GetCurrentFrame().finished_for_presentation_semaphore;
+        present_info.pSwapchains        = &m_swapchain;
         present_info.waitSemaphoreCount = 1;
+        present_info.pWaitSemaphores    = &GetCurrentFrame().finished_for_presentation_semaphore;
         present_info.pImageIndices      = &m_cur_swapchain_image_index;
 
         // todo recreate swapchain
@@ -137,16 +139,9 @@ namespace Yutrel
         vkCmdDraw(cmd_buffer, vertex_count, instance_count, first_vertex, first_isnstance);
     }
 
-    void VulkanRHI::InitVulkan(GLFWwindow* raw_window, uint32_t width, uint32_t height)
+    void VulkanRHI::InitVulkan(GLFWwindow* raw_window)
     {
         LOG_INFO("Initialize Vulkan RHI");
-
-        // 记录交换范围大小
-        m_swapchain_extent.width  = width;
-        m_swapchain_extent.height = height;
-
-        m_viewport = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
-        m_scissor  = {{0, 0}, m_swapchain_extent};
 
         // vkb创建器
         vkb::InstanceBuilder builder;
@@ -168,32 +163,45 @@ namespace Yutrel
         // 创建窗口表面
         glfwCreateWindowSurface(m_instance, raw_window, nullptr, &m_surface);
 
+        // vulkan 1.3 特性
+        VkPhysicalDeviceVulkan13Features features_13{};
+        features_13.dynamicRendering = true;
+        features_13.synchronization2 = true;
+
+        // vulkan 1.2 特性
+        VkPhysicalDeviceVulkan12Features features_12{};
+        features_12.bufferDeviceAddress = true;
+        features_12.descriptorIndexing  = true;
+
         // 选择物理设备
         vkb::PhysicalDeviceSelector selector{vkb_instance};
         vkb::PhysicalDevice physical_device =
             selector
                 .set_minimum_version(1, 3)
+                .set_required_features_13(features_13)
+                .set_required_features_12(features_12)
                 .set_surface(m_surface)
                 .select()
                 .value();
 
         // 创建逻辑设备
         vkb::DeviceBuilder device_builder{physical_device};
-        // 启用shader draw parameters功能
-        VkPhysicalDeviceShaderDrawParametersFeatures shader_draw_parameters_features{};
-        shader_draw_parameters_features.sType                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES;
-        shader_draw_parameters_features.pNext                = nullptr;
-        shader_draw_parameters_features.shaderDrawParameters = VK_TRUE;
+
+        // todo 以后开启
+        // // 启用shader draw parameters功能
+        // VkPhysicalDeviceShaderDrawParametersFeatures shader_draw_parameters_features{};
+        // shader_draw_parameters_features.sType                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES;
+        // shader_draw_parameters_features.pNext                = nullptr;
+        // shader_draw_parameters_features.shaderDrawParameters = VK_TRUE;
 
         vkb::Device vkb_device = device_builder
-                                     .add_pNext(&shader_draw_parameters_features)
+                                     //  .add_pNext(&shader_draw_parameters_features)
                                      .build()
                                      .value();
 
         // 获取设备
-        m_physical_device            = physical_device.physical_device;
-        m_physical_device_properties = vkb_device.physical_device.properties;
-        m_device                     = vkb_device.device;
+        m_physical_device = physical_device.physical_device;
+        m_device          = vkb_device.device;
 
         // 获取图形队列
         m_graphics_queue        = vkb_device.get_queue(vkb::QueueType::graphics).value();
@@ -311,7 +319,7 @@ namespace Yutrel
         }
     }
 
-    void VulkanRHI::InitSwapchain()
+    void VulkanRHI::InitSwapchain(uint32_t width, uint32_t height)
     {
         // vkb创建交换链
         vkb::SwapchainBuilder swapchain_builder{m_physical_device, m_device, m_surface};
@@ -320,11 +328,15 @@ namespace Yutrel
             swapchain_builder
                 .use_default_format_selection()
                 .set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
-                .set_desired_extent(m_swapchain_extent.width, m_swapchain_extent.height)
-                .add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-                // .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+                .set_desired_extent(width, height)
+                .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
                 .build()
                 .value();
+
+        // 记录交换范围大小
+        m_swapchain_extent = vkb_swapchain.extent;
+        m_viewport         = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
+        m_scissor          = {{0, 0}, m_swapchain_extent};
 
         // 获取交换链和图像
         m_swapchain              = vkb_swapchain.swapchain;
@@ -511,6 +523,34 @@ namespace Yutrel
         vmaMapMemory(m_allocator, mesh.vertex_buffer->allocation, &data);
         memcpy(data, mesh.vertices->data(), mesh.vertices->size() * sizeof(Vertex));
         vmaUnmapMemory(m_allocator, mesh.vertex_buffer->allocation);
+    }
+
+    void VulkanRHI::TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout)
+    {
+        VkImageMemoryBarrier2 imageBarrier{};
+        imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+        imageBarrier.pNext = nullptr;
+
+        imageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+        imageBarrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
+        imageBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+        imageBarrier.dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+
+        imageBarrier.oldLayout = cur_layout;
+        imageBarrier.newLayout = new_layout;
+
+        VkImageAspectFlags aspectMask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+        imageBarrier.subresourceRange = vkinit::ImageSubresourceRange(aspectMask);
+        imageBarrier.image            = image;
+
+        VkDependencyInfo depInfo{};
+        depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+        depInfo.pNext = nullptr;
+
+        depInfo.imageMemoryBarrierCount = 1;
+        depInfo.pImageMemoryBarriers    = &imageBarrier;
+
+        vkCmdPipelineBarrier2(cmd_buffer, &depInfo);
     }
 
 } // namespace Yutrel

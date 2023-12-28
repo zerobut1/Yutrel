@@ -54,6 +54,18 @@ namespace Yutrel
         // 展示信息
         VkPresentInfoKHR PresentInfo();
 
+        // 图像子资源范围
+        VkImageSubresourceRange ImageSubresourceRange(VkImageAspectFlags aspect_mask);
+
+        // 信号量提交信息
+        VkSemaphoreSubmitInfo SemaphoreSubmitInfo(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
+
+        // 指令缓冲提交信息
+        VkCommandBufferSubmitInfo CommandBufferSubmitInfo(VkCommandBuffer cmd_buffer);
+
+        // 提交信息2
+        VkSubmitInfo2 SubmitInfo2(VkCommandBufferSubmitInfo* cmd_buffer_info, VkSemaphoreSubmitInfo* signal_semaphore_info, VkSemaphoreSubmitInfo* wait_semaphore_info);
+
     } // namespace vkinit
 
 } // namespace Yutrel

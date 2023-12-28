@@ -28,9 +28,7 @@ namespace Yutrel
 
     protected:
         Ref<VulkanRHI> m_rhi;
-
-        VkRenderPass m_render_pass;
-
+        
         struct RenderPipelineBase
         {
             VkPipelineLayout layout;
