@@ -35,19 +35,19 @@ namespace Yutrel
         render_pass_info.clearValueCount       = 1;
         render_pass_info.pClearValues          = &clear_value;
 
-        m_rhi->CmdBeginRenderPass(m_rhi->GetCurrentCommandBuffer(), &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(m_rhi->GetCurrentCommandBuffer(), &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-        m_rhi->CmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[0].pipeline);
+        vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[0].pipeline);
 
         for (auto& pbr : m_render_data->pbrs)
         {
             VkDeviceSize offset = 0;
-            m_rhi->CmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh.vertex_buffer->buffer, &offset);
+            vkCmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh.vertex_buffer->buffer, &offset);
 
-            m_rhi->CmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh.vertices->size(), 1, 0, 0);
+            vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh.vertices->size(), 1, 0, 0);
         }
 
-        m_rhi->CmdEndRenderPass(m_rhi->GetCurrentCommandBuffer());
+        vkCmdEndRenderPass(m_rhi->GetCurrentCommandBuffer());
     }
 
     void MainPass::InitRenderPass()
@@ -82,7 +82,7 @@ namespace Yutrel
         render_pass_info.subpassCount    = 1;
         render_pass_info.pSubpasses      = &subpass;
 
-        YUTREL_ASSERT(m_rhi->CreateRenderPass(&render_pass_info, &m_render_pass), "Failed to create render pass");
+        m_rhi->CreateRenderPass(&render_pass_info, &m_render_pass);
     }
 
     void MainPass::InitFramebuffer()
@@ -98,7 +98,7 @@ namespace Yutrel
         {
             info.pAttachments = &(*swapchain_info.image_views)[i];
 
-            YUTREL_ASSERT(m_rhi->CreateFramebuffer(&info, &m_swapchain_framebuffers[i]), "Failed to create framebuffer");
+            m_rhi->CreateFramebuffer(&info, &m_swapchain_framebuffers[i]);
         }
     }
 
@@ -132,7 +132,7 @@ namespace Yutrel
         //-----------管线布局-------------
         VkPipelineLayoutCreateInfo layout_info = vkinit::PipelineLayoutCreateInfo();
 
-        YUTREL_ASSERT(m_rhi->CreatePipelineLayout(&layout_info, &m_pipelines[0].layout), "Failed to create pipeline layout");
+        m_rhi->CreatePipelineLayout(&layout_info, &m_pipelines[0].layout);
 
         //----------顶点状态-------------
         VertexInputDescription vertex_description = Vertex::GetVertexDescription();
@@ -188,7 +188,7 @@ namespace Yutrel
         pipeline_create_info.render_pass = m_render_pass;
         pipeline_create_info.subpass     = 0;
 
-        YUTREL_ASSERT(m_rhi->CreateGraphicsPipeline(pipeline_create_info, &m_pipelines[0].pipeline), "Failed to create graphics pipeline");
+        m_rhi->CreateGraphicsPipelines(pipeline_create_info, &m_pipelines[0].pipeline);
 
         //------------删除着色器模块--------------
         m_rhi->DestroyShaderModule(triangle_vert_shader);

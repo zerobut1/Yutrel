@@ -60,12 +60,12 @@ namespace Yutrel
         draw_image_alloc_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
         draw_image_alloc_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-        YUTREL_ASSERT(m_rhi->CreateImage(&draw_image_create_info, &draw_image_alloc_info, &m_draw_image), "Failed to create draw image");
+        m_rhi->CreateImage(&draw_image_create_info, &draw_image_alloc_info, &m_draw_image);
 
         // 创建图像视图
         VkImageViewCreateInfo draw_image_view_info = vkinit::ImageViewCreateInfo(m_draw_image.image_format, m_draw_image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 
-        YUTREL_ASSERT(m_rhi->CreateImageView(&draw_image_view_info, &m_draw_image), "Failed to create draw image view");
+        m_rhi->CreateImageView(&draw_image_view_info, &m_draw_image);
     }
 
     void TestPass::InitDescriptors()
@@ -77,10 +77,10 @@ namespace Yutrel
         layout_info.shader_stages = VK_SHADER_STAGE_COMPUTE_BIT;
         layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
-        YUTREL_ASSERT(m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[0].layout), "Failed to create descriptor layout");
+        m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[0].layout);
 
         // 分配描述符集
-        YUTREL_ASSERT(m_rhi->AllocateDescriptorSets(m_descriptor_infos[0].layout, &m_descriptor_infos[0].set), "Failed to allocate descriptor set");
+        m_rhi->AllocateDescriptorSets(m_descriptor_infos[0].layout, &m_descriptor_infos[0].set);
 
         // 设置写描述符集信息
         VkDescriptorImageInfo img_info{};
@@ -112,7 +112,7 @@ namespace Yutrel
         computeLayout.pSetLayouts    = &m_descriptor_infos[0].layout;
         computeLayout.setLayoutCount = 1;
 
-        YUTREL_ASSERT(m_rhi->CreatePipelineLayout(&computeLayout, &m_pipelines[0].layout), "Failed to create pipeline layout");
+        m_rhi->CreatePipelineLayout(&computeLayout, &m_pipelines[0].layout);
 
         // shader
         // clang-format off
@@ -121,7 +121,10 @@ namespace Yutrel
         };
         // clang-format on
         VkShaderModule compute_shader;
-        m_rhi->CreateShaderModule(compute_code, &compute_shader);
+        if (!m_rhi->CreateShaderModule(compute_code, &compute_shader))
+        {
+            LOG_ERROR("Failed to create compute shader");
+        }
 
         VkPipelineShaderStageCreateInfo stageinfo{};
         stageinfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

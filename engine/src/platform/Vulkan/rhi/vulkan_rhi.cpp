@@ -124,31 +124,6 @@ namespace Yutrel
         m_cur_frame++;
     }
 
-    void VulkanRHI::CmdBeginRenderPass(VkCommandBuffer cmd_buffer, const VkRenderPassBeginInfo* info, VkSubpassContents contents)
-    {
-        vkCmdBeginRenderPass(cmd_buffer, info, contents);
-    }
-
-    void VulkanRHI::CmdEndRenderPass(VkCommandBuffer cmd_buffer)
-    {
-        vkCmdEndRenderPass(cmd_buffer);
-    }
-
-    void VulkanRHI::CmdBindPipeline(VkCommandBuffer cmd_buffer, VkPipelineBindPoint bind_point, VkPipeline pipeline)
-    {
-        vkCmdBindPipeline(cmd_buffer, bind_point, pipeline);
-    }
-
-    void VulkanRHI::CmdBindVertexBuffers(VkCommandBuffer cmd_buffer, uint32_t first_binding, uint32_t binding_count, const VkBuffer* p_buffers, const VkDeviceSize* p_offsets)
-    {
-        vkCmdBindVertexBuffers(cmd_buffer, first_binding, binding_count, p_buffers, p_offsets);
-    }
-
-    void VulkanRHI::CmdDraw(VkCommandBuffer cmd_buffer, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_isnstance)
-    {
-        vkCmdDraw(cmd_buffer, vertex_count, instance_count, first_vertex, first_isnstance);
-    }
-
     void VulkanRHI::InitVulkan(GLFWwindow* raw_window)
     {
         LOG_INFO("Initialize Vulkan RHI");
@@ -400,10 +375,10 @@ namespace Yutrel
         return desc;
     }
 
-    bool VulkanRHI::CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass)
+    void VulkanRHI::CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass)
     {
         VkRenderPass render_pass;
-        bool result = vkCreateRenderPass(m_device, info, nullptr, &render_pass) == VK_SUCCESS;
+        YUTREL_ASSERT(vkCreateRenderPass(m_device, info, nullptr, &render_pass) == VK_SUCCESS, "Failed to create render pass");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -412,13 +387,12 @@ namespace Yutrel
             });
 
         *out_render_pass = render_pass;
-        return result;
     }
 
-    bool VulkanRHI::CreateFramebuffer(const VkFramebufferCreateInfo* info, VkFramebuffer* out_framebuffer)
+    void VulkanRHI::CreateFramebuffer(const VkFramebufferCreateInfo* info, VkFramebuffer* out_framebuffer)
     {
         VkFramebuffer framebuffer;
-        bool result = vkCreateFramebuffer(m_device, info, nullptr, &framebuffer) == VK_SUCCESS;
+        YUTREL_ASSERT(vkCreateFramebuffer(m_device, info, nullptr, &framebuffer) == VK_SUCCESS, "Failed to create framebuffer");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -427,7 +401,6 @@ namespace Yutrel
             });
 
         *out_framebuffer = framebuffer;
-        return result;
     }
 
     bool VulkanRHI::CreateShaderModule(const std::vector<unsigned char>& shader_code, VkShaderModule* out_shader_module)
@@ -450,10 +423,10 @@ namespace Yutrel
         vkDestroyShaderModule(m_device, shader, nullptr);
     }
 
-    bool VulkanRHI::CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout)
+    void VulkanRHI::CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout)
     {
         VkPipelineLayout layout;
-        bool result = vkCreatePipelineLayout(m_device, info, nullptr, &layout) == VK_SUCCESS;
+        YUTREL_ASSERT(vkCreatePipelineLayout(m_device, info, nullptr, &layout) == VK_SUCCESS, "Failed to create pipeline layout");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -462,10 +435,9 @@ namespace Yutrel
             });
 
         *out_layout = layout;
-        return result;
     }
 
-    bool VulkanRHI::CreateGraphicsPipeline(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline)
+    void VulkanRHI::CreateGraphicsPipelines(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline)
     {
         VkPipeline pipeline;
 
@@ -486,7 +458,7 @@ namespace Yutrel
         pipeline_info.subpass             = 0;
         pipeline_info.basePipelineHandle  = VK_NULL_HANDLE;
 
-        bool result = vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline) == VK_SUCCESS;
+        YUTREL_ASSERT(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline) == VK_SUCCESS, "Failed to create graphics pipelines");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -495,17 +467,16 @@ namespace Yutrel
             });
 
         *out_pipeline = pipeline;
-        return result;
     }
 
-    bool VulkanRHI::CreateComputePipelines(VkPipelineCache pipelineCache,
+    void VulkanRHI::CreateComputePipelines(VkPipelineCache pipelineCache,
                                            uint32_t createInfoCount,
                                            const VkComputePipelineCreateInfo* pCreateInfos,
                                            const VkAllocationCallbacks* pAllocator,
                                            VkPipeline* pPipelines)
     {
         VkPipeline pipeline;
-        bool result = vkCreateComputePipelines(m_device, pipelineCache, createInfoCount, pCreateInfos, pAllocator, &pipeline) == VK_SUCCESS;
+        YUTREL_ASSERT(vkCreateComputePipelines(m_device, pipelineCache, createInfoCount, pCreateInfos, pAllocator, &pipeline) == VK_SUCCESS, "Failed to create compute pipelines");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -514,14 +485,13 @@ namespace Yutrel
             });
 
         *pPipelines = pipeline;
-        return result;
     }
 
-    bool VulkanRHI::CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image)
+    void VulkanRHI::CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image)
     {
         VkImage image;
         VmaAllocation allocation;
-        bool result = vmaCreateImage(m_allocator, create_info, alloc_info, &image, &allocation, nullptr) == VK_SUCCESS;
+        YUTREL_ASSERT(vmaCreateImage(m_allocator, create_info, alloc_info, &image, &allocation, nullptr) == VK_SUCCESS, "Failed to create image");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -531,13 +501,12 @@ namespace Yutrel
 
         out_image->image      = image;
         out_image->allocation = allocation;
-        return result;
     }
 
-    bool VulkanRHI::CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image)
+    void VulkanRHI::CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image)
     {
         VkImageView image_view;
-        bool result = vkCreateImageView(m_device, info, nullptr, &image_view) == VK_SUCCESS;
+        YUTREL_ASSERT(vkCreateImageView(m_device, info, nullptr, &image_view) == VK_SUCCESS, "Failed to create image view");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -546,10 +515,9 @@ namespace Yutrel
             });
 
         out_image->image_view = image_view;
-        return result;
     }
 
-    bool VulkanRHI::CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout)
+    void VulkanRHI::CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout)
     {
         for (auto& b : info.bindings)
         {
@@ -565,7 +533,7 @@ namespace Yutrel
         create_info.flags        = 0;
 
         VkDescriptorSetLayout layout;
-        bool result = vkCreateDescriptorSetLayout(m_device, &create_info, nullptr, &layout) == VK_SUCCESS;
+        YUTREL_ASSERT(vkCreateDescriptorSetLayout(m_device, &create_info, nullptr, &layout) == VK_SUCCESS, "Failed to create descriptor set layout");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -574,10 +542,9 @@ namespace Yutrel
             });
 
         *out_layout = layout;
-        return result;
     }
 
-    bool VulkanRHI::AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set)
+    void VulkanRHI::AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set)
     {
         VkDescriptorSetAllocateInfo info{};
         info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -587,10 +554,9 @@ namespace Yutrel
         info.pSetLayouts        = &layout;
 
         VkDescriptorSet set;
-        bool result = vkAllocateDescriptorSets(m_device, &info, &set) == VK_SUCCESS;
+        YUTREL_ASSERT(vkAllocateDescriptorSets(m_device, &info, &set) == VK_SUCCESS, "Failed to allocate descriptor sets");
 
         *out_set = set;
-        return result;
     }
 
     void VulkanRHI::UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies)

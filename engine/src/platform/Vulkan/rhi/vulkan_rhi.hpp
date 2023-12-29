@@ -41,17 +41,6 @@ namespace Yutrel
 
         void SubmitRendering();
 
-        // ---------指令--------------
-        void CmdBeginRenderPass(VkCommandBuffer cmd_buffer, const VkRenderPassBeginInfo* info, VkSubpassContents contents);
-
-        void CmdEndRenderPass(VkCommandBuffer cmd_buffer);
-
-        void CmdBindPipeline(VkCommandBuffer cmd_buffer, VkPipelineBindPoint bind_point, VkPipeline pipeline);
-
-        void CmdBindVertexBuffers(VkCommandBuffer cmd_buffer, uint32_t first_binding, uint32_t binding_count, const VkBuffer* p_buffers, const VkDeviceSize* p_offsets);
-
-        void CmdDraw(VkCommandBuffer cmd_buffer, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_isnstance);
-
         //---------获取信息------------
         uint32_t GetCurrentFrameCount() { return m_cur_frame; }
 
@@ -66,32 +55,32 @@ namespace Yutrel
         VkCommandBuffer GetCurrentCommandBuffer() const { return m_cur_command_buffer; }
 
         //---------创建对象------------
-        bool CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass);
+        void CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass);
 
-        bool CreateFramebuffer(const VkFramebufferCreateInfo* info, VkFramebuffer* out_framebuffer);
+        void CreateFramebuffer(const VkFramebufferCreateInfo* info, VkFramebuffer* out_framebuffer);
 
         bool CreateShaderModule(const std::vector<unsigned char>& shader_code, VkShaderModule* out_shader_module);
 
         void DestroyShaderModule(VkShaderModule shader);
 
-        bool CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout);
+        void CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout);
 
-        bool CreateGraphicsPipeline(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline);
+        void CreateGraphicsPipelines(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline);
 
         // todo 用rhipipelinecreateinfo初始化
-        bool CreateComputePipelines(VkPipelineCache pipelineCache,
+        void CreateComputePipelines(VkPipelineCache pipelineCache,
                                     uint32_t createInfoCount,
                                     const VkComputePipelineCreateInfo* pCreateInfos,
                                     const VkAllocationCallbacks* pAllocator,
                                     VkPipeline* pPipelines);
 
-        bool CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image);
+        void CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image);
 
-        bool CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image);
+        void CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image);
 
-        bool CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout);
+        void CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout);
 
-        bool AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set);
+        void AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set);
 
         void UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies);
 
