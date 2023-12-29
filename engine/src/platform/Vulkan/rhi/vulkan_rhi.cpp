@@ -70,9 +70,18 @@ namespace Yutrel
 
     void VulkanRHI::PrepareBeforePass()
     {
+        // 等待 fence
+        YUTREL_ASSERT(vkWaitForFences(m_device, 1, &GetCurrentFrame().render_fence, VK_TRUE, UINT64_MAX) == VK_SUCCESS, "Failed to synchronize");
+
+        // 清除为单独帧创建的对象
+        GetCurrentFrame().deletion_queue.flush();
+
         // 请求图像索引
         // todo recreate swapchain
         YUTREL_ASSERT(vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, VK_NULL_HANDLE, &m_cur_swapchain_image_index) == VK_SUCCESS, "Failed to acquire next image KHR");
+
+        // 重设fence
+        YUTREL_ASSERT(vkResetFences(m_device, 1, &GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to reset fence");
 
         // 重置命令缓冲
         YUTREL_ASSERT(vkResetCommandBuffer(m_cur_command_buffer, 0) == VK_SUCCESS, "Failed to reset command buffer");
@@ -81,14 +90,50 @@ namespace Yutrel
         VkCommandBufferBeginInfo cmd_begin_info = vkinit::CommandBufferBeginInfo(0);
 
         YUTREL_ASSERT(vkBeginCommandBuffer(m_cur_command_buffer, &cmd_begin_info) == VK_SUCCESS, "Failed to begin command buffer");
+
+        // 设置渲染图像范围
+        m_draw_extent.width  = m_draw_image.image_extent.width;
+        m_draw_extent.height = m_draw_image.image_extent.height;
+
+        // 将渲染图像布局转换为通用布局
+        TransitionImage(m_cur_command_buffer,
+                        m_draw_image.image,
+                        VK_IMAGE_LAYOUT_UNDEFINED,
+                        VK_IMAGE_LAYOUT_GENERAL);
     }
 
     void VulkanRHI::SubmitRendering()
     {
-        // 终止指令缓冲
+        //----------将渲染图像拷贝至交换链------------
+        // 将渲染图像布局转换为传输源布局
+        TransitionImage(m_cur_command_buffer,
+                        m_draw_image.image,
+                        VK_IMAGE_LAYOUT_GENERAL,
+                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+        // 将交换链布局转换为传输目标布局
+        TransitionImage(m_cur_command_buffer,
+                        GetCurrentSwapchainImage(),
+                        VK_IMAGE_LAYOUT_UNDEFINED,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+        // 将渲染图像拷贝至交换链
+        CopyImageToImage(m_cur_command_buffer,
+                         m_draw_image.image,
+                         GetCurrentSwapchainImage(),
+                         m_draw_extent,
+                         m_swapchain_extent);
+
+        // 将交换链布局转换为呈现布局
+        TransitionImage(m_cur_command_buffer,
+                        GetCurrentSwapchainImage(),
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+        //-------------终止指令缓冲-------------
         YUTREL_ASSERT(vkEndCommandBuffer(m_cur_command_buffer) == VK_SUCCESS, "Failed to end command buffer");
 
-        // --------------提交指令---------
+        // --------------提交指令---------------
         VkCommandBufferSubmitInfo cmd_info = vkinit::CommandBufferSubmitInfo(m_cur_command_buffer);
 
         VkSemaphoreSubmitInfo wait_info   = vkinit::SemaphoreSubmitInfo(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, GetCurrentFrame().available_for_render_semaphore);
@@ -212,11 +257,12 @@ namespace Yutrel
         allocator_info.physicalDevice = m_physical_device;
         allocator_info.device         = m_device;
         allocator_info.instance       = m_instance;
+        allocator_info.flags          = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
         vmaCreateAllocator(&allocator_info, &m_allocator);
 
         // 加入销毁队列
         m_main_deletion_queue.PushFunction(
-            [=]()
+            [&]()
             {
                 vmaDestroyAllocator(m_allocator);
             });
@@ -321,7 +367,7 @@ namespace Yutrel
 
     void VulkanRHI::InitSwapchain(uint32_t width, uint32_t height)
     {
-        // vkb创建交换链
+        //---------vkb创建交换链-----------
         vkb::SwapchainBuilder swapchain_builder{m_physical_device, m_device, m_surface};
 
         vkb::Swapchain vkb_swapchain =
@@ -354,6 +400,45 @@ namespace Yutrel
                 {
                     vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
                 }
+            });
+
+        //----------创建渲染目标图像---------------
+        VkExtent3D draw_image_extent{
+            m_swapchain_extent.width,
+            m_swapchain_extent.height,
+            1,
+        };
+
+        // 设为16位浮点格式以获得更高的精度
+        m_draw_image.image_format = VK_FORMAT_R16G16B16A16_SFLOAT;
+        m_draw_image.image_extent = draw_image_extent;
+
+        VkImageUsageFlags draw_image_usages{};
+        draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        draw_image_usages |= VK_IMAGE_USAGE_STORAGE_BIT;
+        draw_image_usages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+        VkImageCreateInfo draw_image_create_info = vkinit::ImageCreateInfo(m_draw_image.image_format, draw_image_usages, m_draw_image.image_extent);
+
+        // 将图像放至GPU only内存
+        VmaAllocationCreateInfo draw_image_alloc_info{};
+        draw_image_alloc_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
+        draw_image_alloc_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        YUTREL_ASSERT(vmaCreateImage(m_allocator, &draw_image_create_info, &draw_image_alloc_info, &m_draw_image.image, &m_draw_image.allocation, nullptr) == VK_SUCCESS, "Failed to create draw image");
+
+        // 创建图像视图
+        VkImageViewCreateInfo draw_image_view_info = vkinit::ImageViewCreateInfo(m_draw_image.image_format, m_draw_image.image, VK_IMAGE_ASPECT_COLOR_BIT);
+
+        YUTREL_ASSERT(vkCreateImageView(m_device, &draw_image_view_info, nullptr, &m_draw_image.image_view) == VK_SUCCESS, "Failed to create draw image view");
+
+        // 添加到删除队列
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyImageView(m_device, m_draw_image.image_view, nullptr);
+                vmaDestroyImage(m_allocator, m_draw_image.image, m_draw_image.allocation);
             });
     }
 
@@ -551,6 +636,44 @@ namespace Yutrel
         depInfo.pImageMemoryBarriers    = &imageBarrier;
 
         vkCmdPipelineBarrier2(cmd_buffer, &depInfo);
+    }
+
+    void VulkanRHI::CopyImageToImage(VkCommandBuffer cmd_buffer, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size)
+    {
+        VkImageBlit2 blit_region{};
+        blit_region.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+        blit_region.pNext = nullptr;
+
+        blit_region.srcOffsets[1].x = src_size.width;
+        blit_region.srcOffsets[1].y = src_size.height;
+        blit_region.srcOffsets[1].z = 1;
+
+        blit_region.dstOffsets[1].x = dst_size.width;
+        blit_region.dstOffsets[1].y = dst_size.height;
+        blit_region.dstOffsets[1].z = 1;
+
+        blit_region.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit_region.srcSubresource.baseArrayLayer = 0;
+        blit_region.srcSubresource.layerCount     = 1;
+        blit_region.srcSubresource.mipLevel       = 0;
+
+        blit_region.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit_region.dstSubresource.baseArrayLayer = 0;
+        blit_region.dstSubresource.layerCount     = 1;
+        blit_region.dstSubresource.mipLevel       = 0;
+
+        VkBlitImageInfo2 blit_info{};
+        blit_info.sType          = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+        blit_info.pNext          = nullptr;
+        blit_info.dstImage       = destination;
+        blit_info.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        blit_info.srcImage       = source;
+        blit_info.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        blit_info.filter         = VK_FILTER_LINEAR;
+        blit_info.regionCount    = 1;
+        blit_info.pRegions       = &blit_region;
+
+        vkCmdBlitImage2(cmd_buffer, &blit_info);
     }
 
 } // namespace Yutrel

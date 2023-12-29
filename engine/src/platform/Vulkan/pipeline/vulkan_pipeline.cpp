@@ -28,28 +28,11 @@ namespace Yutrel
 
     void VulkanPipeline::ForwardRender()
     {
-        m_rhi->WaitForFences();
-
-        // 暂时只重置CommandBuffer 在prepareBeforePass中
-        // m_rhi->ResetCommandPool();
-
         // todo recreate swapchian
         m_rhi->PrepareBeforePass();
 
-        // 将交换链布局转换为通用布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_rhi->GetCurrentSwapchainImage(),
-                               VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_GENERAL);
-
         // std::dynamic_pointer_cast<MainPass>(m_main_pass)->DrawForward();
         std::dynamic_pointer_cast<TestPass>(m_test_pass)->DrawForward();
-
-        // 将交换链布局转换为可展示的布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_rhi->GetCurrentSwapchainImage(),
-                               VK_IMAGE_LAYOUT_GENERAL,
-                               VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
         m_rhi->SubmitRendering();
     }

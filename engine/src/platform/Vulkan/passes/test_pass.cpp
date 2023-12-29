@@ -25,7 +25,7 @@ namespace Yutrel
 
         VkImageSubresourceRange clear_range = vkinit::ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
 
-        vkCmdClearColorImage(m_rhi->GetCurrentCommandBuffer(), m_rhi->GetCurrentSwapchainImage(), VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &clear_range);
+        vkCmdClearColorImage(m_rhi->GetCurrentCommandBuffer(), m_rhi->GetDrawImage().image, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &clear_range);
     }
 
 } // namespace Yutrel

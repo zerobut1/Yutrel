@@ -66,6 +66,12 @@ namespace Yutrel
         // 提交信息2
         VkSubmitInfo2 SubmitInfo2(VkCommandBufferSubmitInfo* cmd_buffer_info, VkSemaphoreSubmitInfo* signal_semaphore_info, VkSemaphoreSubmitInfo* wait_semaphore_info);
 
+        // 图像创建信息
+        VkImageCreateInfo ImageCreateInfo(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent);
+
+        // 图像视图创建信息
+        VkImageViewCreateInfo ImageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags);
+
     } // namespace vkinit
 
 } // namespace Yutrel

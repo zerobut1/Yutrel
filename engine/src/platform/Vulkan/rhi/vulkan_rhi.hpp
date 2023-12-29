@@ -55,6 +55,8 @@ namespace Yutrel
         //---------获取信息------------
         uint32_t GetCurrentFrameCount() { return m_cur_frame; }
 
+        FrameData& GetCurrentFrame() { return m_frames[m_cur_frame % FRAME_OVERLAP]; }
+
         uint32_t GetCurrentSwapchainImageIndex() { return m_cur_swapchain_image_index; }
 
         VkImage GetCurrentSwapchainImage() { return m_swapchain_images[m_cur_swapchain_image_index]; }
@@ -63,12 +65,19 @@ namespace Yutrel
 
         VkCommandBuffer GetCurrentCommandBuffer() const { return m_cur_command_buffer; }
 
+        AllocatedImage& GetDrawImage() { return m_draw_image; }
+
         //---------创建对象------------
         bool CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass);
+
         bool CreateFramebuffer(const VkFramebufferCreateInfo* info, VkFramebuffer* out_framebuffer);
+
         bool CreateShaderModule(const std::vector<unsigned char>& shader_code, VkShaderModule* out_shader_module);
+
         void DestroyShaderModule(VkShaderModule shader);
+
         bool CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout);
+
         bool CreateGraphicsPipeline(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline);
 
         //----------渲染资源----------
@@ -77,13 +86,10 @@ namespace Yutrel
         // 转换图像布局
         void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout);
 
-    private:
-        // 获取当前帧
-        FrameData& GetCurrentFrame()
-        {
-            return m_frames[m_cur_frame % FRAME_OVERLAP];
-        }
+        // 拷贝图像
+        void CopyImageToImage(VkCommandBuffer cmd_buffer, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size);
 
+    private:
         //--------初始化----------
         void InitVulkan(GLFWwindow* raw_window);
         // 指令池与指令缓冲
@@ -109,26 +115,6 @@ namespace Yutrel
         uint32_t m_cur_frame{0};
 
         // 删除队列
-        struct DeletionQueue
-        {
-            std::deque<std::function<void()>> deletors;
-
-            void PushFunction(std::function<void()>&& function)
-            {
-                deletors.push_back(function);
-            }
-
-            void flush()
-            {
-                for (auto it = deletors.rbegin(); it != deletors.rend(); it++)
-                {
-                    // 调用删除函数
-                    (*it)();
-                }
-
-                deletors.clear();
-            }
-        };
         DeletionQueue m_main_deletion_queue;
 
         // vulkan实例
@@ -167,6 +153,10 @@ namespace Yutrel
         // 交换链图像
         std::vector<VkImage> m_swapchain_images;
         std::vector<VkImageView> m_swapchain_image_views;
+
+        // 绘制到的图像
+        AllocatedImage m_draw_image;
+        VkExtent2D m_draw_extent;
 
         // 深度图像
         AllocatedImage m_depth_image;
