@@ -14,7 +14,7 @@ struct GLFWwindow;
 namespace Yutrel
 {
     // todo 临时
-    struct Mesh;
+    class Mesh;
 
     struct RHIInitInfo
     {
@@ -65,8 +65,6 @@ namespace Yutrel
 
         VkCommandBuffer GetCurrentCommandBuffer() const { return m_cur_command_buffer; }
 
-        AllocatedImage& GetDrawImage() { return m_draw_image; }
-
         //---------创建对象------------
         bool CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass);
 
@@ -79,6 +77,23 @@ namespace Yutrel
         bool CreatePipelineLayout(const VkPipelineLayoutCreateInfo* info, VkPipelineLayout* out_layout);
 
         bool CreateGraphicsPipeline(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline);
+
+        // todo 用rhipipelinecreateinfo初始化
+        bool CreateComputePipelines(VkPipelineCache pipelineCache,
+                                    uint32_t createInfoCount,
+                                    const VkComputePipelineCreateInfo* pCreateInfos,
+                                    const VkAllocationCallbacks* pAllocator,
+                                    VkPipeline* pPipelines);
+
+        bool CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image);
+
+        bool CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image);
+
+        bool CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout);
+
+        bool AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set);
+
+        void UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies);
 
         //----------渲染资源----------
         void UploadMesh(Mesh& mesh);
@@ -154,10 +169,6 @@ namespace Yutrel
         std::vector<VkImage> m_swapchain_images;
         std::vector<VkImageView> m_swapchain_image_views;
 
-        // 绘制到的图像
-        AllocatedImage m_draw_image;
-        VkExtent2D m_draw_extent;
-
         // 深度图像
         AllocatedImage m_depth_image;
         VkImageView m_depth_image_view;
@@ -165,7 +176,6 @@ namespace Yutrel
 
         // 当前指令缓冲
         VkCommandBuffer m_cur_command_buffer;
-
         // 当前交换链图像索引
         uint32_t m_cur_swapchain_image_index;
     };

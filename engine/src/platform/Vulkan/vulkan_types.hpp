@@ -116,4 +116,26 @@ namespace Yutrel
         uint32_t subpass;
     };
 
+    struct RHIDescriptorLayoutCreateInfo
+    {
+        std::vector<VkDescriptorSetLayoutBinding> bindings;
+
+        VkShaderStageFlags shader_stages;
+
+        void AddBinding(uint32_t binding, VkDescriptorType type)
+        {
+            VkDescriptorSetLayoutBinding newbind{};
+            newbind.binding         = binding;
+            newbind.descriptorCount = 1;
+            newbind.descriptorType  = type;
+
+            bindings.push_back(newbind);
+        }
+
+        void Clear()
+        {
+            bindings.clear();
+        }
+    };
+
 } // namespace Yutrel

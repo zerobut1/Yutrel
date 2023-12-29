@@ -7,7 +7,7 @@ namespace Yutrel
     class VulkanRHI;
     class VulkanPipeline;
 
-    class VulkanRenderer : public Renderer
+    class VulkanRenderer final : public Renderer
     {
     public:
         virtual void Init(RendererInitInfo info) override;

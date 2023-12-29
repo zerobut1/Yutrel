@@ -37,7 +37,7 @@ namespace Yutrel
 
         m_rhi->CmdBeginRenderPass(m_rhi->GetCurrentCommandBuffer(), &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-        m_rhi->CmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_render_pipelines[0].pipeline);
+        m_rhi->CmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[0].pipeline);
 
         for (auto& pbr : m_render_data->pbrs)
         {
@@ -104,7 +104,7 @@ namespace Yutrel
 
     void MainPass::InitPipeline()
     {
-        m_render_pipelines.resize(1);
+        m_pipelines.resize(1);
 
         //-------------着色器模块-------------
         // clang-format off
@@ -132,7 +132,7 @@ namespace Yutrel
         //-----------管线布局-------------
         VkPipelineLayoutCreateInfo layout_info = vkinit::PipelineLayoutCreateInfo();
 
-        YUTREL_ASSERT(m_rhi->CreatePipelineLayout(&layout_info, &m_render_pipelines[0].layout), "Failed to create pipeline layout");
+        YUTREL_ASSERT(m_rhi->CreatePipelineLayout(&layout_info, &m_pipelines[0].layout), "Failed to create pipeline layout");
 
         //----------顶点状态-------------
         VertexInputDescription vertex_description = Vertex::GetVertexDescription();
@@ -164,7 +164,7 @@ namespace Yutrel
         //------------创建管线-----------
         RHIGraphicsPipelineCreateInfo pipeline_create_info{};
         // 布局
-        pipeline_create_info.pipeline_layout = m_render_pipelines[0].layout;
+        pipeline_create_info.pipeline_layout = m_pipelines[0].layout;
         // 着色器
         pipeline_create_info.shader_stages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, triangle_vert_shader));
         pipeline_create_info.shader_stages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangle_frag_shader));
@@ -188,7 +188,7 @@ namespace Yutrel
         pipeline_create_info.render_pass = m_render_pass;
         pipeline_create_info.subpass     = 0;
 
-        YUTREL_ASSERT(m_rhi->CreateGraphicsPipeline(pipeline_create_info, &m_render_pipelines[0].pipeline), "Failed to create graphics pipeline");
+        YUTREL_ASSERT(m_rhi->CreateGraphicsPipeline(pipeline_create_info, &m_pipelines[0].pipeline), "Failed to create graphics pipeline");
 
         //------------删除着色器模块--------------
         m_rhi->DestroyShaderModule(triangle_vert_shader);

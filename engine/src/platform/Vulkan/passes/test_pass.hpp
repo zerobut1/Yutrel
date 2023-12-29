@@ -9,7 +9,7 @@ namespace Yutrel
     struct TestPassInitInfo : RenderPassInitInfo
     {};
 
-    class TestPass : public RenderPass
+    class TestPass final : public RenderPass
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;
@@ -19,13 +19,24 @@ namespace Yutrel
         void DrawForward();
 
     private:
-        void InitRenderPass();
-        void InitFramebuffer();
-        void InitPipeline();
+        //--------初始化---------
+        void InitDrawImage();
+
+        void InitDescriptors();
+
+        void InitBackgroundPipeline();
+
+        //---------绘制------------
+        void PrepareDrawImage();
+
+        void CopyToSwapchain();
+
+        void DrawBackground();
 
     private:
-
-        std::vector<VkFramebuffer> m_swapchain_framebuffers;
+        // 绘制到的图像
+        AllocatedImage m_draw_image;
+        VkExtent2D m_draw_extent;
 
         Ref<struct RenderData> m_render_data;
     };

@@ -8,7 +8,7 @@
 namespace Yutrel
 {
     class VulkanRHI;
-    struct Mesh;
+    class Mesh;
 
     struct RenderPassInitInfo
     {};
@@ -22,18 +22,21 @@ namespace Yutrel
 
         void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
 
-    public:
-        // todo 临时
-        static inline Ref<Mesh> m_triangle_mesh;
-
     protected:
         Ref<VulkanRHI> m_rhi;
-        
-        struct RenderPipelineBase
+
+        struct PipelineBase
         {
             VkPipelineLayout layout;
             VkPipeline pipeline;
         };
-        std::vector<RenderPipelineBase> m_render_pipelines;
+        std::vector<PipelineBase> m_pipelines;
+
+        struct Descriptor
+        {
+            VkDescriptorSetLayout layout;
+            VkDescriptorSet set;
+        };
+        std::vector<Descriptor> m_descriptor_infos;
     };
 } // namespace Yutrel

@@ -8,6 +8,7 @@
 
 #include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
+#include <stdint.h>
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -18,13 +19,13 @@ namespace Yutrel
     {
         InitVulkan(info.raw_window);
 
-        InitCommands();
+        InitSwapchain(info.width, info.height);
 
-        InitDescriptorPool();
+        InitCommands();
 
         InitSyncStructures();
 
-        InitSwapchain(info.width, info.height);
+        InitDescriptorPool();
 
         InitDepthImage();
     }
@@ -90,46 +91,10 @@ namespace Yutrel
         VkCommandBufferBeginInfo cmd_begin_info = vkinit::CommandBufferBeginInfo(0);
 
         YUTREL_ASSERT(vkBeginCommandBuffer(m_cur_command_buffer, &cmd_begin_info) == VK_SUCCESS, "Failed to begin command buffer");
-
-        // 设置渲染图像范围
-        m_draw_extent.width  = m_draw_image.image_extent.width;
-        m_draw_extent.height = m_draw_image.image_extent.height;
-
-        // 将渲染图像布局转换为通用布局
-        TransitionImage(m_cur_command_buffer,
-                        m_draw_image.image,
-                        VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_GENERAL);
     }
 
     void VulkanRHI::SubmitRendering()
     {
-        //----------将渲染图像拷贝至交换链------------
-        // 将渲染图像布局转换为传输源布局
-        TransitionImage(m_cur_command_buffer,
-                        m_draw_image.image,
-                        VK_IMAGE_LAYOUT_GENERAL,
-                        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
-        // 将交换链布局转换为传输目标布局
-        TransitionImage(m_cur_command_buffer,
-                        GetCurrentSwapchainImage(),
-                        VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-        // 将渲染图像拷贝至交换链
-        CopyImageToImage(m_cur_command_buffer,
-                         m_draw_image.image,
-                         GetCurrentSwapchainImage(),
-                         m_draw_extent,
-                         m_swapchain_extent);
-
-        // 将交换链布局转换为呈现布局
-        TransitionImage(m_cur_command_buffer,
-                        GetCurrentSwapchainImage(),
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                        VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
         //-------------终止指令缓冲-------------
         YUTREL_ASSERT(vkEndCommandBuffer(m_cur_command_buffer) == VK_SUCCESS, "Failed to end command buffer");
 
@@ -307,14 +272,7 @@ namespace Yutrel
         // 创建描述符池
         // todo 控制描述符池大小
         std::vector<VkDescriptorPoolSize> sizes{
-            // 支持十个uniform buffer
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10},
-            // 支持十个dynamic uniform buffer
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10},
-            // 支持十个SSBO
-            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10},
-            // image采样
-            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10},
+            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10},
         };
 
         VkDescriptorPoolCreateInfo pool_create_info{};
@@ -400,45 +358,6 @@ namespace Yutrel
                 {
                     vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
                 }
-            });
-
-        //----------创建渲染目标图像---------------
-        VkExtent3D draw_image_extent{
-            m_swapchain_extent.width,
-            m_swapchain_extent.height,
-            1,
-        };
-
-        // 设为16位浮点格式以获得更高的精度
-        m_draw_image.image_format = VK_FORMAT_R16G16B16A16_SFLOAT;
-        m_draw_image.image_extent = draw_image_extent;
-
-        VkImageUsageFlags draw_image_usages{};
-        draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_STORAGE_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-        VkImageCreateInfo draw_image_create_info = vkinit::ImageCreateInfo(m_draw_image.image_format, draw_image_usages, m_draw_image.image_extent);
-
-        // 将图像放至GPU only内存
-        VmaAllocationCreateInfo draw_image_alloc_info{};
-        draw_image_alloc_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
-        draw_image_alloc_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        YUTREL_ASSERT(vmaCreateImage(m_allocator, &draw_image_create_info, &draw_image_alloc_info, &m_draw_image.image, &m_draw_image.allocation, nullptr) == VK_SUCCESS, "Failed to create draw image");
-
-        // 创建图像视图
-        VkImageViewCreateInfo draw_image_view_info = vkinit::ImageViewCreateInfo(m_draw_image.image_format, m_draw_image.image, VK_IMAGE_ASPECT_COLOR_BIT);
-
-        YUTREL_ASSERT(vkCreateImageView(m_device, &draw_image_view_info, nullptr, &m_draw_image.image_view) == VK_SUCCESS, "Failed to create draw image view");
-
-        // 添加到删除队列
-        m_main_deletion_queue.PushFunction(
-            [=]()
-            {
-                vkDestroyImageView(m_device, m_draw_image.image_view, nullptr);
-                vmaDestroyImage(m_allocator, m_draw_image.image, m_draw_image.allocation);
             });
     }
 
@@ -577,6 +496,106 @@ namespace Yutrel
 
         *out_pipeline = pipeline;
         return result;
+    }
+
+    bool VulkanRHI::CreateComputePipelines(VkPipelineCache pipelineCache,
+                                           uint32_t createInfoCount,
+                                           const VkComputePipelineCreateInfo* pCreateInfos,
+                                           const VkAllocationCallbacks* pAllocator,
+                                           VkPipeline* pPipelines)
+    {
+        VkPipeline pipeline;
+        bool result = vkCreateComputePipelines(m_device, pipelineCache, createInfoCount, pCreateInfos, pAllocator, &pipeline) == VK_SUCCESS;
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyPipeline(m_device, pipeline, nullptr);
+            });
+
+        *pPipelines = pipeline;
+        return result;
+    }
+
+    bool VulkanRHI::CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image)
+    {
+        VkImage image;
+        VmaAllocation allocation;
+        bool result = vmaCreateImage(m_allocator, create_info, alloc_info, &image, &allocation, nullptr) == VK_SUCCESS;
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vmaDestroyImage(m_allocator, image, allocation);
+            });
+
+        out_image->image      = image;
+        out_image->allocation = allocation;
+        return result;
+    }
+
+    bool VulkanRHI::CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image)
+    {
+        VkImageView image_view;
+        bool result = vkCreateImageView(m_device, info, nullptr, &image_view) == VK_SUCCESS;
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyImageView(m_device, image_view, nullptr);
+            });
+
+        out_image->image_view = image_view;
+        return result;
+    }
+
+    bool VulkanRHI::CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout)
+    {
+        for (auto& b : info.bindings)
+        {
+            b.stageFlags |= info.shader_stages;
+        }
+
+        VkDescriptorSetLayoutCreateInfo create_info{};
+        create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        create_info.pNext = nullptr;
+
+        create_info.pBindings    = info.bindings.data();
+        create_info.bindingCount = static_cast<uint32_t>(info.bindings.size());
+        create_info.flags        = 0;
+
+        VkDescriptorSetLayout layout;
+        bool result = vkCreateDescriptorSetLayout(m_device, &create_info, nullptr, &layout) == VK_SUCCESS;
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyDescriptorSetLayout(m_device, layout, nullptr);
+            });
+
+        *out_layout = layout;
+        return result;
+    }
+
+    bool VulkanRHI::AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set)
+    {
+        VkDescriptorSetAllocateInfo info{};
+        info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        info.pNext              = nullptr;
+        info.descriptorPool     = m_descriptor_pool;
+        info.descriptorSetCount = 1;
+        info.pSetLayouts        = &layout;
+
+        VkDescriptorSet set;
+        bool result = vkAllocateDescriptorSets(m_device, &info, &set) == VK_SUCCESS;
+
+        *out_set = set;
+        return result;
+    }
+
+    void VulkanRHI::UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies)
+    {
+        vkUpdateDescriptorSets(m_device, descriptor_write_count, p_descriptor_writes, descriptor_copy_count, p_descriptor_copies);
     }
 
     void VulkanRHI::UploadMesh(Mesh& mesh)

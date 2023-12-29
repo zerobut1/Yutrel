@@ -9,7 +9,7 @@ namespace Yutrel
     struct MainPassInitInfo : RenderPassInitInfo
     {};
 
-    class MainPass : public RenderPass
+    class MainPass final : public RenderPass
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;

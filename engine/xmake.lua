@@ -25,5 +25,5 @@ target("engine")
 
     -- 着色器
     add_rules("utils.glsl2spv",{bin2c = true})
-    add_files("asset/shader/**.vert","asset/shader/**.frag")
+    add_files("asset/shader/**.vert","asset/shader/**.frag","asset/shader/**.comp")
     add_packages("glslang")
