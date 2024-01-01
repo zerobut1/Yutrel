@@ -564,6 +564,33 @@ namespace Yutrel
         vkUpdateDescriptorSets(m_device, descriptor_write_count, p_descriptor_writes, descriptor_copy_count, p_descriptor_copies);
     }
 
+    VkCommandBuffer VulkanRHI::BeginSingleTimeCommands()
+    {
+        VkCommandBufferAllocateInfo alloc_info = vkinit::CommandBufferAllocateInfo(m_rhi_command_pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+        VkCommandBuffer cmd_buffer;
+        vkAllocateCommandBuffers(m_device, &alloc_info, &cmd_buffer);
+
+        VkCommandBufferBeginInfo beginInfo = vkinit::CommandBufferBeginInfo(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+        YUTREL_ASSERT(vkBeginCommandBuffer(cmd_buffer, &beginInfo) == VK_SUCCESS, "Failed to begin single time command buffer");
+
+        return cmd_buffer;
+    }
+
+    void VulkanRHI::EndSingleTimeCommands(VkCommandBuffer cmd_buffer)
+    {
+        YUTREL_ASSERT(vkEndCommandBuffer(cmd_buffer), "Failed to end signle time command buffer");
+
+        VkCommandBufferSubmitInfo cmd_info = vkinit::CommandBufferSubmitInfo(cmd_buffer);
+        VkSubmitInfo2 submit               = vkinit::SubmitInfo2(&cmd_info, nullptr, nullptr);
+
+        vkQueueSubmit2(m_graphics_queue, 1, &submit, VK_NULL_HANDLE);
+        vkQueueWaitIdle(m_graphics_queue);
+
+        vkFreeCommandBuffers(m_device, m_rhi_command_pool, 1, &cmd_buffer);
+    }
+
     void VulkanRHI::UploadMesh(Mesh& mesh)
     {
         mesh.vertex_buffer = CreateRef<AllocatedBuffer>();

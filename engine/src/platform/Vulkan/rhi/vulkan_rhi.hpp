@@ -84,6 +84,11 @@ namespace Yutrel
 
         void UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies);
 
+        //----------单次指令----------
+        VkCommandBuffer BeginSingleTimeCommands();
+
+        void EndSingleTimeCommands(VkCommandBuffer cmd_buffer);
+
         //----------渲染资源----------
         void UploadMesh(Mesh& mesh);
 
