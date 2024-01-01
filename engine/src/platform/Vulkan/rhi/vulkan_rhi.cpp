@@ -8,6 +8,7 @@
 
 #include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
+#include <array>
 #include <stdint.h>
 
 #define VMA_IMPLEMENTATION
@@ -439,8 +440,6 @@ namespace Yutrel
 
     void VulkanRHI::CreateGraphicsPipelines(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline)
     {
-        VkPipeline pipeline;
-
         VkGraphicsPipelineCreateInfo pipeline_info{};
         pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipeline_info.pNext = nullptr;
@@ -458,6 +457,7 @@ namespace Yutrel
         pipeline_info.subpass             = 0;
         pipeline_info.basePipelineHandle  = VK_NULL_HANDLE;
 
+        VkPipeline pipeline;
         YUTREL_ASSERT(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline) == VK_SUCCESS, "Failed to create graphics pipelines");
 
         m_main_deletion_queue.PushFunction(
@@ -485,6 +485,69 @@ namespace Yutrel
             });
 
         *pPipelines = pipeline;
+    }
+
+    void VulkanRHI::CreateDynamicPipelines(const RHIDynamicPipelineCreateInfo& info, VkPipeline* out_pipeline)
+    {
+        // 视口和裁剪
+        VkPipelineViewportStateCreateInfo viewport_state{};
+        viewport_state.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewport_state.pNext         = nullptr;
+        viewport_state.viewportCount = 1;
+        viewport_state.scissorCount  = 1;
+
+        // 颜色混合
+        VkPipelineColorBlendStateCreateInfo color_blending{};
+        color_blending.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        color_blending.pNext           = nullptr;
+        color_blending.logicOpEnable   = VK_FALSE;
+        color_blending.logicOp         = VK_LOGIC_OP_COPY;
+        color_blending.attachmentCount = 1;
+        color_blending.pAttachments    = &info.color_blend_attachment;
+
+        // 顶点阶段
+        // 不需要
+        VkPipelineVertexInputStateCreateInfo vertex_input_info{};
+        vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertex_input_info.pNext = nullptr;
+
+        // 动态状态
+        std::array<VkDynamicState, 2> state =
+            {
+                VK_DYNAMIC_STATE_VIEWPORT,
+                VK_DYNAMIC_STATE_SCISSOR,
+            };
+        VkPipelineDynamicStateCreateInfo dynamic_info{};
+        dynamic_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamic_info.dynamicStateCount = static_cast<uint32_t>(state.size());
+        dynamic_info.pDynamicStates    = state.data();
+
+        //---------管线创建信息-------------
+        VkGraphicsPipelineCreateInfo pipeline_info{};
+        pipeline_info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipeline_info.pNext               = &info.render_info;
+        pipeline_info.stageCount          = static_cast<uint32_t>(info.shader_stages.size());
+        pipeline_info.pStages             = info.shader_stages.data();
+        pipeline_info.pVertexInputState   = &vertex_input_info;
+        pipeline_info.pInputAssemblyState = &info.input_assembly;
+        pipeline_info.pViewportState      = &viewport_state;
+        pipeline_info.pRasterizationState = &info.rasterizer;
+        pipeline_info.pMultisampleState   = &info.multisampling;
+        pipeline_info.pColorBlendState    = &color_blending;
+        pipeline_info.pDepthStencilState  = &info.depth_stencil;
+        pipeline_info.layout              = info.pipeline_layout;
+        pipeline_info.pDynamicState       = &dynamic_info;
+
+        VkPipeline pipeline;
+        YUTREL_ASSERT(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline) == VK_SUCCESS, "Failed to create dynamic pipelines");
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroyPipeline(m_device, pipeline, nullptr);
+            });
+
+        *out_pipeline = pipeline;
     }
 
     void VulkanRHI::CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image)

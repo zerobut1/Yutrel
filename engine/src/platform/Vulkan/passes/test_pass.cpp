@@ -13,7 +13,11 @@ namespace Yutrel
 
         InitDescriptors();
 
-        InitBackgroundPipeline();
+        m_pipelines.resize(pipelines::count);
+
+        InitComputePipeline();
+
+        InitTrianglePipeline();
     }
 
     void TestPass::PreparePassData(Ref<struct RenderData> render_data)
@@ -28,8 +32,23 @@ namespace Yutrel
         //--------绘制------------
         // 清除图像
         DrawBackground();
-        //-----------------------
 
+        // 图像格式转换为颜色缓冲
+        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
+                               m_draw_image.image,
+                               VK_IMAGE_LAYOUT_GENERAL,
+                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+        // 绘制几何图形
+        DrawGeometry();
+
+        // 将渲染图像布局转换为传输源布局
+        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
+                               m_draw_image.image,
+                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+        //-----------------------
         CopyToSwapchain();
     }
 
@@ -101,18 +120,16 @@ namespace Yutrel
         m_rhi->UpdateDescriptorSets(1, &draw_image_write, 0, nullptr);
     }
 
-    void TestPass::InitBackgroundPipeline()
+    void TestPass::InitComputePipeline()
     {
-        m_pipelines.resize(1);
-
         // layout
-        VkPipelineLayoutCreateInfo computeLayout{};
-        computeLayout.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        computeLayout.pNext          = nullptr;
-        computeLayout.pSetLayouts    = &m_descriptor_infos[0].layout;
-        computeLayout.setLayoutCount = 1;
+        VkPipelineLayoutCreateInfo compute_layout{};
+        compute_layout.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        compute_layout.pNext          = nullptr;
+        compute_layout.pSetLayouts    = &m_descriptor_infos[0].layout;
+        compute_layout.setLayoutCount = 1;
 
-        m_rhi->CreatePipelineLayout(&computeLayout, &m_pipelines[0].layout);
+        m_rhi->CreatePipelineLayout(&compute_layout, &m_pipelines[pipelines::compute].layout);
 
         // shader
         // clang-format off
@@ -136,13 +153,60 @@ namespace Yutrel
         VkComputePipelineCreateInfo computePipelineCreateInfo{};
         computePipelineCreateInfo.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
         computePipelineCreateInfo.pNext  = nullptr;
-        computePipelineCreateInfo.layout = m_pipelines[0].layout;
+        computePipelineCreateInfo.layout = m_pipelines[pipelines::compute].layout;
         computePipelineCreateInfo.stage  = stageinfo;
 
-        m_rhi->CreateComputePipelines(VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &m_pipelines[0].pipeline);
+        m_rhi->CreateComputePipelines(VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &m_pipelines[pipelines::compute].pipeline);
 
         // 清除着色器模块
         m_rhi->DestroyShaderModule(compute_shader);
+    }
+
+    void TestPass::InitTrianglePipeline()
+    {
+        //----------shader--------------
+        // clang-format off
+        std::vector<unsigned char> triangle_vert_code{
+            #include "triangle.vert.spv.h"
+        };
+        std::vector<unsigned char> triangle_frag_code{
+            #include "triangle.frag.spv.h"
+        };
+        // clang-format on
+        VkShaderModule triangle_vert_shader;
+        if (!m_rhi->CreateShaderModule(triangle_vert_code, &triangle_vert_shader))
+        {
+            LOG_ERROR("Failed to create vertex shader");
+        }
+        VkShaderModule triangle_frag_shader;
+        if (!m_rhi->CreateShaderModule(triangle_frag_code, &triangle_frag_shader))
+        {
+            LOG_ERROR("Failed to create fragment shader");
+        }
+
+        //------------layout-------------
+        VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
+        m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[pipelines::triangle].layout);
+
+        //-----------创建管线----------
+        RHIDynamicPipelineCreateInfo pipeline_create_info;
+        pipeline_create_info.Clear();
+        pipeline_create_info.pipeline_layout = m_pipelines[pipelines::triangle].layout;
+        pipeline_create_info.SetShaders(triangle_vert_shader, triangle_frag_shader);
+        pipeline_create_info.SetInputTopolygy(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+        pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
+        pipeline_create_info.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+        pipeline_create_info.SetMultisamplingNone();
+        pipeline_create_info.DisableBlending();
+        pipeline_create_info.DisableDepthTest();
+        pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
+        pipeline_create_info.SetDepthFormat(VK_FORMAT_UNDEFINED);
+
+        m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[pipelines::triangle].pipeline);
+
+        //--------清除---------
+        m_rhi->DestroyShaderModule(triangle_vert_shader);
+        m_rhi->DestroyShaderModule(triangle_frag_shader);
     }
 
     void TestPass::PrepareDrawImage()
@@ -160,12 +224,6 @@ namespace Yutrel
 
     void TestPass::CopyToSwapchain()
     {
-        // 将渲染图像布局转换为传输源布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_draw_image.image,
-                               VK_IMAGE_LAYOUT_GENERAL,
-                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
         // 将交换链布局转换为传输目标布局
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
                                m_rhi->GetCurrentSwapchainImage(),
@@ -188,11 +246,43 @@ namespace Yutrel
 
     void TestPass::DrawBackground()
     {
-        vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0].pipeline);
+        vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[pipelines::compute].pipeline);
 
-        vkCmdBindDescriptorSets(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[0].layout, 0, 1, &m_descriptor_infos[0].set, 0, nullptr);
+        vkCmdBindDescriptorSets(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[pipelines::compute].layout, 0, 1, &m_descriptor_infos[0].set, 0, nullptr);
 
         vkCmdDispatch(m_rhi->GetCurrentCommandBuffer(), std::ceil(m_draw_extent.width / 16.0), std::ceil(m_draw_extent.height / 16.0), 1);
+    }
+
+    void TestPass::DrawGeometry()
+    {
+        VkRenderingAttachmentInfo color_attachment = vkinit::AttachmentInfo(m_draw_image.image_view, nullptr, VK_IMAGE_LAYOUT_GENERAL);
+
+        VkRenderingInfo render_info = vkinit::RenderingInfo(m_draw_extent, &color_attachment, nullptr);
+        vkCmdBeginRendering(m_rhi->GetCurrentCommandBuffer(), &render_info);
+
+        vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[pipelines::triangle].pipeline);
+
+        VkViewport viewport{};
+        viewport.x        = 0;
+        viewport.y        = 0;
+        viewport.width    = m_draw_extent.width;
+        viewport.height   = m_draw_extent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        vkCmdSetViewport(m_rhi->GetCurrentCommandBuffer(), 0, 1, &viewport);
+
+        VkRect2D scissor{};
+        scissor.offset.x      = 0;
+        scissor.offset.y      = 0;
+        scissor.extent.width  = m_draw_extent.width;
+        scissor.extent.height = m_draw_extent.height;
+
+        vkCmdSetScissor(m_rhi->GetCurrentCommandBuffer(), 0, 1, &scissor);
+
+        vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), 3, 1, 0, 0);
+
+        vkCmdEndRendering(m_rhi->GetCurrentCommandBuffer());
     }
 
 } // namespace Yutrel

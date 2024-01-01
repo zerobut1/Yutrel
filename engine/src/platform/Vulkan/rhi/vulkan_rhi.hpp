@@ -74,6 +74,8 @@ namespace Yutrel
                                     const VkAllocationCallbacks* pAllocator,
                                     VkPipeline* pPipelines);
 
+        void CreateDynamicPipelines(const RHIDynamicPipelineCreateInfo& info, VkPipeline* out_pipeline);
+
         void CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image);
 
         void CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image);

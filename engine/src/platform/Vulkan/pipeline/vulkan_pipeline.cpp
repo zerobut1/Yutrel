@@ -19,8 +19,8 @@ namespace Yutrel
         m_main_pass->SetRHI(m_rhi);
         m_test_pass->SetRHI(m_rhi);
 
-        MainPassInitInfo main_init_info{};
-        m_main_pass->Init(&main_init_info);
+        // MainPassInitInfo main_init_info{};
+        // m_main_pass->Init(&main_init_info);
 
         TestPassInitInfo test_init_info{};
         m_test_pass->Init(&test_init_info);

@@ -24,7 +24,9 @@ namespace Yutrel
 
         void InitDescriptors();
 
-        void InitBackgroundPipeline();
+        void InitComputePipeline();
+
+        void InitTrianglePipeline();
 
         //---------绘制------------
         void PrepareDrawImage();
@@ -33,7 +35,17 @@ namespace Yutrel
 
         void DrawBackground();
 
+        void DrawGeometry();
+
     private:
+        enum pipelines : uint8_t
+        {
+            compute = 0,
+            triangle,
+
+            count,
+        };
+
         // 绘制到的图像
         AllocatedImage m_draw_image;
         VkExtent2D m_draw_extent;

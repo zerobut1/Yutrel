@@ -291,7 +291,6 @@ namespace Yutrel
             return info;
         }
 
-        // 图像创建信息
         VkImageCreateInfo ImageCreateInfo(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent)
         {
             VkImageCreateInfo info{};
@@ -315,7 +314,6 @@ namespace Yutrel
             return info;
         }
 
-        // 图像视图创建信息
         VkImageViewCreateInfo ImageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags)
         {
             VkImageViewCreateInfo info{};
@@ -330,6 +328,40 @@ namespace Yutrel
             info.subresourceRange.baseArrayLayer = 0;
             info.subresourceRange.layerCount     = 1;
             info.subresourceRange.aspectMask     = aspect_flags;
+
+            return info;
+        }
+
+        VkRenderingAttachmentInfo AttachmentInfo(VkImageView view, VkClearValue* clear, VkImageLayout layout)
+        {
+            VkRenderingAttachmentInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            info.pNext = nullptr;
+
+            info.imageView   = view;
+            info.imageLayout = layout;
+            info.loadOp      = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+            info.storeOp     = VK_ATTACHMENT_STORE_OP_STORE;
+            if (clear)
+            {
+                info.clearValue = *clear;
+            }
+
+            return info;
+        }
+
+        VkRenderingInfo RenderingInfo(VkExtent2D render_extent, VkRenderingAttachmentInfo* color_attachment, VkRenderingAttachmentInfo* depth_attachment)
+        {
+            VkRenderingInfo info{};
+            info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+            info.pNext = nullptr;
+
+            info.renderArea           = VkRect2D{VkOffset2D{0, 0}, render_extent};
+            info.layerCount           = 1;
+            info.colorAttachmentCount = 1;
+            info.pColorAttachments    = color_attachment;
+            info.pDepthAttachment     = depth_attachment;
+            info.pStencilAttachment   = nullptr;
 
             return info;
         }
