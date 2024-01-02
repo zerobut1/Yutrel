@@ -13,4 +13,11 @@ namespace Yutrel
 
         VkPipelineVertexInputStateCreateFlags flags{0};
     };
+
+    struct GPUMeshBuffers
+    {
+        AllocatedBuffer index_buffer;
+        AllocatedBuffer vertex_buffer;
+        VkDeviceAddress vertex_buffer_address;
+    };
 } // namespace Yutrel

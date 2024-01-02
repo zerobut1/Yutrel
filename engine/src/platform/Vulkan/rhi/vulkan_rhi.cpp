@@ -10,6 +10,7 @@
 #include <VKBootstrap.h>
 #include <array>
 #include <stdint.h>
+#include <vcruntime.h>
 
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -643,7 +644,7 @@ namespace Yutrel
 
     void VulkanRHI::EndSingleTimeCommands(VkCommandBuffer cmd_buffer)
     {
-        YUTREL_ASSERT(vkEndCommandBuffer(cmd_buffer), "Failed to end signle time command buffer");
+        YUTREL_ASSERT(vkEndCommandBuffer(cmd_buffer) == VK_SUCCESS, "Failed to end signle time command buffer");
 
         VkCommandBufferSubmitInfo cmd_info = vkinit::CommandBufferSubmitInfo(cmd_buffer);
         VkSubmitInfo2 submit               = vkinit::SubmitInfo2(&cmd_info, nullptr, nullptr);
@@ -654,35 +655,87 @@ namespace Yutrel
         vkFreeCommandBuffers(m_device, m_rhi_command_pool, 1, &cmd_buffer);
     }
 
+    AllocatedBuffer VulkanRHI::CreateBuffer(size_t alloc_size, VkBufferUsageFlags usage_flags, VmaMemoryUsage usage)
+    {
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.pNext = nullptr;
+        bufferInfo.size  = alloc_size;
+
+        bufferInfo.usage = usage_flags;
+
+        VmaAllocationCreateInfo vmaallocInfo{};
+        vmaallocInfo.usage = usage;
+        vmaallocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+        AllocatedBuffer new_buffer;
+        YUTREL_ASSERT(vmaCreateBuffer(m_allocator, &bufferInfo, &vmaallocInfo, &new_buffer.buffer, &new_buffer.allocation, &new_buffer.info) == VK_SUCCESS, "Failed to create buffer");
+
+        return new_buffer;
+    }
+
+    void VulkanRHI::DestroyBuffer(const AllocatedBuffer& buffer)
+    {
+        vmaDestroyBuffer(m_allocator, buffer.buffer, buffer.allocation);
+    }
+
     void VulkanRHI::UploadMesh(Mesh& mesh)
     {
-        mesh.vertex_buffer = CreateRef<AllocatedBuffer>();
+        const size_t VERTEX_BUFFER_SIZE = mesh.vertices->size() * sizeof(Vertex);
+        const size_t INDEX_BUFFER_SIZE  = mesh.indices->size() * sizeof(uint32_t);
 
-        // 创建缓冲区
-        VkBufferCreateInfo buffer_info{};
-        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        buffer_info.size  = mesh.vertices->size() * sizeof(Vertex);
-        buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        mesh.gpu_buffers = CreateRef<GPUMeshBuffers>();
 
-        // 内存由CPU写入，GPU读取
-        VmaAllocationCreateInfo vma_alloc_info{};
-        vma_alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+        // 顶点缓冲
+        mesh.gpu_buffers->vertex_buffer =
+            CreateBuffer(VERTEX_BUFFER_SIZE,
+                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                         VMA_MEMORY_USAGE_GPU_ONLY);
 
-        // 内存分配
-        YUTREL_ASSERT(vmaCreateBuffer(m_allocator, &buffer_info, &vma_alloc_info, &mesh.vertex_buffer->buffer, &mesh.vertex_buffer->allocation, nullptr) == VK_SUCCESS, "Failed to create buffer");
+        VkBufferDeviceAddressInfo device_address_info{};
+        device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+        device_address_info.buffer = mesh.gpu_buffers->vertex_buffer.buffer;
 
-        // 加入销毁队列
-        m_main_deletion_queue.PushFunction(
-            [=]()
-            {
-                vmaDestroyBuffer(m_allocator, mesh.vertex_buffer->buffer, mesh.vertex_buffer->allocation);
-            });
+        mesh.gpu_buffers->vertex_buffer_address = vkGetBufferDeviceAddress(m_device, &device_address_info);
 
-        // 将数据拷贝到缓冲区
-        void* data;
-        vmaMapMemory(m_allocator, mesh.vertex_buffer->allocation, &data);
-        memcpy(data, mesh.vertices->data(), mesh.vertices->size() * sizeof(Vertex));
-        vmaUnmapMemory(m_allocator, mesh.vertex_buffer->allocation);
+        // 索引缓冲
+        mesh.gpu_buffers->index_buffer =
+            CreateBuffer(INDEX_BUFFER_SIZE,
+                         VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                         VMA_MEMORY_USAGE_GPU_ONLY);
+
+        // 创建暂存缓冲区
+        AllocatedBuffer staging =
+            CreateBuffer(VERTEX_BUFFER_SIZE + INDEX_BUFFER_SIZE,
+                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                         VMA_MEMORY_USAGE_CPU_ONLY);
+
+        // 将数据拷贝到暂存缓冲区
+        void* data = staging.allocation->GetMappedData();
+
+        memcpy(data, mesh.vertices->data(), VERTEX_BUFFER_SIZE);
+        memcpy((char*)data + VERTEX_BUFFER_SIZE, mesh.indices->data(), INDEX_BUFFER_SIZE);
+
+        // 从暂存缓冲区拷贝到gpu
+        VkCommandBuffer cmd_buffer = BeginSingleTimeCommands();
+
+        VkBufferCopy vertex_copy{0};
+        vertex_copy.dstOffset = 0;
+        vertex_copy.srcOffset = 0;
+        vertex_copy.size      = VERTEX_BUFFER_SIZE;
+
+        vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh.gpu_buffers->vertex_buffer.buffer, 1, &vertex_copy);
+
+        VkBufferCopy index_copy{0};
+        index_copy.dstOffset = 0;
+        index_copy.srcOffset = VERTEX_BUFFER_SIZE;
+        index_copy.size      = INDEX_BUFFER_SIZE;
+
+        vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh.gpu_buffers->index_buffer.buffer, 1, &index_copy);
+
+        EndSingleTimeCommands(cmd_buffer);
+
+        DestroyBuffer(staging);
     }
 
     void VulkanRHI::TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout)

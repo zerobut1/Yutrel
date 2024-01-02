@@ -2,22 +2,34 @@
 
 #include "core/macro.hpp"
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
+#include <glm/glm.hpp>
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 
 namespace Yutrel
 {
     struct VertexInputDescription;
+    struct GPUMeshBuffers;
+
+    // struct Vertex
+    // {
+    //     glm::vec3 position;
+    //     glm::vec3 normal;
+    //     glm::vec3 color;
+    //     glm::vec2 uv;
+
+    //     static VertexInputDescription GetVertexDescription();
+    // };
 
     struct Vertex
     {
         glm::vec3 position;
+        float uv_x;
         glm::vec3 normal;
-        glm::vec3 color;
-        glm::vec2 uv;
+        float uv_y;
+        glm::vec4 color;
 
         static VertexInputDescription GetVertexDescription();
     };
@@ -41,7 +53,9 @@ namespace Yutrel
         bool is_uploaded{false};
 
         Ref<std::vector<Vertex>> vertices;
-        Ref<struct AllocatedBuffer> vertex_buffer;
+        Ref<std::vector<uint32_t>> indices;
+
+        Ref<GPUMeshBuffers> gpu_buffers;
     };
 
 } // namespace Yutrel

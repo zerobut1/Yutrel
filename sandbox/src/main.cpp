@@ -10,7 +10,8 @@ void StartWorld(gecs::commands cmds,
     cmds.emplace<Yutrel::PbrBundle>(
         entity,
         Yutrel::PbrBundle{
-            asset_manager->LoadMesh("resource/lost_empire/lost_empire.obj"),
+            // asset_manager->LoadMesh("resource/lost_empire/lost_empire.obj"),
+            asset_manager->TempAddMesh(),
         });
 }
 

@@ -64,13 +64,13 @@ namespace Yutrel
         // std::vector<const PbrBundle*> render_data;
         for (auto&& [entity, pbr_bundle] : pbrs)
         {
-            if (!pbr_bundle.mesh.is_loaded)
-            {
-                if (!asset_manager->LoadFromFile(pbr_bundle.mesh))
-                {
-                    LOG_ERROR("Failed to load {}", pbr_bundle.mesh.path);
-                }
-            }
+            // if (!pbr_bundle.mesh.is_loaded)
+            // {
+            //     if (!asset_manager->LoadFromFile(pbr_bundle.mesh))
+            //     {
+            //         LOG_ERROR("Failed to load {}", pbr_bundle.mesh.path);
+            //     }
+            // }
 
             render_data->pbrs.push_back(&pbr_bundle);
         }

@@ -37,6 +37,7 @@ namespace Yutrel
     {
         VkBuffer buffer;
         VmaAllocation allocation;
+        VmaAllocationInfo info;
     };
 
     // 分配图像

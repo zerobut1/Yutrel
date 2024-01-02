@@ -42,7 +42,7 @@ namespace Yutrel
         for (auto& pbr : m_render_data->pbrs)
         {
             VkDeviceSize offset = 0;
-            vkCmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh.vertex_buffer->buffer, &offset);
+            vkCmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh.gpu_buffers->vertex_buffer.buffer, &offset);
 
             vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh.vertices->size(), 1, 0, 0);
         }

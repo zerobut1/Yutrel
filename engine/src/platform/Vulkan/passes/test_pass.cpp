@@ -2,7 +2,9 @@
 
 #include "test_pass.hpp"
 
+#include "function/render/renderer.hpp"
 #include "platform/Vulkan/initializers/initializers.hpp"
+#include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 
 namespace Yutrel
@@ -184,8 +186,17 @@ namespace Yutrel
             LOG_ERROR("Failed to create fragment shader");
         }
 
+        //------------推送常量------------
+        VkPushConstantRange buffer_range{};
+        buffer_range.offset     = 0;
+        buffer_range.size       = sizeof(GPUDrawPushConstants);
+        buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
         //------------layout-------------
         VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
+        pipeline_layout_info.pushConstantRangeCount     = 1;
+        pipeline_layout_info.pPushConstantRanges        = &buffer_range;
+
         m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[pipelines::triangle].layout);
 
         //-----------创建管线----------
@@ -280,7 +291,17 @@ namespace Yutrel
 
         vkCmdSetScissor(m_rhi->GetCurrentCommandBuffer(), 0, 1, &scissor);
 
-        vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), 3, 1, 0, 0);
+        // vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), 3, 1, 0, 0);
+
+        GPUDrawPushConstants push_constants;
+        push_constants.world_matrix  = glm::mat4{1.0f};
+        push_constants.vertex_buffer = m_render_data->pbrs[0]->mesh.gpu_buffers->vertex_buffer_address;
+
+        vkCmdPushConstants(m_rhi->GetCurrentCommandBuffer(), m_pipelines[pipelines::triangle].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
+
+        vkCmdBindIndexBuffer(m_rhi->GetCurrentCommandBuffer(), m_render_data->pbrs[0]->mesh.gpu_buffers->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+        vkCmdDrawIndexed(m_rhi->GetCurrentCommandBuffer(), 6, 1, 0, 0, 0);
 
         vkCmdEndRendering(m_rhi->GetCurrentCommandBuffer());
     }

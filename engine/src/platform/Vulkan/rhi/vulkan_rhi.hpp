@@ -92,6 +92,10 @@ namespace Yutrel
         void EndSingleTimeCommands(VkCommandBuffer cmd_buffer);
 
         //----------渲染资源----------
+        AllocatedBuffer CreateBuffer(size_t alloc_size, VkBufferUsageFlags usage_flags, VmaMemoryUsage usage);
+
+        void DestroyBuffer(const AllocatedBuffer& buffer);
+
         void UploadMesh(Mesh& mesh);
 
         // 转换图像布局

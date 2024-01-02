@@ -2,6 +2,7 @@
 
 #include "asset.hpp"
 
+#include <stdint.h>
 #include <tiny_obj_loader.h>
 
 #include <string>
@@ -9,6 +10,39 @@
 
 namespace Yutrel
 {
+    Mesh& AssetManager::TempAddMesh()
+    {
+        std::vector<Vertex> rect_vertices(4);
+
+        rect_vertices[0].position = {0.5, -0.5, 0};
+        rect_vertices[1].position = {0.5, 0.5, 0};
+        rect_vertices[2].position = {-0.5, -0.5, 0};
+        rect_vertices[3].position = {-0.5, 0.5, 0};
+
+        rect_vertices[0].color = {0, 0, 0, 1};
+        rect_vertices[1].color = {0.5, 0.5, 0.5, 1};
+        rect_vertices[2].color = {1, 0, 0, 1};
+        rect_vertices[3].color = {0, 1, 0, 1};
+
+        std::vector<uint32_t> rect_indices(6);
+
+        rect_indices[0] = 0;
+        rect_indices[1] = 1;
+        rect_indices[2] = 2;
+
+        rect_indices[3] = 2;
+        rect_indices[4] = 1;
+        rect_indices[5] = 3;
+
+        Mesh mesh;
+        mesh.vertices = CreateRef<std::vector<Vertex>>(rect_vertices);
+        mesh.indices  = CreateRef<std::vector<uint32_t>>(rect_indices);
+
+        m_meshes.insert({"NULL", mesh});
+
+        return m_meshes["NULL"];
+    }
+
     Mesh& AssetManager::LoadMesh(const std::string& path)
     {
         m_meshes.insert({path, Mesh(path)});
@@ -66,11 +100,11 @@ namespace Yutrel
                     new_vert.normal.y = ny;
                     new_vert.normal.z = nz;
 
-                    new_vert.uv.x = ux;
-                    new_vert.uv.y = 1 - uy;
+                    // new_vert.uv.x = ux;
+                    // new_vert.uv.y = 1 - uy;
 
-                    // 将颜色设为法线
-                    new_vert.color = new_vert.normal;
+                    // // 将颜色设为法线
+                    // new_vert.color = new_vert.normal;
 
                     mesh.vertices->push_back(new_vert);
                 }

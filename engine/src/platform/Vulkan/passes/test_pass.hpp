@@ -2,12 +2,20 @@
 
 #include "platform/Vulkan/passes/render_pass.hpp"
 
+#include <glm/glm.hpp>
+
 #include <stdint.h>
 
 namespace Yutrel
 {
     struct TestPassInitInfo : RenderPassInitInfo
     {};
+
+    struct GPUDrawPushConstants
+    {
+        glm::mat4 world_matrix;
+        VkDeviceAddress vertex_buffer;
+    };
 
     class TestPass final : public RenderPass
     {
