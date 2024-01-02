@@ -4,6 +4,11 @@
 #include <vulkan/vk_enum_string_helper.h>
 #include <vulkan/vulkan.h>
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/matrix.hpp>
+
 #include <deque>
 #include <string>
 #include <vector>
@@ -249,6 +254,19 @@ namespace Yutrel
             depth_stencil.back                  = {};
             depth_stencil.minDepthBounds        = 0.f;
             depth_stencil.maxDepthBounds        = 1.f;
+        }
+
+        void EnableDepthTest(bool depth_write_enable, VkCompareOp op)
+        {
+            depth_stencil.depthTestEnable       = VK_TRUE;
+            depth_stencil.depthWriteEnable      = depth_write_enable;
+            depth_stencil.depthCompareOp        = op;
+            depth_stencil.depthBoundsTestEnable = VK_FALSE;
+            depth_stencil.stencilTestEnable     = VK_FALSE;
+            depth_stencil.front                 = {};
+            depth_stencil.back                  = {};
+            depth_stencil.minDepthBounds        = 0.0f;
+            depth_stencil.maxDepthBounds        = 1.0f;
         }
     };
 

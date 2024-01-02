@@ -6,12 +6,15 @@
 #include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
+#include "platform/Vulkan/vulkan_types.hpp"
 
 namespace Yutrel
 {
     void TestPass::Init(RenderPassInitInfo* info)
     {
         InitDrawImage();
+
+        InitDepthImage();
 
         InitDescriptors();
 
@@ -40,6 +43,11 @@ namespace Yutrel
                                m_draw_image.image,
                                VK_IMAGE_LAYOUT_GENERAL,
                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        // 深度图像格式转换为深度附件
+        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
+                               m_depth_image.image,
+                               VK_IMAGE_LAYOUT_UNDEFINED,
+                               VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
         // 绘制几何图形
         DrawGeometry();
@@ -56,7 +64,6 @@ namespace Yutrel
 
     void TestPass::InitDrawImage()
     {
-        //----------创建渲染目标图像---------------
         auto swapchain_extent = m_rhi->GetSwapChainInfo().extent;
         VkExtent3D draw_image_extent{
             swapchain_extent.width,
@@ -87,6 +94,27 @@ namespace Yutrel
         VkImageViewCreateInfo draw_image_view_info = vkinit::ImageViewCreateInfo(m_draw_image.image_format, m_draw_image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 
         m_rhi->CreateImageView(&draw_image_view_info, &m_draw_image);
+    }
+
+    void TestPass::InitDepthImage()
+    {
+        m_depth_image.image_format = VK_FORMAT_D32_SFLOAT;
+        m_depth_image.image_extent = m_draw_image.image_extent;
+
+        VkImageUsageFlags depth_image_usages{};
+        depth_image_usages |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+        VkImageCreateInfo depth_image_info = vkinit::ImageCreateInfo(m_depth_image.image_format, depth_image_usages, m_depth_image.image_extent);
+
+        VmaAllocationCreateInfo depth_image_alloc_info{};
+        depth_image_alloc_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
+        depth_image_alloc_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        m_rhi->CreateImage(&depth_image_info, &depth_image_alloc_info, &m_depth_image);
+
+        VkImageViewCreateInfo depth_view_info = vkinit::ImageViewCreateInfo(m_depth_image.image_format, m_depth_image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+        m_rhi->CreateImageView(&depth_view_info, &m_depth_image);
     }
 
     void TestPass::InitDescriptors()
@@ -209,9 +237,9 @@ namespace Yutrel
         pipeline_create_info.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
         pipeline_create_info.SetMultisamplingNone();
         pipeline_create_info.DisableBlending();
-        pipeline_create_info.DisableDepthTest();
+        pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
         pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
-        pipeline_create_info.SetDepthFormat(VK_FORMAT_UNDEFINED);
+        pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
 
         m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[pipelines::triangle].pipeline);
 
@@ -266,13 +294,20 @@ namespace Yutrel
 
     void TestPass::DrawGeometry()
     {
+        // 颜色附件
         VkRenderingAttachmentInfo color_attachment = vkinit::AttachmentInfo(m_draw_image.image_view, nullptr, VK_IMAGE_LAYOUT_GENERAL);
 
-        VkRenderingInfo render_info = vkinit::RenderingInfo(m_draw_extent, &color_attachment, nullptr);
+        // 深度附件
+        VkRenderingAttachmentInfo depth_attachment = vkinit::DepthAttachmentInfo(m_depth_image.image_view, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+
+        // 开始渲染
+        VkRenderingInfo render_info = vkinit::RenderingInfo(m_draw_extent, &color_attachment, &depth_attachment);
         vkCmdBeginRendering(m_rhi->GetCurrentCommandBuffer(), &render_info);
 
+        // 绑定三角形管线
         vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[pipelines::triangle].pipeline);
 
+        // 设定viewport
         VkViewport viewport{};
         viewport.x        = 0;
         viewport.y        = 0;
@@ -280,28 +315,35 @@ namespace Yutrel
         viewport.height   = m_draw_extent.height;
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
-
         vkCmdSetViewport(m_rhi->GetCurrentCommandBuffer(), 0, 1, &viewport);
 
+        // 设定scissor
         VkRect2D scissor{};
         scissor.offset.x      = 0;
         scissor.offset.y      = 0;
         scissor.extent.width  = m_draw_extent.width;
         scissor.extent.height = m_draw_extent.height;
-
         vkCmdSetScissor(m_rhi->GetCurrentCommandBuffer(), 0, 1, &scissor);
 
-        // vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), 3, 1, 0, 0);
-
+        // 推送常量
+        // 将模型矩阵和顶点的设备地址传入
         GPUDrawPushConstants push_constants;
-        push_constants.world_matrix  = glm::mat4{1.0f};
+
+        // MVP矩阵
+        // glm::mat4 view = glm::translate(glm::vec3{-2.0f, 0.0f, 2.0f});
+        // glm::mat4 view = glm::translate(glm::mat4{1.0f}, glm::vec3{0.0f, 0.0f, -5.0f});
+        glm::mat4 view       = glm::lookAt(glm::vec3(2.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)m_draw_extent.width / (float)m_draw_extent.height, 10000.0f, 0.1f);
+        projection[1][1] *= -1;
+        push_constants.world_matrix = projection * view;
+
         push_constants.vertex_buffer = m_render_data->pbrs[0]->mesh.gpu_buffers->vertex_buffer_address;
 
         vkCmdPushConstants(m_rhi->GetCurrentCommandBuffer(), m_pipelines[pipelines::triangle].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
 
         vkCmdBindIndexBuffer(m_rhi->GetCurrentCommandBuffer(), m_render_data->pbrs[0]->mesh.gpu_buffers->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdDrawIndexed(m_rhi->GetCurrentCommandBuffer(), 6, 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_rhi->GetCurrentCommandBuffer(), static_cast<uint32_t>(m_render_data->pbrs[0]->mesh.indices->size()), 1, 0, 0, 0);
 
         vkCmdEndRendering(m_rhi->GetCurrentCommandBuffer());
     }

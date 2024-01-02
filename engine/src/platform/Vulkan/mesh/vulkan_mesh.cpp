@@ -32,23 +32,15 @@ namespace Yutrel
         normal_attribute.format   = VK_FORMAT_R32G32B32_SFLOAT;
         normal_attribute.offset   = offsetof(Vertex, normal);
 
-        // color
-        VkVertexInputAttributeDescription color_attribute{};
-        color_attribute.binding  = 0;
-        color_attribute.location = 2;
-        color_attribute.format   = VK_FORMAT_R32G32B32_SFLOAT;
-        color_attribute.offset   = offsetof(Vertex, color);
-
         // uv
         VkVertexInputAttributeDescription uv_attribute{};
         uv_attribute.binding  = 0;
         uv_attribute.location = 3;
         uv_attribute.format   = VK_FORMAT_R32G32_SFLOAT;
-        // uv_attribute.offset   = offsetof(Vertex, uv);
+        uv_attribute.offset   = offsetof(Vertex, uv);
 
         description.attributes.push_back(position_attribute);
         description.attributes.push_back(normal_attribute);
-        description.attributes.push_back(color_attribute);
         description.attributes.push_back(uv_attribute);
 
         return description;

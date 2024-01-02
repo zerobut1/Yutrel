@@ -30,6 +30,8 @@ namespace Yutrel
         //--------初始化---------
         void InitDrawImage();
 
+        void InitDepthImage();
+
         void InitDescriptors();
 
         void InitComputePipeline();
@@ -54,9 +56,12 @@ namespace Yutrel
             count,
         };
 
+        // 绘制范围
+        VkExtent2D m_draw_extent;
         // 绘制到的图像
         AllocatedImage m_draw_image;
-        VkExtent2D m_draw_extent;
+        // 深度图像
+        AllocatedImage m_depth_image;
 
         Ref<struct RenderData> m_render_data;
     };

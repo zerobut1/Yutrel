@@ -11,7 +11,7 @@ void StartWorld(gecs::commands cmds,
         entity,
         Yutrel::PbrBundle{
             // asset_manager->LoadMesh("resource/lost_empire/lost_empire.obj"),
-            asset_manager->TempAddMesh(),
+            asset_manager->LoadMesh("resource/viking_room/viking_room.obj"),
         });
 }
 

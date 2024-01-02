@@ -8,7 +8,7 @@ target("engine")
     add_headerfiles("src/**.hpp")
 
     -- 通用
-    add_packages("glfw","glm","spdlog","stb","assimp","tinyobjloader")
+    add_packages("glfw","spdlog","stb","assimp","tinyobjloader")
     -- OpenGL
     add_packages("glad")
     -- Vulkan

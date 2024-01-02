@@ -28,8 +28,6 @@ namespace Yutrel
         InitSyncStructures();
 
         InitDescriptorPool();
-
-        InitDepthImage();
     }
 
     void VulkanRHI::Clear()
@@ -335,33 +333,6 @@ namespace Yutrel
                 {
                     vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
                 }
-            });
-    }
-
-    void VulkanRHI::InitDepthImage()
-    {
-        m_depth_format = VK_FORMAT_D32_SFLOAT;
-
-        m_depth_image =
-            vkutil::CreateImage(m_allocator,
-                                m_swapchain_extent.width,
-                                m_swapchain_extent.height,
-                                m_depth_format,
-                                VK_IMAGE_TILING_OPTIMAL,
-                                VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                0,
-                                1,
-                                1);
-
-        m_depth_image_view = vkutil::CreateImageView(m_device, m_depth_image.image, m_depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_VIEW_TYPE_2D, 1, 1);
-
-        // 加入删除队列
-        m_main_deletion_queue.PushFunction(
-            [=]()
-            {
-                vkDestroyImageView(m_device, m_depth_image_view, nullptr);
-                vmaDestroyImage(m_allocator, m_depth_image.image, m_depth_image.allocation);
             });
     }
 
@@ -734,6 +705,14 @@ namespace Yutrel
         vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh.gpu_buffers->index_buffer.buffer, 1, &index_copy);
 
         EndSingleTimeCommands(cmd_buffer);
+
+        // 顶点缓冲区和索引缓冲区加入销毁队列
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vmaDestroyBuffer(m_allocator, mesh.gpu_buffers->vertex_buffer.buffer, mesh.gpu_buffers->vertex_buffer.allocation);
+                vmaDestroyBuffer(m_allocator, mesh.gpu_buffers->index_buffer.buffer, mesh.gpu_buffers->index_buffer.allocation);
+            });
 
         DestroyBuffer(staging);
     }

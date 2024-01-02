@@ -115,8 +115,6 @@ namespace Yutrel
         void InitSyncStructures();
         // 交换链
         void InitSwapchain(uint32_t width, uint32_t height);
-        // 帧缓冲
-        void InitDepthImage();
         //------------------------
 
     private:
@@ -168,11 +166,6 @@ namespace Yutrel
         // 交换链图像
         std::vector<VkImage> m_swapchain_images;
         std::vector<VkImageView> m_swapchain_image_views;
-
-        // 深度图像
-        AllocatedImage m_depth_image;
-        VkImageView m_depth_image_view;
-        VkFormat m_depth_format;
 
         // 当前指令缓冲
         VkCommandBuffer m_cur_command_buffer;

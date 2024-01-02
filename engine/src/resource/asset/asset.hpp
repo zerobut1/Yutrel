@@ -11,8 +11,6 @@ namespace Yutrel
     class AssetManager
     {
     public:
-        Mesh& TempAddMesh();
-
         Mesh& LoadMesh(const std::string& path);
 
         bool LoadFromFile(Mesh& mesh);

@@ -75,6 +75,9 @@ namespace Yutrel
         // 渲染附件信息
         VkRenderingAttachmentInfo AttachmentInfo(VkImageView view, VkClearValue* clear, VkImageLayout layout);
 
+        // 深度附件信息
+        VkRenderingAttachmentInfo DepthAttachmentInfo(VkImageView view, VkImageLayout layout);
+
         // 渲染信息
         VkRenderingInfo RenderingInfo(VkExtent2D render_extent, VkRenderingAttachmentInfo* color_attachment, VkRenderingAttachmentInfo* depth_attachment);
 
