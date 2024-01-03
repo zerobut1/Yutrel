@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/macro.hpp"
+#include "platform/Vulkan/utils/vulkan_utils.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
 
 #include <array>
@@ -13,9 +14,6 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
-    // todo 临时
-    class Mesh;
-
     struct RHIInitInfo
     {
         GLFWwindow* raw_window;
@@ -96,7 +94,7 @@ namespace Yutrel
 
         void DestroyBuffer(const AllocatedBuffer& buffer);
 
-        void UploadMesh(Mesh& mesh);
+        void UploadMesh(class Mesh& mesh);
 
         // 转换图像布局
         void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout);

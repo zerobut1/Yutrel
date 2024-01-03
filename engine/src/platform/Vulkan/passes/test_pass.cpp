@@ -236,7 +236,7 @@ namespace Yutrel
         pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
         pipeline_create_info.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
         pipeline_create_info.SetMultisamplingNone();
-        pipeline_create_info.DisableBlending();
+        pipeline_create_info.EnableBlendingAlphablend();
         pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
         pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
         pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
