@@ -38,6 +38,9 @@ namespace Yutrel
         // 删除队列清空
         m_main_deletion_queue.flush();
 
+        // 销毁交换链
+        DestroySwapchain();
+
         // 销毁窗口表面
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 
@@ -78,8 +81,13 @@ namespace Yutrel
         GetCurrentFrame().deletion_queue.flush();
 
         // 请求图像索引
-        // todo recreate swapchain
-        YUTREL_ASSERT(vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, VK_NULL_HANDLE, &m_cur_swapchain_image_index) == VK_SUCCESS, "Failed to acquire next image KHR");
+        auto result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, VK_NULL_HANDLE, &m_cur_swapchain_image_index);
+        // 若窗口大小发生改变
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            m_resize_requested = true;
+            return;
+        }
 
         // 重设fence
         YUTREL_ASSERT(vkResetFences(m_device, 1, &GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to reset fence");
@@ -118,16 +126,17 @@ namespace Yutrel
         present_info.pWaitSemaphores    = &GetCurrentFrame().finished_for_presentation_semaphore;
         present_info.pImageIndices      = &m_cur_swapchain_image_index;
 
-        // todo recreate swapchain
-        YUTREL_ASSERT(vkQueuePresentKHR(m_graphics_queue, &present_info) == VK_SUCCESS, "Failed to present");
+        auto result = vkQueuePresentKHR(m_graphics_queue, &present_info);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            m_resize_requested = true;
+        }
 
         m_cur_frame++;
     }
 
     void VulkanRHI::InitVulkan(GLFWwindow* raw_window)
     {
-        LOG_INFO("Initialize Vulkan RHI");
-
         // vkb创建器
         vkb::InstanceBuilder builder;
 
@@ -322,18 +331,6 @@ namespace Yutrel
         m_swapchain_image_format = vkb_swapchain.image_format;
         m_swapchain_images       = vkb_swapchain.get_images().value();
         m_swapchain_image_views  = vkb_swapchain.get_image_views().value();
-
-        // 放入删除队列
-        m_main_deletion_queue.PushFunction(
-            [=]()
-            {
-                vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-
-                for (int i = 0; i < m_swapchain_image_views.size(); i++)
-                {
-                    vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
-                }
-            });
     }
 
     RHISwapChainDesc VulkanRHI::GetSwapChainInfo()
@@ -639,7 +636,7 @@ namespace Yutrel
         vmaallocInfo.usage = usage;
         vmaallocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-        AllocatedBuffer new_buffer;
+        AllocatedBuffer new_buffer{};
         YUTREL_ASSERT(vmaCreateBuffer(m_allocator, &bufferInfo, &vmaallocInfo, &new_buffer.buffer, &new_buffer.allocation, &new_buffer.info) == VK_SUCCESS, "Failed to create buffer");
 
         return new_buffer;
@@ -781,6 +778,33 @@ namespace Yutrel
         blit_info.pRegions       = &blit_region;
 
         vkCmdBlitImage2(cmd_buffer, &blit_info);
+    }
+
+    void VulkanRHI::UpdateSwapchainSize(uint32_t width, uint32_t height)
+    {
+        m_new_swapchain_extent.width  = width;
+        m_new_swapchain_extent.height = height;
+    }
+
+    void VulkanRHI::ResizeSwapchain()
+    {
+        vkDeviceWaitIdle(m_device);
+
+        DestroySwapchain();
+
+        InitSwapchain(m_new_swapchain_extent.width, m_new_swapchain_extent.height);
+
+        m_resize_requested = false;
+    }
+
+    void VulkanRHI::DestroySwapchain()
+    {
+        vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+
+        for (int i = 0; i < m_swapchain_image_views.size(); i++)
+        {
+            vkDestroyImageView(m_device, m_swapchain_image_views[i], nullptr);
+        }
     }
 
 } // namespace Yutrel

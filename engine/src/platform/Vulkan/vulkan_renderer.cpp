@@ -15,6 +15,8 @@ namespace Yutrel
 {
     void VulkanRenderer::Init(RendererInitInfo info)
     {
+        LOG_INFO("Initialize Vulkan Renderer");
+
         // 初始化RHI
         RHIInitInfo rhi_init_info;
         rhi_init_info.raw_window = info.raw_window;
@@ -35,6 +37,11 @@ namespace Yutrel
     {
         m_render_data = render_data;
         ProcessRenderData();
+
+        if (m_rhi->RequestResize())
+        {
+            m_rhi->ResizeSwapchain();
+        }
 
         m_rhi->PrepareContext();
 
@@ -58,6 +65,11 @@ namespace Yutrel
             m_render_pipeline->Clear();
         }
         m_render_pipeline.reset();
+    }
+
+    void VulkanRenderer::UpdateWindowSize(uint32_t width, uint32_t height)
+    {
+        m_rhi->UpdateSwapchainSize(width, height);
     }
 
     void VulkanRenderer::ProcessRenderData()

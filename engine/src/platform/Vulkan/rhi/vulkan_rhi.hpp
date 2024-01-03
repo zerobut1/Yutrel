@@ -28,6 +28,11 @@ namespace Yutrel
 
         void Clear();
 
+        void UpdateSwapchainSize(uint32_t width, uint32_t height);
+
+        // 重建交换链
+        void ResizeSwapchain();
+
         //----------Tick---------
         void PrepareContext();
 
@@ -51,6 +56,8 @@ namespace Yutrel
         RHISwapChainDesc GetSwapChainInfo();
 
         VkCommandBuffer GetCurrentCommandBuffer() const { return m_cur_command_buffer; }
+
+        bool RequestResize() { return m_resize_requested; }
 
         //---------创建对象------------
         void CreateRenderPass(const VkRenderPassCreateInfo* info, VkRenderPass* out_render_pass);
@@ -115,6 +122,9 @@ namespace Yutrel
         void InitSwapchain(uint32_t width, uint32_t height);
         //------------------------
 
+        // 删除交换链
+        void DestroySwapchain();
+
     private:
         // 同时渲染的帧数
         static constexpr uint8_t FRAME_OVERLAP{2};
@@ -169,5 +179,9 @@ namespace Yutrel
         VkCommandBuffer m_cur_command_buffer;
         // 当前交换链图像索引
         uint32_t m_cur_swapchain_image_index;
+
+        // 窗口大小改变
+        bool m_resize_requested{false};
+        VkExtent2D m_new_swapchain_extent;
     };
 } // namespace Yutrel

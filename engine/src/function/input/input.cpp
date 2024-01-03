@@ -3,11 +3,10 @@
 #include "input.hpp"
 
 #include "core/application/application.hpp"
+#include "function/render/renderer.hpp"
 #include "function/window/window.hpp"
 
 #include <GLFW/glfw3.h>
-
-#include <functional>
 
 namespace Yutrel
 {
@@ -15,17 +14,20 @@ namespace Yutrel
                      gecs::resource<Input> input,
                      gecs::event_dispatcher<KeyEvent> keyboard_dispatcher,
                      gecs::event_dispatcher<MouseButtonEvent> mouse_btn_dispatcher,
-                     gecs::event_dispatcher<CursorPosEvent> mouse_motion_dispatcher)
+                     gecs::event_dispatcher<CursorPosEvent> mouse_motion_dispatcher,
+                     gecs::event_dispatcher<ResizeEvent> resize_dispatcher)
     {
         LOG_INFO("Initialize Input Resource");
 
         keyboard_dispatcher.sink().add<Input::KeyboardEventHandle>();
         mouse_btn_dispatcher.sink().add<Input::MouseButtonEventHandle>();
         mouse_motion_dispatcher.sink().add<Input::MouseMotionEventHandle>();
+        resize_dispatcher.sink().add<Input::ResizeEventHandle>();
 
         window->GetWindow()->RegisterOnKeyFunc(std::bind(&Input::OnKey, *input, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
         window->GetWindow()->RegisterOnMouseButtonFunc(std::bind(&Input::OnMouseButton, *input, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
         window->GetWindow()->RegisterOnCursorPosFunc(std::bind(&Input::OnCursorPos, *input, std::placeholders::_1, std::placeholders::_2));
+        window->GetWindow()->RegisterOnWindowSizeFunc(std::bind(&Input::OnResize, *input, std::placeholders::_1, std::placeholders::_2));
     }
 
     bool Input::IsKeyPressed(KeyCode key) const
@@ -72,6 +74,12 @@ namespace Yutrel
         input->cursor_position = event.positon;
     }
 
+    void Input::ResizeEventHandle(const ResizeEvent& event,
+                                  gecs::resource<RendererResource> render)
+    {
+        render->renderer->UpdateWindowSize(event.width, event.height);
+    }
+
     void Input::OnKey(int key, int scancode, int action, int mods)
     {
         KeyEvent event{};
@@ -99,6 +107,15 @@ namespace Yutrel
         event.positon = glm::vec2(xpos, ypos);
 
         Application::Create().GetWorld().cur_registry()->event_dispatcher<CursorPosEvent>().enqueue(event);
+    }
+
+    void Input::OnResize(int width, int height)
+    {
+        ResizeEvent event{};
+        event.width  = width;
+        event.height = height;
+
+        Application::Create().GetWorld().cur_registry()->event_dispatcher<ResizeEvent>().enqueue(event);
     }
 
 } // namespace Yutrel

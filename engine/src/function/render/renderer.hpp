@@ -1,21 +1,10 @@
-/**
- * 渲染器
- * 与API有关
- * 默认资源之一
- * 提供一些默认加载的渲染资源、渲染选项设置以及渲染指令
- * todo 改为submit模式
- */
 #pragma once
 
 #include "function/window/window.hpp"
 #include "resource/component/component.hpp"
 
+#include <stdint.h>
 #include <vector>
-// #include "resource/asset/framebuffer.hpp"
-// #include "resource/asset/shader.hpp"
-// #include "resource/component/camera/camera_controller.hpp"
-// #include "resource/component/model/model.hpp"
-// #include "resource/component/ui/window_ui.hpp"
 
 struct GLFWwindow;
 
@@ -97,6 +86,8 @@ namespace Yutrel
         virtual void Tick(Ref<RenderData> render_data) = 0;
 
         virtual void Clear() = 0;
+
+        virtual void UpdateWindowSize(uint32_t width, uint32_t height) = 0;
     };
 
     class RendererResource
@@ -112,7 +103,7 @@ namespace Yutrel
                            gecs::resource<RendererResource> render,
                            gecs::resource<gecs::mut<class AssetManager>> asset_manager);
 
-    private:
-        Ref<Renderer> m_renderer;
+    public:
+        Ref<Renderer> renderer;
     };
 } // namespace Yutrel

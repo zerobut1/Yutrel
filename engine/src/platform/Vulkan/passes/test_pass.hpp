@@ -58,6 +58,9 @@ namespace Yutrel
 
         // 绘制范围
         VkExtent2D m_draw_extent;
+        // 渲染缩放
+        float m_render_scale{1.0f};
+
         // 绘制到的图像
         AllocatedImage m_draw_image;
         // 深度图像

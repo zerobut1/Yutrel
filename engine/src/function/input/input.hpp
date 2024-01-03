@@ -42,6 +42,12 @@ namespace Yutrel
             glm::vec2 positon;
         };
 
+        struct ResizeEvent final
+        {
+            uint32_t width;
+            uint32_t height;
+        };
+
     public:
         Input()          = default;
         virtual ~Input() = default;
@@ -50,7 +56,8 @@ namespace Yutrel
                          gecs::resource<Input> input,
                          gecs::event_dispatcher<KeyEvent> keyboard_dispatcher,
                          gecs::event_dispatcher<MouseButtonEvent> mouse_btn_dispatcher,
-                         gecs::event_dispatcher<CursorPosEvent> mouse_motion_dispatcher);
+                         gecs::event_dispatcher<CursorPosEvent> mouse_motion_dispatcher,
+                         gecs::event_dispatcher<ResizeEvent> resize_dispatcher);
 
         bool IsKeyPressed(KeyCode key) const;
         bool IsMousePressed(MouseCode mouse) const;
@@ -60,10 +67,12 @@ namespace Yutrel
         static void KeyboardEventHandle(const KeyEvent& event, gecs::resource<gecs::mut<Input>> input);
         static void MouseButtonEventHandle(const MouseButtonEvent& event, gecs::resource<gecs::mut<Input>> input);
         static void MouseMotionEventHandle(const CursorPosEvent& event, gecs::resource<gecs::mut<Input>> input);
+        static void ResizeEventHandle(const ResizeEvent& event, gecs::resource<class RendererResource> render);
 
         void OnKey(int key, int scancode, int action, int mods);
         void OnMouseButton(int button, int action, int mods);
         void OnCursorPos(double xpos, double ypos);
+        void OnResize(int width, int height);
 
     private:
         std::unordered_set<KeyCode> key_pressed;

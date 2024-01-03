@@ -7,6 +7,7 @@
 #include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
+#include <algorithm>
 
 namespace Yutrel
 {
@@ -251,8 +252,8 @@ namespace Yutrel
     void TestPass::PrepareDrawImage()
     {
         // 设置渲染图像范围
-        m_draw_extent.width  = m_draw_image.image_extent.width;
-        m_draw_extent.height = m_draw_image.image_extent.height;
+        m_draw_extent.width  = std::min(m_rhi->GetSwapChainInfo().extent.width, m_draw_image.image_extent.width) * m_render_scale;
+        m_draw_extent.height = std::min(m_rhi->GetSwapChainInfo().extent.height, m_draw_image.image_extent.height) * m_render_scale;
 
         // 将渲染图像布局转换为通用布局
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),

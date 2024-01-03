@@ -111,6 +111,7 @@ namespace Yutrel
             {
                 windows_window->m_width  = width;
                 windows_window->m_height = height;
+                windows_window->OnWindowSize(width, height);
             }
         }
 

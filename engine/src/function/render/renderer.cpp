@@ -2,6 +2,7 @@
 
 #include "renderer.hpp"
 
+#include "core/application/application.hpp"
 #include "core/path/path.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
 #include "resource/asset/asset.hpp"
@@ -33,12 +34,12 @@ namespace Yutrel
 
     RendererResource::RendererResource()
     {
-        m_renderer = CreateRef<VulkanRenderer>();
+        renderer = CreateRef<VulkanRenderer>();
     }
 
     RendererResource::~RendererResource()
     {
-        m_renderer->Clear();
+        renderer->Clear();
         LOG_INFO("Renderer Destroyed");
     }
 
@@ -53,7 +54,7 @@ namespace Yutrel
         info.width      = window->GetWidth();
         info.height     = window->GetHeight();
 
-        render->m_renderer->Init(info);
+        render->renderer->Init(info);
     }
 
     void RendererResource::Update(gecs::querier<PbrBundle> pbrs,
@@ -73,7 +74,7 @@ namespace Yutrel
 
             render_data->pbrs.push_back(&pbr_bundle);
         }
-        render->m_renderer->Tick(render_data);
+        render->renderer->Tick(render_data);
     }
 
 } // namespace Yutrel

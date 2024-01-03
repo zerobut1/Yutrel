@@ -16,6 +16,8 @@ namespace Yutrel
 
         virtual void Clear() override;
 
+        virtual void UpdateWindowSize(uint32_t width, uint32_t height) override;
+
     private:
         void ProcessRenderData();
 
