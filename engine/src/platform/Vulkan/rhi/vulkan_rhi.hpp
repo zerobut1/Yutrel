@@ -53,6 +53,8 @@ namespace Yutrel
 
         VkImage GetCurrentSwapchainImage() { return m_swapchain_images[m_cur_swapchain_image_index]; }
 
+        VkImageView GetCurrentSwapchainImageView() { return m_swapchain_image_views[m_cur_swapchain_image_index]; }
+
         RHISwapChainDesc GetSwapChainInfo();
 
         VkCommandBuffer GetCurrentCommandBuffer() const { return m_cur_command_buffer; }
@@ -120,6 +122,8 @@ namespace Yutrel
         void InitSyncStructures();
         // 交换链
         void InitSwapchain(uint32_t width, uint32_t height);
+        // Imgui
+        void InitImgui(GLFWwindow* raw_window);
         //------------------------
 
         // 删除交换链
@@ -163,9 +167,6 @@ namespace Yutrel
         // 描述符池
         VkDescriptorPool m_descriptor_pool;
 
-        // 视口和裁剪
-        VkViewport m_viewport;
-        VkRect2D m_scissor;
         // 交换链
         VkSwapchainKHR m_swapchain;
         VkFormat m_swapchain_image_format;

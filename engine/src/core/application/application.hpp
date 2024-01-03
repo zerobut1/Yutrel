@@ -43,6 +43,13 @@ namespace Yutrel
             m_world.cur_registry()->regist_update_system<System>();
             return *this;
         }
+
+        template <typename T, typename... Args>
+        Application& AddResource(Args&&... args)
+        {
+            m_world.cur_registry()->commands().emplace_resource<T>(std::forward<Args>(args)...);
+            return *this;
+        }
         //-----------------------------
 
     private:

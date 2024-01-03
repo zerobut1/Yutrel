@@ -75,8 +75,6 @@ namespace Yutrel
     {
         VkExtent2D extent;
         VkFormat image_format;
-        VkViewport viewport;
-        VkRect2D scissor;
         std::vector<VkImageView>* image_views;
     };
 

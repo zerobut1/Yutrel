@@ -4,6 +4,7 @@
 build
 vsxmake2022
 resource
+imgui.ini
 
 todo.md
 

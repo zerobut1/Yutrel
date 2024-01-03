@@ -2,6 +2,7 @@
 
 #include "function/window/window.hpp"
 #include "resource/component/component.hpp"
+#include "resource/component/ui/window_ui.hpp"
 
 #include <stdint.h>
 #include <vector>
@@ -75,6 +76,9 @@ namespace Yutrel
 
     struct RenderData
     {
+        Ref<WindowUI> ui;
+
+        BackGroundColor background;
         std::vector<const PbrBundle*> pbrs;
     };
 
@@ -101,6 +105,8 @@ namespace Yutrel
 
         static void Update(gecs::querier<struct PbrBundle> pbrs,
                            gecs::resource<RendererResource> render,
+                           gecs::resource<UIResource> ui,
+                           gecs::resource<BackGroundColor> background_color,
                            gecs::resource<gecs::mut<class AssetManager>> asset_manager);
 
     public:

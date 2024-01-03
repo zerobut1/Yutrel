@@ -29,5 +29,6 @@ namespace Yutrel
 
         Ref<RenderPass> m_main_pass;
         Ref<RenderPass> m_test_pass;
+        Ref<RenderPass> m_imgui_pass;
     };
 } // namespace Yutrel

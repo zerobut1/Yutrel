@@ -9,6 +9,6 @@ target("sandbox")
 
     add_deps("engine")
 
-    add_packages("spdlog","glm","assimp")
+    add_packages("spdlog","glm","assimp","imgui")
 
     add_includedirs(path.join(os.scriptdir(), "src"))

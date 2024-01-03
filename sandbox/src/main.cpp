@@ -1,7 +1,6 @@
-// #include "scene_pbr.hpp"
-
 #include <Yutrel.hpp>
-#include <utility>
+
+#include "ui/imgui_ui.hpp"
 
 void StartWorld(gecs::commands cmds,
                 gecs::resource<gecs::mut<Yutrel::AssetManager>> asset_manager)
@@ -32,7 +31,10 @@ int main()
 
     Yutrel::Application::Create()
         .Init("Sandbox", 1920, 1080)
+        .AddResource<Yutrel::UIResource>(Yutrel::CreateRef<ImguiUI>())
+        .AddResource<Yutrel::BackGroundColor>()
         .AddStartupSystem<StartWorld>()
+        .AddSystem<ImguiUI::UpdateData>()
         .Run();
 
     return 0;

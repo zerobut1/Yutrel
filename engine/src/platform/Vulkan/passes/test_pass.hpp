@@ -11,6 +11,14 @@ namespace Yutrel
     struct TestPassInitInfo : RenderPassInitInfo
     {};
 
+    struct ComputePushConstants
+    {
+        glm::vec4 data1;
+        glm::vec4 data2;
+        glm::vec4 data3;
+        glm::vec4 data4;
+    };
+
     struct GPUDrawPushConstants
     {
         glm::mat4 world_matrix;

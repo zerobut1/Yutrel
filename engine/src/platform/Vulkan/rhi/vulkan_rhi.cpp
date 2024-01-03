@@ -5,14 +5,14 @@
 #include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/utils/vulkan_utils.hpp"
-
-#include <GLFW/glfw3.h>
-#include <VKBootstrap.h>
-#include <array>
-#include <stdint.h>
-#include <vcruntime.h>
+#include <vector>
 
 #define VMA_IMPLEMENTATION
+#include <GLFW/glfw3.h>
+#include <VKBootstrap.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 #include <vk_mem_alloc.h>
 
 namespace Yutrel
@@ -28,6 +28,8 @@ namespace Yutrel
         InitSyncStructures();
 
         InitDescriptorPool();
+
+        InitImgui(info.raw_window);
     }
 
     void VulkanRHI::Clear()
@@ -323,9 +325,7 @@ namespace Yutrel
 
         // 记录交换范围大小
         m_swapchain_extent = vkb_swapchain.extent;
-        m_viewport         = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
-        m_scissor          = {{0, 0}, m_swapchain_extent};
-
+       
         // 获取交换链和图像
         m_swapchain              = vkb_swapchain.swapchain;
         m_swapchain_image_format = vkb_swapchain.image_format;
@@ -333,13 +333,67 @@ namespace Yutrel
         m_swapchain_image_views  = vkb_swapchain.get_image_views().value();
     }
 
+    void VulkanRHI::InitImgui(GLFWwindow* raw_window)
+    {
+        std::vector<VkDescriptorPoolSize> pool_sizes = {
+            {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+            {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+            {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+            {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000},
+        };
+
+        VkDescriptorPoolCreateInfo pool_info{};
+        pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_info.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        pool_info.maxSets       = 1000;
+        pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
+        pool_info.pPoolSizes    = pool_sizes.data();
+
+        VkDescriptorPool imgui_pool;
+        YUTREL_ASSERT(vkCreateDescriptorPool(m_device, &pool_info, nullptr, &imgui_pool) == VK_SUCCESS, "Failed to create descriptor pool");
+
+        //---------初始化imgui-----------
+        ImGui::CreateContext();
+
+        ImGui_ImplGlfw_InitForVulkan(raw_window, true);
+
+        ImGui_ImplVulkan_InitInfo init_info{};
+        init_info.Instance              = m_instance;
+        init_info.PhysicalDevice        = m_physical_device;
+        init_info.Device                = m_device;
+        init_info.Queue                 = m_graphics_queue;
+        init_info.DescriptorPool        = imgui_pool;
+        init_info.MinImageCount         = 3;
+        init_info.ImageCount            = 3;
+        init_info.UseDynamicRendering   = true;
+        init_info.ColorAttachmentFormat = m_swapchain_image_format;
+        init_info.MSAASamples           = VK_SAMPLE_COUNT_1_BIT;
+
+        ImGui_ImplVulkan_Init(&init_info, VK_NULL_HANDLE);
+
+        ImGui_ImplVulkan_CreateFontsTexture();
+        ImGui_ImplVulkan_DestroyFontsTexture();
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                ImGui_ImplVulkan_Shutdown();
+                vkDestroyDescriptorPool(m_device, imgui_pool, nullptr);
+            });
+    }
+
     RHISwapChainDesc VulkanRHI::GetSwapChainInfo()
     {
         RHISwapChainDesc desc{};
         desc.extent       = m_swapchain_extent;
         desc.image_format = m_swapchain_image_format;
-        desc.viewport     = m_viewport;
-        desc.scissor      = m_scissor;
         desc.image_views  = &m_swapchain_image_views;
 
         return desc;

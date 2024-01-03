@@ -143,11 +143,11 @@ namespace Yutrel
         viewport_state_info.pNext = nullptr;
 
         // 暂时只有一个视口一个剪刀
-        auto swapchain_info               = m_rhi->GetSwapChainInfo();
-        viewport_state_info.viewportCount = 1;
-        viewport_state_info.pViewports    = &swapchain_info.viewport;
-        viewport_state_info.scissorCount  = 1;
-        viewport_state_info.pScissors     = &swapchain_info.scissor;
+        // auto swapchain_info               = m_rhi->GetSwapChainInfo();
+        // viewport_state_info.viewportCount = 1;
+        // viewport_state_info.pViewports    = &swapchain_info.viewport;
+        // viewport_state_info.scissorCount  = 1;
+        // viewport_state_info.pScissors     = &swapchain_info.scissor;
 
         //------------颜色混合-------------
         VkPipelineColorBlendAttachmentState color_blend_attachment = vkinit::ColorBlendAttachmentState();

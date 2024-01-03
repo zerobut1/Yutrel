@@ -59,9 +59,14 @@ namespace Yutrel
 
     void RendererResource::Update(gecs::querier<PbrBundle> pbrs,
                                   gecs::resource<RendererResource> render,
+                                  gecs::resource<UIResource> ui,
+                                  gecs::resource<BackGroundColor> background_color,
                                   gecs::resource<gecs::mut<AssetManager>> asset_manager)
     {
-        auto render_data = CreateRef<RenderData>();
+        auto render_data        = CreateRef<RenderData>();
+        render_data->ui         = ui->ui;
+        render_data->background = background_color.get();
+
         for (auto&& [entity, pbr_bundle] : pbrs)
         {
             if (!pbr_bundle.mesh.is_loaded)

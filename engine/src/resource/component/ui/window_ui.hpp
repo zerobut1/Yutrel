@@ -1,16 +1,24 @@
-/**
- * UI类
- * 留待具体的app中自己实现不同的UI
- */
 #pragma once
 
-#include <memory>
+#include "core/macro.hpp"
 
 namespace Yutrel
 {
-    class WindowUI : public std::enable_shared_from_this<WindowUI>
+    class WindowUI
     {
     public:
+        virtual ~WindowUI() = default;
+
         virtual void RenderUI() = 0;
+    };
+
+    class UIResource
+    {
+    public:
+        UIResource() = default;
+        UIResource(Ref<WindowUI> ui) : ui(ui) {}
+
+    public:
+        Ref<WindowUI> ui;
     };
 } // namespace Yutrel

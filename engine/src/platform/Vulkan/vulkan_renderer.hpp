@@ -21,6 +21,8 @@ namespace Yutrel
     private:
         void ProcessRenderData();
 
+        void NewImguiFrame();
+
     private:
         Ref<VulkanRHI> m_rhi;
         Ref<VulkanPipeline> m_render_pipeline;

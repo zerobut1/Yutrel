@@ -65,10 +65,9 @@ namespace Yutrel
 
     void TestPass::InitDrawImage()
     {
-        auto swapchain_extent = m_rhi->GetSwapChainInfo().extent;
         VkExtent3D draw_image_extent{
-            swapchain_extent.width,
-            swapchain_extent.height,
+            3840,
+            2160,
             1,
         };
 
@@ -159,6 +158,14 @@ namespace Yutrel
         compute_layout.pNext          = nullptr;
         compute_layout.pSetLayouts    = &m_descriptor_infos[0].layout;
         compute_layout.setLayoutCount = 1;
+
+        VkPushConstantRange push_constant{};
+        push_constant.offset     = 0;
+        push_constant.size       = sizeof(ComputePushConstants);
+        push_constant.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+        compute_layout.pushConstantRangeCount = 1;
+        compute_layout.pPushConstantRanges    = &push_constant;
 
         m_rhi->CreatePipelineLayout(&compute_layout, &m_pipelines[pipelines::compute].layout);
 
@@ -276,21 +283,25 @@ namespace Yutrel
                                 m_rhi->GetCurrentSwapchainImage(),
                                 m_draw_extent,
                                 m_rhi->GetSwapChainInfo().extent);
-
-        // 将交换链布局转换为呈现布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_rhi->GetCurrentSwapchainImage(),
-                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                               VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     }
 
     void TestPass::DrawBackground()
     {
-        vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[pipelines::compute].pipeline);
+        auto cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
-        vkCmdBindDescriptorSets(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[pipelines::compute].layout, 0, 1, &m_descriptor_infos[0].set, 0, nullptr);
+        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[pipelines::compute].pipeline);
 
-        vkCmdDispatch(m_rhi->GetCurrentCommandBuffer(), std::ceil(m_draw_extent.width / 16.0), std::ceil(m_draw_extent.height / 16.0), 1);
+        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[pipelines::compute].layout, 0, 1, &m_descriptor_infos[0].set, 0, nullptr);
+
+        ComputePushConstants push_constant;
+        push_constant.data1 = m_render_data->background.data1;
+        push_constant.data2 = m_render_data->background.data2;
+        push_constant.data3 = m_render_data->background.data3;
+        push_constant.data4 = m_render_data->background.data4;
+
+        vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::compute].layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constant);
+
+        vkCmdDispatch(cmd_buffer, std::ceil(m_draw_extent.width / 16.0), std::ceil(m_draw_extent.height / 16.0), 1);
     }
 
     void TestPass::DrawGeometry()

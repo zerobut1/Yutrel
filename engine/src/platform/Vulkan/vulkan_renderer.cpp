@@ -6,7 +6,10 @@
 #include "platform/Vulkan/pipeline/vulkan_pipeline.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "resource/component/component.hpp"
+#include "resource/component/ui/window_ui.hpp"
 
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 #include <vector>
 
 // #include "platform/Vulkan/mesh/mesh.hpp"
@@ -42,6 +45,8 @@ namespace Yutrel
         {
             m_rhi->ResizeSwapchain();
         }
+
+        NewImguiFrame();
 
         m_rhi->PrepareContext();
 
@@ -85,4 +90,14 @@ namespace Yutrel
         }
     }
 
+    void VulkanRenderer::NewImguiFrame()
+    {
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        m_render_data->ui->RenderUI();
+
+        ImGui::Render();
+    }
 } // namespace Yutrel

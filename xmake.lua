@@ -21,6 +21,6 @@ add_requires("vulkansdk","vk-bootstrap","vulkan-memory-allocator")
 add_requires("glslang", {configs = {binaryonly = true}})
 
 -- imgui
-add_requires("imgui v1.90-docking")
+add_requires("imgui",{configs = {glfw_vulkan = true}})
 
 includes("engine","sandbox")
