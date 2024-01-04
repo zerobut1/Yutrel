@@ -6,8 +6,6 @@
 #include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
-#include "platform/Vulkan/vulkan_types.hpp"
-#include <algorithm>
 
 namespace Yutrel
 {
@@ -19,7 +17,7 @@ namespace Yutrel
 
         InitDescriptors();
 
-        m_pipelines.resize(pipelines::count);
+        m_pipelines.resize(pipelines::pipeline_count);
 
         InitComputePipeline();
 
@@ -119,35 +117,35 @@ namespace Yutrel
 
     void TestPass::InitDescriptors()
     {
-        m_descriptor_infos.resize(1);
+        m_descriptor_infos.resize(descriptor_count);
 
-        // 创建描述符布局
-        RHIDescriptorLayoutCreateInfo layout_info{};
-        layout_info.shader_stages = VK_SHADER_STAGE_COMPUTE_BIT;
-        layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+        // 计算着色器
+        {
+            // 创建描述符布局
+            RHIDescriptorLayoutCreateInfo layout_info{};
+            layout_info.shader_stages = VK_SHADER_STAGE_COMPUTE_BIT;
+            layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
-        m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[0].layout);
+            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[compute_descriptor].layout);
 
-        // 分配描述符集
-        m_rhi->AllocateDescriptorSets(m_descriptor_infos[0].layout, &m_descriptor_infos[0].set);
+            // 分配描述符集
+            m_rhi->AllocateDescriptorSets(m_descriptor_infos[compute_descriptor].layout, &m_descriptor_infos[compute_descriptor].set);
 
-        // 设置写描述符集信息
-        VkDescriptorImageInfo img_info{};
-        img_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-        img_info.imageView   = m_draw_image.image_view;
+            // 写描述符集
+            DescriptorWriter writer;
+            writer.WriteImage(0, m_draw_image.image_view, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
-        VkWriteDescriptorSet draw_image_write{};
-        draw_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        draw_image_write.pNext = nullptr;
+            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[compute_descriptor].set);
+        }
 
-        draw_image_write.dstBinding      = 0;
-        draw_image_write.dstSet          = m_descriptor_infos[0].set;
-        draw_image_write.descriptorCount = 1;
-        draw_image_write.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        draw_image_write.pImageInfo      = &img_info;
+        // 场景信息
+        {
+            RHIDescriptorLayoutCreateInfo layout_info{};
+            layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            layout_info.shader_stages = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
-        // 更新描述符集
-        m_rhi->UpdateDescriptorSets(1, &draw_image_write, 0, nullptr);
+            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[scene_descriptor].layout);
+        }
     }
 
     void TestPass::InitComputePipeline()
@@ -156,7 +154,7 @@ namespace Yutrel
         VkPipelineLayoutCreateInfo compute_layout{};
         compute_layout.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         compute_layout.pNext          = nullptr;
-        compute_layout.pSetLayouts    = &m_descriptor_infos[0].layout;
+        compute_layout.pSetLayouts    = &m_descriptor_infos[compute_descriptor].layout;
         compute_layout.setLayoutCount = 1;
 
         VkPushConstantRange push_constant{};
@@ -167,7 +165,7 @@ namespace Yutrel
         compute_layout.pushConstantRangeCount = 1;
         compute_layout.pPushConstantRanges    = &push_constant;
 
-        m_rhi->CreatePipelineLayout(&compute_layout, &m_pipelines[pipelines::compute].layout);
+        m_rhi->CreatePipelineLayout(&compute_layout, &m_pipelines[compute_pipeline].layout);
 
         // shader
         // clang-format off
@@ -191,10 +189,10 @@ namespace Yutrel
         VkComputePipelineCreateInfo computePipelineCreateInfo{};
         computePipelineCreateInfo.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
         computePipelineCreateInfo.pNext  = nullptr;
-        computePipelineCreateInfo.layout = m_pipelines[pipelines::compute].layout;
+        computePipelineCreateInfo.layout = m_pipelines[compute_pipeline].layout;
         computePipelineCreateInfo.stage  = stageinfo;
 
-        m_rhi->CreateComputePipelines(VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &m_pipelines[pipelines::compute].pipeline);
+        m_rhi->CreateComputePipelines(VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &m_pipelines[compute_pipeline].pipeline);
 
         // 清除着色器模块
         m_rhi->DestroyShaderModule(compute_shader);
@@ -233,12 +231,12 @@ namespace Yutrel
         pipeline_layout_info.pushConstantRangeCount     = 1;
         pipeline_layout_info.pPushConstantRanges        = &buffer_range;
 
-        m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[pipelines::triangle].layout);
+        m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[pipelines::triangle_pipeline].layout);
 
         //-----------创建管线----------
         RHIDynamicPipelineCreateInfo pipeline_create_info;
         pipeline_create_info.Clear();
-        pipeline_create_info.pipeline_layout = m_pipelines[pipelines::triangle].layout;
+        pipeline_create_info.pipeline_layout = m_pipelines[pipelines::triangle_pipeline].layout;
         pipeline_create_info.SetShaders(triangle_vert_shader, triangle_frag_shader);
         pipeline_create_info.SetInputTopolygy(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
         pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
@@ -249,7 +247,7 @@ namespace Yutrel
         pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
         pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
 
-        m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[pipelines::triangle].pipeline);
+        m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[pipelines::triangle_pipeline].pipeline);
 
         //--------清除---------
         m_rhi->DestroyShaderModule(triangle_vert_shader);
@@ -289,9 +287,9 @@ namespace Yutrel
     {
         auto cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
-        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[pipelines::compute].pipeline);
+        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].pipeline);
 
-        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[pipelines::compute].layout, 0, 1, &m_descriptor_infos[0].set, 0, nullptr);
+        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].layout, 0, 1, &m_descriptor_infos[compute_descriptor].set, 0, nullptr);
 
         ComputePushConstants push_constant;
         push_constant.data1 = m_render_data->background.data1;
@@ -299,13 +297,36 @@ namespace Yutrel
         push_constant.data3 = m_render_data->background.data3;
         push_constant.data4 = m_render_data->background.data4;
 
-        vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::compute].layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constant);
+        vkCmdPushConstants(cmd_buffer, m_pipelines[compute_pipeline].layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constant);
 
         vkCmdDispatch(cmd_buffer, std::ceil(m_draw_extent.width / 16.0), std::ceil(m_draw_extent.height / 16.0), 1);
     }
 
     void TestPass::DrawGeometry()
     {
+        //------------描述符集----------
+        AllocatedBuffer gpu_scene_data_buffer = m_rhi->CreateBuffer(sizeof(GPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+        m_rhi->GetCurrentFrame().deletion_queue.PushFunction(
+            [=]()
+            {
+                m_rhi->DestroyBuffer(gpu_scene_data_buffer);
+            });
+
+        // 写缓冲
+        GPUSceneData* scene_uniform_data = reinterpret_cast<GPUSceneData*>(gpu_scene_data_buffer.info.pMappedData);
+        *scene_uniform_data              = scene_data;
+
+        // 创建描述符集
+        VkDescriptorSet global_descriptor = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[scene_descriptor].layout);
+
+        DescriptorWriter writer;
+        writer.WriteBuffer(0, gpu_scene_data_buffer.buffer, sizeof(GPUSceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+
+        m_rhi->UpdateDescriptorSets(writer, global_descriptor);
+
+        //---------渲染信息----------------
+
         // 颜色附件
         VkRenderingAttachmentInfo color_attachment = vkinit::AttachmentInfo(m_draw_image.image_view, nullptr, VK_IMAGE_LAYOUT_GENERAL);
 
@@ -317,7 +338,7 @@ namespace Yutrel
         vkCmdBeginRendering(m_rhi->GetCurrentCommandBuffer(), &render_info);
 
         // 绑定三角形管线
-        vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[pipelines::triangle].pipeline);
+        vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[pipelines::triangle_pipeline].pipeline);
 
         // 设定viewport
         VkViewport viewport{};
@@ -351,7 +372,7 @@ namespace Yutrel
 
         push_constants.vertex_buffer = m_render_data->pbrs[0]->mesh.gpu_buffers->vertex_buffer_address;
 
-        vkCmdPushConstants(m_rhi->GetCurrentCommandBuffer(), m_pipelines[pipelines::triangle].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
+        vkCmdPushConstants(m_rhi->GetCurrentCommandBuffer(), m_pipelines[pipelines::triangle_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
 
         vkCmdBindIndexBuffer(m_rhi->GetCurrentCommandBuffer(), m_render_data->pbrs[0]->mesh.gpu_buffers->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 

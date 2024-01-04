@@ -116,4 +116,46 @@ namespace Yutrel
             bindings.clear();
         }
     };
+
+    // todo 将rhi分出来
+    struct DescriptorAllocator
+    {
+    public:
+        struct PoolSizeRatio
+        {
+            VkDescriptorType type;
+            float ratio;
+        };
+
+        void Init(class VulkanRHI* rhi, uint32_t initial_sets, std::vector<PoolSizeRatio>& pool_ratios);
+        void ClearPools();
+        void DestroyPools();
+
+        VkDescriptorSet Allocate(VkDescriptorSetLayout layout);
+
+    private:
+        VkDescriptorPool GetPool();
+        VkDescriptorPool CreatePool(uint32_t set_count, std::vector<PoolSizeRatio>& pool_ratios);
+
+    private:
+        VulkanRHI* m_rhi;
+
+        std::vector<PoolSizeRatio> m_ratios;
+        std::vector<VkDescriptorPool> m_full_pools;
+        std::vector<VkDescriptorPool> m_ready_pools;
+        uint32_t m_sets_per_pool;
+    };
+
+    struct DescriptorWriter
+    {
+        std::deque<VkDescriptorImageInfo> image_infos;
+        std::deque<VkDescriptorBufferInfo> buffer_infos;
+        std::vector<VkWriteDescriptorSet> writes;
+
+        void WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type);
+        void WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type);
+
+        void Clear();
+    };
+
 } // namespace Yutrel

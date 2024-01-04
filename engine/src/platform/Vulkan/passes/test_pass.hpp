@@ -25,6 +25,16 @@ namespace Yutrel
         VkDeviceAddress vertex_buffer;
     };
 
+    struct GPUSceneData
+    {
+        glm::mat4 view;
+        glm::mat4 proj;
+        glm::mat4 view_proj;
+        glm::vec4 ambient_color;
+        glm::vec4 sunlight_direction; // w for sun power
+        glm::vec4 sunlight_color;
+    };
+
     class TestPass final : public RenderPass
     {
     public:
@@ -58,10 +68,18 @@ namespace Yutrel
     private:
         enum pipelines : uint8_t
         {
-            compute = 0,
-            triangle,
+            compute_pipeline = 0,
+            triangle_pipeline,
 
-            count,
+            pipeline_count,
+        };
+
+        enum descriptors : uint8_t
+        {
+            compute_descriptor = 0,
+            scene_descriptor,
+
+            descriptor_count,
         };
 
         // 绘制范围
@@ -75,5 +93,7 @@ namespace Yutrel
         AllocatedImage m_depth_image;
 
         Ref<struct RenderData> m_render_data;
+        // todo 设定场景数据
+        GPUSceneData scene_data;
     };
 } // namespace Yutrel

@@ -55,21 +55,6 @@ namespace Yutrel
         VkFormat image_format;
     };
 
-    // 帧数据
-    struct FrameData
-    {
-        // 指令
-        VkCommandPool command_pool;
-        VkCommandBuffer main_command_buffer;
-
-        // 同步
-        VkSemaphore finished_for_presentation_semaphore, available_for_render_semaphore;
-        VkFence render_fence;
-
-        // 删除队列
-        DeletionQueue deletion_queue;
-    };
-
     // 交换链信息
     struct RHISwapChainDesc
     {

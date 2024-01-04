@@ -5,15 +5,12 @@
 #include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/utils/vulkan_utils.hpp"
-#include <vector>
 
-#define VMA_IMPLEMENTATION
 #include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
-#include <vk_mem_alloc.h>
 
 namespace Yutrel
 {
@@ -38,6 +35,11 @@ namespace Yutrel
         vkDeviceWaitIdle(m_device);
 
         // 删除队列清空
+        for (int i = 0; i < FRAME_OVERLAP; i++)
+        {
+            m_frames[i].deletion_queue.flush();
+        }
+
         m_main_deletion_queue.flush();
 
         // 销毁交换链
@@ -81,6 +83,7 @@ namespace Yutrel
 
         // 清除为单独帧创建的对象
         GetCurrentFrame().deletion_queue.flush();
+        GetCurrentFrame().descriptors.ClearPools();
 
         // 请求图像索引
         auto result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, VK_NULL_HANDLE, &m_cur_swapchain_image_index);
@@ -255,7 +258,7 @@ namespace Yutrel
 
     void VulkanRHI::InitDescriptorPool()
     {
-        // 创建描述符池
+        //--------创建描述符池-----------
         // todo 控制描述符池大小
         std::vector<VkDescriptorPoolSize> sizes{
             {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10},
@@ -276,6 +279,26 @@ namespace Yutrel
             {
                 vkDestroyDescriptorPool(m_device, m_descriptor_pool, nullptr);
             });
+
+        //------------创建每帧动态分配的描述符池---------
+        for (int i = 0; i < FRAME_OVERLAP; i++)
+        {
+            std::vector<DescriptorAllocator::PoolSizeRatio> frame_sizes = {
+                {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3},
+                {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3},
+                {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3},
+                {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+            };
+
+            m_frames[i].descriptors = DescriptorAllocator{};
+            m_frames[i].descriptors.Init(this, 1000, frame_sizes);
+
+            m_main_deletion_queue.PushFunction(
+                [&, i]()
+                {
+                    m_frames[i].descriptors.DestroyPools();
+                });
+        }
     }
 
     void VulkanRHI::InitSyncStructures()
@@ -325,7 +348,7 @@ namespace Yutrel
 
         // 记录交换范围大小
         m_swapchain_extent = vkb_swapchain.extent;
-       
+
         // 获取交换链和图像
         m_swapchain              = vkb_swapchain.swapchain;
         m_swapchain_image_format = vkb_swapchain.image_format;
@@ -630,6 +653,31 @@ namespace Yutrel
         *out_layout = layout;
     }
 
+    void VulkanRHI::CreateDescriptorPool(const VkDescriptorPoolCreateInfo* info, VkDescriptorPool* out_pool)
+    {
+        VkDescriptorPool pool;
+        YUTREL_ASSERT(vkCreateDescriptorPool(m_device, info, nullptr, &pool) == VK_SUCCESS, "Failed to create descriptor pool");
+
+        // 暂时不用加入删除队列，因为描述符池有自己的删除函数
+        // m_main_deletion_queue.PushFunction(
+        //     [=]()
+        //     {
+        //         vkDestroyDescriptorPool(m_device, pool, nullptr);
+        //     });
+
+        *out_pool = pool;
+    }
+
+    void VulkanRHI::ResetDescriptorPool(VkDescriptorPool pool)
+    {
+        vkResetDescriptorPool(m_device, pool, 0);
+    }
+
+    void VulkanRHI::DestroyDescriptorPool(VkDescriptorPool pool)
+    {
+        vkDestroyDescriptorPool(m_device, pool, nullptr);
+    }
+
     void VulkanRHI::AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set)
     {
         VkDescriptorSetAllocateInfo info{};
@@ -645,9 +693,27 @@ namespace Yutrel
         *out_set = set;
     }
 
+    VkResult VulkanRHI::AllocateDescriptorSets(const VkDescriptorSetAllocateInfo* info, VkDescriptorSet* out_set)
+    {
+        VkDescriptorSet set;
+        auto result = vkAllocateDescriptorSets(m_device, info, &set);
+
+        *out_set = set;
+        return result;
+    }
+
     void VulkanRHI::UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies)
     {
         vkUpdateDescriptorSets(m_device, descriptor_write_count, p_descriptor_writes, descriptor_copy_count, p_descriptor_copies);
+    }
+
+    void VulkanRHI::UpdateDescriptorSets(DescriptorWriter& writer, VkDescriptorSet set)
+    {
+        for (VkWriteDescriptorSet& write : writer.writes)
+        {
+            write.dstSet = set;
+        }
+        vkUpdateDescriptorSets(m_device, static_cast<uint32_t>(writer.writes.size()), writer.writes.data(), 0, nullptr);
     }
 
     VkCommandBuffer VulkanRHI::BeginSingleTimeCommands()
@@ -733,7 +799,7 @@ namespace Yutrel
                          VMA_MEMORY_USAGE_CPU_ONLY);
 
         // 将数据拷贝到暂存缓冲区
-        void* data = staging.allocation->GetMappedData();
+        void* data = staging.info.pMappedData;
 
         memcpy(data, mesh.vertices->data(), VERTEX_BUFFER_SIZE);
         memcpy((char*)data + VERTEX_BUFFER_SIZE, mesh.indices->data(), INDEX_BUFFER_SIZE);

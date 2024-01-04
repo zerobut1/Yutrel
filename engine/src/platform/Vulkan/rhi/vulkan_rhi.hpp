@@ -21,6 +21,24 @@ namespace Yutrel
         uint32_t height;
     };
 
+    // 帧数据
+    struct FrameData
+    {
+        // 指令
+        VkCommandPool command_pool;
+        VkCommandBuffer main_command_buffer;
+
+        // 同步
+        VkSemaphore finished_for_presentation_semaphore, available_for_render_semaphore;
+        VkFence render_fence;
+
+        // 删除队列
+        DeletionQueue deletion_queue;
+
+        // 描述符分配
+        DescriptorAllocator descriptors;
+    };
+
     class VulkanRHI
     {
     public:
@@ -89,9 +107,19 @@ namespace Yutrel
 
         void CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout);
 
+        void CreateDescriptorPool(const VkDescriptorPoolCreateInfo* info, VkDescriptorPool* out_pool);
+
+        void ResetDescriptorPool(VkDescriptorPool pool);
+
+        void DestroyDescriptorPool(VkDescriptorPool pool);
+
         void AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set);
 
+        VkResult AllocateDescriptorSets(const VkDescriptorSetAllocateInfo* info, VkDescriptorSet* out_set);
+
         void UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies);
+
+        void UpdateDescriptorSets(DescriptorWriter& writer, VkDescriptorSet set);
 
         //----------单次指令----------
         VkCommandBuffer BeginSingleTimeCommands();

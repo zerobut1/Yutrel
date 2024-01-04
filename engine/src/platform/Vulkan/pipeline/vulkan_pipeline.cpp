@@ -34,7 +34,6 @@ namespace Yutrel
 
     void VulkanPipeline::ForwardRender()
     {
-        // todo recreate swapchian
         m_rhi->PrepareBeforePass();
 
         // std::dynamic_pointer_cast<MainPass>(m_main_pass)->DrawForward();
