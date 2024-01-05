@@ -39,6 +39,17 @@ namespace Yutrel
         DescriptorAllocator descriptors;
     };
 
+    struct DefaultData
+    {
+        AllocatedImage white_image;
+        AllocatedImage black_image;
+        AllocatedImage grey_image;
+        AllocatedImage error_image;
+
+        VkSampler default_sampler_linear;
+        VkSampler default_sampler_nearest;
+    };
+
     class VulkanRHI
     {
     public:
@@ -77,6 +88,8 @@ namespace Yutrel
 
         VkCommandBuffer GetCurrentCommandBuffer() const { return m_cur_command_buffer; }
 
+        DefaultData& GetDefaultData() { return m_default_data; }
+
         bool RequestResize() { return m_resize_requested; }
 
         //---------创建对象------------
@@ -101,9 +114,15 @@ namespace Yutrel
 
         void CreateDynamicPipelines(const RHIDynamicPipelineCreateInfo& info, VkPipeline* out_pipeline);
 
-        void CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image);
+        void CreateDrawImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image);
 
-        void CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image);
+        void CreateDrawImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image);
+
+        void CreateImage(VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped, AllocatedImage* out_image);
+
+        void CreateImage(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped, AllocatedImage* out_image);
+
+        void DestroyImage(const AllocatedImage& image);
 
         void CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout);
 
@@ -152,6 +171,8 @@ namespace Yutrel
         void InitSwapchain(uint32_t width, uint32_t height);
         // Imgui
         void InitImgui(GLFWwindow* raw_window);
+        // 默认数据
+        void InitDefaultData();
         //------------------------
 
         // 删除交换链
@@ -212,5 +233,8 @@ namespace Yutrel
         // 窗口大小改变
         bool m_resize_requested{false};
         VkExtent2D m_new_swapchain_extent;
+
+        // 默认数据
+        DefaultData m_default_data{};
     };
 } // namespace Yutrel

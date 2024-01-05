@@ -54,7 +54,7 @@ namespace Yutrel
 
         void InitComputePipeline();
 
-        void InitTrianglePipeline();
+        void InitTexturePipeline();
 
         //---------绘制------------
         void PrepareDrawImage();
@@ -69,7 +69,7 @@ namespace Yutrel
         enum pipelines : uint8_t
         {
             compute_pipeline = 0,
-            triangle_pipeline,
+            texture_pipeline,
 
             pipeline_count,
         };
@@ -78,6 +78,7 @@ namespace Yutrel
         {
             compute_descriptor = 0,
             scene_descriptor,
+            texture_descriptor,
 
             descriptor_count,
         };

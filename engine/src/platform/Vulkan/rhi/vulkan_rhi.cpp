@@ -11,6 +11,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -27,6 +28,8 @@ namespace Yutrel
         InitDescriptorPool();
 
         InitImgui(info.raw_window);
+
+        InitDefaultData();
     }
 
     void VulkanRHI::Clear()
@@ -412,6 +415,53 @@ namespace Yutrel
             });
     }
 
+    void VulkanRHI::InitDefaultData()
+    {
+        // 默认纹理
+        uint32_t white = 0xFFFFFFFF;
+        CreateImage((void*)&white, VkExtent3D{1, 1, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false, &m_default_data.white_image);
+
+        uint32_t grey = 0xFFAAAAAA;
+        CreateImage((void*)&grey, VkExtent3D{1, 1, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false, &m_default_data.grey_image);
+
+        uint32_t black = 0xFF000000;
+        CreateImage((void*)&black, VkExtent3D{1, 1, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false, &m_default_data.black_image);
+
+        uint32_t magenta = 0xFFFF00FF;
+        std::array<uint32_t, 16 * 16> pixels;
+        for (int x = 0; x < 16; x++)
+        {
+            for (int y = 0; y < 16; y++)
+            {
+                pixels[y * 16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
+            }
+        }
+        CreateImage(pixels.data(), VkExtent3D{16, 16, 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, false, &m_default_data.error_image);
+
+        // 默认采样器
+        VkSamplerCreateInfo sampler_info{};
+        sampler_info.sType     = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        sampler_info.magFilter = VK_FILTER_NEAREST;
+        sampler_info.minFilter = VK_FILTER_NEAREST;
+
+        vkCreateSampler(m_device, &sampler_info, nullptr, &m_default_data.default_sampler_nearest);
+
+        sampler_info.magFilter = VK_FILTER_LINEAR;
+        sampler_info.minFilter = VK_FILTER_LINEAR;
+        vkCreateSampler(m_device, &sampler_info, nullptr, &m_default_data.default_sampler_linear);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                DestroyImage(m_default_data.white_image);
+                DestroyImage(m_default_data.grey_image);
+                DestroyImage(m_default_data.black_image);
+                DestroyImage(m_default_data.error_image);
+                vkDestroySampler(m_device, m_default_data.default_sampler_nearest, nullptr);
+                vkDestroySampler(m_device, m_default_data.default_sampler_linear, nullptr);
+            });
+    }
+
     RHISwapChainDesc VulkanRHI::GetSwapChainInfo()
     {
         RHISwapChainDesc desc{};
@@ -596,7 +646,7 @@ namespace Yutrel
         *out_pipeline = pipeline;
     }
 
-    void VulkanRHI::CreateImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image)
+    void VulkanRHI::CreateDrawImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image)
     {
         VkImage image;
         VmaAllocation allocation;
@@ -612,7 +662,7 @@ namespace Yutrel
         out_image->allocation = allocation;
     }
 
-    void VulkanRHI::CreateImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image)
+    void VulkanRHI::CreateDrawImageView(const VkImageViewCreateInfo* info, AllocatedImage* out_image)
     {
         VkImageView image_view;
         YUTREL_ASSERT(vkCreateImageView(m_device, info, nullptr, &image_view) == VK_SUCCESS, "Failed to create image view");
@@ -624,6 +674,92 @@ namespace Yutrel
             });
 
         out_image->image_view = image_view;
+    }
+
+    void VulkanRHI::CreateImage(VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped, AllocatedImage* out_image)
+    {
+        AllocatedImage new_image;
+        new_image.image_format = format;
+        new_image.image_extent = size;
+
+        VkImageCreateInfo img_info = vkinit::ImageCreateInfo(format, usage, size);
+        // 是否mipmap
+        if (mipmapped)
+        {
+            img_info.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(size.width, size.height)))) + 1;
+        }
+
+        VmaAllocationCreateInfo allocinfo{};
+        // 设为GPU内存
+        allocinfo.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
+        allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        YUTREL_ASSERT(vmaCreateImage(m_allocator, &img_info, &allocinfo, &new_image.image, &new_image.allocation, nullptr) == VK_SUCCESS, "Failed to create image");
+
+        // 判断是否为深度图像
+        VkImageAspectFlags aspectFlag = VK_IMAGE_ASPECT_COLOR_BIT;
+        if (format == VK_FORMAT_D32_SFLOAT)
+        {
+            aspectFlag = VK_IMAGE_ASPECT_DEPTH_BIT;
+        }
+
+        VkImageViewCreateInfo view_info       = vkinit::ImageViewCreateInfo(format, new_image.image, aspectFlag);
+        view_info.subresourceRange.levelCount = img_info.mipLevels;
+
+        YUTREL_ASSERT(vkCreateImageView(m_device, &view_info, nullptr, &new_image.image_view) == VK_SUCCESS, "Failed to create image view");
+
+        *out_image = new_image;
+    }
+
+    void VulkanRHI::CreateImage(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped, AllocatedImage* out_image)
+    {
+        // 将图像数据存入暂存缓冲区
+        size_t data_size = size.depth * size.width * size.height * 4;
+
+        AllocatedBuffer upload_buffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+        memcpy(upload_buffer.info.pMappedData, data, data_size);
+
+        AllocatedImage new_image;
+        CreateImage(size, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, mipmapped, &new_image);
+
+        // 将数据拷贝到GPU图像
+        VkCommandBuffer cmd_buffer = BeginSingleTimeCommands();
+
+        TransitionImage(cmd_buffer,
+                        new_image.image,
+                        VK_IMAGE_LAYOUT_UNDEFINED,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+        VkBufferImageCopy copyRegion{};
+        copyRegion.bufferOffset      = 0;
+        copyRegion.bufferRowLength   = 0;
+        copyRegion.bufferImageHeight = 0;
+
+        copyRegion.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        copyRegion.imageSubresource.mipLevel       = 0;
+        copyRegion.imageSubresource.baseArrayLayer = 0;
+        copyRegion.imageSubresource.layerCount     = 1;
+        copyRegion.imageExtent                     = size;
+
+        vkCmdCopyBufferToImage(cmd_buffer, upload_buffer.buffer, new_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+        TransitionImage(cmd_buffer,
+                        new_image.image,
+                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+        EndSingleTimeCommands(cmd_buffer);
+
+        DestroyBuffer(upload_buffer);
+
+        *out_image = new_image;
+    }
+
+    void VulkanRHI::DestroyImage(const AllocatedImage& image)
+    {
+        vkDestroyImageView(m_device, image.image_view, nullptr);
+        vmaDestroyImage(m_allocator, image.image, image.allocation);
     }
 
     void VulkanRHI::CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout)
