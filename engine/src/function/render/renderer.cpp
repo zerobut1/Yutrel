@@ -7,8 +7,7 @@
 #include "platform/Vulkan/vulkan_renderer.hpp"
 #include "resource/asset/asset.hpp"
 #include "resource/component/component.hpp"
-
-// #include "platform/OpenGL/opengl_renderer.hpp"
+#include "resource/component/window_ui.hpp"
 
 #include <GLFW/glfw3.h>
 #include <vector>
@@ -67,7 +66,7 @@ namespace Yutrel
         render_data->ui         = ui->ui;
         render_data->background = background_color.get();
 
-        for (auto&& [entity, pbr_bundle] : pbrs)
+        for (const auto& [entity, pbr_bundle] : pbrs)
         {
             if (!pbr_bundle.mesh->is_loaded)
             {

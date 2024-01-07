@@ -6,7 +6,7 @@
 #include "platform/Vulkan/pipeline/vulkan_pipeline.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "resource/component/component.hpp"
-#include "resource/component/ui/window_ui.hpp"
+#include "resource/component/window_ui.hpp"
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
