@@ -903,27 +903,27 @@ namespace Yutrel
         vmaDestroyBuffer(m_allocator, buffer.buffer, buffer.allocation);
     }
 
-    void VulkanRHI::UploadMesh(Mesh& mesh)
+    void VulkanRHI::UploadMesh(Ref<Mesh> mesh)
     {
-        const size_t VERTEX_BUFFER_SIZE = mesh.vertices->size() * sizeof(Vertex);
-        const size_t INDEX_BUFFER_SIZE  = mesh.indices->size() * sizeof(uint32_t);
+        const size_t VERTEX_BUFFER_SIZE = mesh->vertices->size() * sizeof(Vertex);
+        const size_t INDEX_BUFFER_SIZE  = mesh->indices->size() * sizeof(uint32_t);
 
-        mesh.gpu_buffers = CreateRef<GPUMeshBuffers>();
+        mesh->gpu_buffers = CreateRef<GPUMeshBuffers>();
 
         // 顶点缓冲
-        mesh.gpu_buffers->vertex_buffer =
+        mesh->gpu_buffers->vertex_buffer =
             CreateBuffer(VERTEX_BUFFER_SIZE,
                          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
                          VMA_MEMORY_USAGE_GPU_ONLY);
 
         VkBufferDeviceAddressInfo device_address_info{};
         device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-        device_address_info.buffer = mesh.gpu_buffers->vertex_buffer.buffer;
+        device_address_info.buffer = mesh->gpu_buffers->vertex_buffer.buffer;
 
-        mesh.gpu_buffers->vertex_buffer_address = vkGetBufferDeviceAddress(m_device, &device_address_info);
+        mesh->gpu_buffers->vertex_buffer_address = vkGetBufferDeviceAddress(m_device, &device_address_info);
 
         // 索引缓冲
-        mesh.gpu_buffers->index_buffer =
+        mesh->gpu_buffers->index_buffer =
             CreateBuffer(INDEX_BUFFER_SIZE,
                          VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                          VMA_MEMORY_USAGE_GPU_ONLY);
@@ -937,8 +937,8 @@ namespace Yutrel
         // 将数据拷贝到暂存缓冲区
         void* data = staging.info.pMappedData;
 
-        memcpy(data, mesh.vertices->data(), VERTEX_BUFFER_SIZE);
-        memcpy((char*)data + VERTEX_BUFFER_SIZE, mesh.indices->data(), INDEX_BUFFER_SIZE);
+        memcpy(data, mesh->vertices->data(), VERTEX_BUFFER_SIZE);
+        memcpy((char*)data + VERTEX_BUFFER_SIZE, mesh->indices->data(), INDEX_BUFFER_SIZE);
 
         // 从暂存缓冲区拷贝到gpu
         VkCommandBuffer cmd_buffer = BeginSingleTimeCommands();
@@ -948,14 +948,14 @@ namespace Yutrel
         vertex_copy.srcOffset = 0;
         vertex_copy.size      = VERTEX_BUFFER_SIZE;
 
-        vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh.gpu_buffers->vertex_buffer.buffer, 1, &vertex_copy);
+        vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh->gpu_buffers->vertex_buffer.buffer, 1, &vertex_copy);
 
         VkBufferCopy index_copy{0};
         index_copy.dstOffset = 0;
         index_copy.srcOffset = VERTEX_BUFFER_SIZE;
         index_copy.size      = INDEX_BUFFER_SIZE;
 
-        vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh.gpu_buffers->index_buffer.buffer, 1, &index_copy);
+        vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh->gpu_buffers->index_buffer.buffer, 1, &index_copy);
 
         EndSingleTimeCommands(cmd_buffer);
 
@@ -963,9 +963,12 @@ namespace Yutrel
         m_main_deletion_queue.PushFunction(
             [=]()
             {
-                vmaDestroyBuffer(m_allocator, mesh.gpu_buffers->vertex_buffer.buffer, mesh.gpu_buffers->vertex_buffer.allocation);
-                vmaDestroyBuffer(m_allocator, mesh.gpu_buffers->index_buffer.buffer, mesh.gpu_buffers->index_buffer.allocation);
+                vmaDestroyBuffer(m_allocator, mesh->gpu_buffers->vertex_buffer.buffer, mesh->gpu_buffers->vertex_buffer.allocation);
+                vmaDestroyBuffer(m_allocator, mesh->gpu_buffers->index_buffer.buffer, mesh->gpu_buffers->index_buffer.allocation);
             });
+
+        // 将顶点和索引从内存释放
+        mesh->ReleaseVertices();
 
         DestroyBuffer(staging);
     }

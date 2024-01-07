@@ -69,11 +69,11 @@ namespace Yutrel
 
         for (auto&& [entity, pbr_bundle] : pbrs)
         {
-            if (!pbr_bundle.mesh.is_loaded)
+            if (!pbr_bundle.mesh->is_loaded)
             {
                 if (!asset_manager->LoadFromFile(pbr_bundle.mesh))
                 {
-                    LOG_ERROR("Failed to load {}", pbr_bundle.mesh.path);
+                    LOG_ERROR("Failed to load {}", pbr_bundle.mesh->path);
                 }
             }
 

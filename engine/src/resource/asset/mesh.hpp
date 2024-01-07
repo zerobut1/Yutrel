@@ -12,7 +12,6 @@
 
 namespace Yutrel
 {
-    struct VertexInputDescription;
     struct GPUMeshBuffers;
 
     struct Vertex
@@ -20,8 +19,6 @@ namespace Yutrel
         alignas(16) glm::vec3 position;
         alignas(16) glm::vec3 normal;
         alignas(8) glm::vec2 uv;
-
-        static VertexInputDescription GetVertexDescription();
 
         bool operator==(const Vertex& other) const
         {
@@ -31,20 +28,8 @@ namespace Yutrel
         }
     };
 
-    class Mesh
+    struct Mesh
     {
-    public:
-        Mesh() = default;
-        Mesh(const std::string& path)
-            : path(path) {}
-
-        void ReleaseVertices()
-        {
-            vertices.reset();
-            is_loaded = false;
-        }
-
-    public:
         std::string path;
         bool is_loaded{false};
         bool is_uploaded{false};
@@ -53,6 +38,12 @@ namespace Yutrel
         Ref<std::vector<uint32_t>> indices;
 
         Ref<GPUMeshBuffers> gpu_buffers;
+
+        Mesh() = default;
+        Mesh(const std::string& path)
+            : path(path) {}
+
+        void ReleaseVertices();
     };
 
 } // namespace Yutrel

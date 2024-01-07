@@ -380,7 +380,7 @@ namespace Yutrel
         projection[1][1] *= -1;
         push_constants.world_matrix = projection * view;
 
-        push_constants.vertex_buffer = m_render_data->pbrs[0]->mesh.gpu_buffers->vertex_buffer_address;
+        push_constants.vertex_buffer = m_render_data->pbrs[0]->mesh->gpu_buffers->vertex_buffer_address;
 
         vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::texture_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
 
@@ -395,9 +395,9 @@ namespace Yutrel
         vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &m_descriptor_infos[texture_descriptor].set, 0, nullptr);
 
         // 绑定VBO和IBO
-        vkCmdBindIndexBuffer(cmd_buffer, m_render_data->pbrs[0]->mesh.gpu_buffers->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(cmd_buffer, m_render_data->pbrs[0]->mesh->gpu_buffers->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(m_render_data->pbrs[0]->mesh.indices->size()), 1, 0, 0, 0);
+        vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(m_render_data->pbrs[0]->mesh->gpu_buffers->index_count), 1, 0, 0, 0);
 
         vkCmdEndRendering(cmd_buffer);
     }

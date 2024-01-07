@@ -11,18 +11,18 @@
 
 namespace Yutrel
 {
-    Mesh& AssetManager::LoadMesh(const std::string& path)
+    Ref<Mesh> AssetManager::LoadMesh(const std::string& path)
     {
-        m_meshes.insert({path, Mesh(path)});
+        m_meshes.insert({path, CreateRef<Mesh>(path)});
 
         return m_meshes[path];
     }
 
-    bool AssetManager::LoadFromFile(Mesh& mesh)
+    bool AssetManager::LoadFromFile(Ref<Mesh> mesh)
     {
-        LOG_INFO("Load model from {}", mesh.path);
-        mesh.vertices = CreateRef<std::vector<Vertex>>();
-        mesh.indices  = CreateRef<std::vector<uint32_t>>();
+        LOG_INFO("Load model from {}", mesh->path);
+        mesh->vertices = CreateRef<std::vector<Vertex>>();
+        mesh->indices  = CreateRef<std::vector<uint32_t>>();
 
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
@@ -30,7 +30,7 @@ namespace Yutrel
         std::string warn, err;
 
         // 加载模型
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, mesh.path.c_str()))
+        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, mesh->path.c_str()))
         {
             LOG_ERROR(warn + err);
             return false;
@@ -63,14 +63,14 @@ namespace Yutrel
 
                 if (!unique_vertices.count(vertex))
                 {
-                    unique_vertices[vertex] = static_cast<uint32_t>(mesh.vertices->size());
-                    mesh.vertices->push_back(vertex);
+                    unique_vertices[vertex] = static_cast<uint32_t>(mesh->vertices->size());
+                    mesh->vertices->push_back(vertex);
                 }
-                mesh.indices->push_back(unique_vertices[vertex]);
+                mesh->indices->push_back(unique_vertices[vertex]);
             }
         }
 
-        mesh.is_loaded = true;
+        mesh->is_loaded = true;
         return true;
     }
 } // namespace Yutrel

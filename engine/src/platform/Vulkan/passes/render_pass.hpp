@@ -8,7 +8,7 @@
 namespace Yutrel
 {
     class VulkanRHI;
-    class Mesh;
+    struct Mesh;
 
     struct RenderPassInitInfo
     {};

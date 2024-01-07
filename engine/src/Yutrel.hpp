@@ -11,7 +11,7 @@
 #include "function/render/renderer.hpp"
 #include "function/window/window.hpp"
 #include "resource/asset/asset.hpp"
-#include "resource/asset/mesh/mesh.hpp"
+#include "resource/asset/mesh.hpp"
 #include "resource/component/component.hpp"
 #include "resource/component/ui/window_ui.hpp"
 

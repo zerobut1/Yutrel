@@ -12,7 +12,7 @@
 #include <imgui_impl_vulkan.h>
 #include <vector>
 
-// #include "platform/Vulkan/mesh/mesh.hpp"
+// #include "platform/Vulkan/mesh.hpp"
 
 namespace Yutrel
 {
@@ -81,11 +81,11 @@ namespace Yutrel
     {
         for (auto& pbr : m_render_data->pbrs)
         {
-            if (!pbr->mesh.is_uploaded)
+            if (!pbr->mesh->is_uploaded)
             {
                 m_rhi->UploadMesh(pbr->mesh);
 
-                pbr->mesh.is_uploaded = true;
+                pbr->mesh->is_uploaded = true;
             }
         }
     }

@@ -42,9 +42,9 @@ namespace Yutrel
         for (auto& pbr : m_render_data->pbrs)
         {
             VkDeviceSize offset = 0;
-            vkCmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh.gpu_buffers->vertex_buffer.buffer, &offset);
+            vkCmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh->gpu_buffers->vertex_buffer.buffer, &offset);
 
-            vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh.vertices->size(), 1, 0, 0);
+            vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh->vertices->size(), 1, 0, 0);
         }
 
         vkCmdEndRenderPass(m_rhi->GetCurrentCommandBuffer());
@@ -135,7 +135,7 @@ namespace Yutrel
         m_rhi->CreatePipelineLayout(&layout_info, &m_pipelines[0].layout);
 
         //----------顶点状态-------------
-        VertexInputDescription vertex_description = Vertex::GetVertexDescription();
+        // VertexInputDescription vertex_description = Vertex::GetVertexDescription();
 
         //-----------视口状态------------
         VkPipelineViewportStateCreateInfo viewport_state_info{};
@@ -169,11 +169,11 @@ namespace Yutrel
         pipeline_create_info.shader_stages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, triangle_vert_shader));
         pipeline_create_info.shader_stages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangle_frag_shader));
         // 顶点输入
-        pipeline_create_info.vertex_input                                 = vkinit::VertexInputStateCreateInfo();
-        pipeline_create_info.vertex_input.vertexAttributeDescriptionCount = vertex_description.attributes.size();
-        pipeline_create_info.vertex_input.pVertexAttributeDescriptions    = vertex_description.attributes.data();
-        pipeline_create_info.vertex_input.vertexBindingDescriptionCount   = vertex_description.bindings.size();
-        pipeline_create_info.vertex_input.pVertexBindingDescriptions      = vertex_description.bindings.data();
+        // pipeline_create_info.vertex_input                                 = vkinit::VertexInputStateCreateInfo();
+        // pipeline_create_info.vertex_input.vertexAttributeDescriptionCount = vertex_description.attributes.size();
+        // pipeline_create_info.vertex_input.pVertexAttributeDescriptions    = vertex_description.attributes.data();
+        // pipeline_create_info.vertex_input.vertexBindingDescriptionCount   = vertex_description.bindings.size();
+        // pipeline_create_info.vertex_input.pVertexBindingDescriptions      = vertex_description.bindings.data();
         // 图元装配
         pipeline_create_info.input_assembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
         // 视口状态

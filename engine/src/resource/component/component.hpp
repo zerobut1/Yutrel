@@ -1,16 +1,12 @@
 #pragma once
 
-// #include "glm/ext/matrix_float4x4.hpp"
-// #include "glm/ext/matrix_transform.hpp"
-// #include "resource/asset/texture.hpp"
-// #include "resource/component/model/model.hpp"
-#include "resource/asset/mesh/mesh.hpp"
+#include "resource/asset/mesh.hpp"
 
 namespace Yutrel
 {
     struct PbrBundle
     {
-        Mesh& mesh;
+        Ref<Mesh> mesh;
     };
 
     struct BackGroundColor

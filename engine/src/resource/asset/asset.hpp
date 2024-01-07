@@ -1,6 +1,6 @@
 #pragma once
 
-#include "resource/asset/mesh/mesh.hpp"
+#include "resource/asset/mesh.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -11,12 +11,12 @@ namespace Yutrel
     class AssetManager
     {
     public:
-        Mesh& LoadMesh(const std::string& path);
+        Ref<Mesh> LoadMesh(const std::string& path);
 
-        bool LoadFromFile(Mesh& mesh);
+        bool LoadFromFile(Ref<Mesh> mesh);
 
     private:
-        std::unordered_map<std::string, Mesh> m_meshes;
+        std::unordered_map<std::string, Ref<Mesh>> m_meshes;
     };
 
     // class Asset
