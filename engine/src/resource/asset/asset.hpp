@@ -1,22 +1,27 @@
 #pragma once
 
-#include "resource/asset/mesh.hpp"
+#include "core/macro.hpp"
 
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace Yutrel
 {
     class AssetManager
     {
     public:
-        Ref<Mesh> LoadMesh(const std::string& path);
+        Ref<struct Mesh> AddMesh(const std::string& path);
 
-        bool LoadFromFile(Ref<Mesh> mesh);
+        Ref<struct Material> AddMaterial(const Material& material);
+
+        void LoadFromFile(Ref<Mesh> mesh);
 
     private:
-        std::unordered_map<std::string, Ref<Mesh>> m_meshes;
+        std::unordered_map<uint32_t, Ref<Mesh>> m_meshes;
+
+        std::unordered_map<uint32_t, Ref<Material>> m_materials;
     };
 
     // class Asset

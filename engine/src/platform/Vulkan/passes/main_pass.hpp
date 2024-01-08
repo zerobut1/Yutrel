@@ -28,6 +28,6 @@ namespace Yutrel
 
         std::vector<VkFramebuffer> m_swapchain_framebuffers;
 
-        Ref<struct RenderData> m_render_data;
+        Ref<RenderData> m_render_data;
     };
 } // namespace Yutrel

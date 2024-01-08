@@ -2,15 +2,22 @@
 
 #include "ui/imgui_ui.hpp"
 
+#include <glm/glm.hpp>
+
 void StartWorld(gecs::commands cmds,
                 gecs::resource<gecs::mut<Yutrel::AssetManager>> asset_manager)
 {
+    auto mesh     = asset_manager->AddMesh("resource/viking_room/viking_room.obj");
+    auto material = asset_manager->AddMaterial(Yutrel::Material{
+        glm::vec4(0.4f, 0.8f, 1.0f, 1.0f),
+    });
+
     auto entity = cmds.create();
     cmds.emplace<Yutrel::PbrBundle>(
         entity,
         Yutrel::PbrBundle{
-            // asset_manager->LoadMesh("resource/lost_empire/lost_empire.obj"),
-            asset_manager->LoadMesh("resource/viking_room/viking_room.obj"),
+            mesh,
+            material,
         });
 }
 

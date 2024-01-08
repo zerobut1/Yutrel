@@ -93,7 +93,7 @@ namespace Yutrel
         // 深度图像
         AllocatedImage m_depth_image;
 
-        Ref<struct RenderData> m_render_data;
+        Ref<RenderData> m_render_data;
         // todo 设定场景数据
         GPUSceneData scene_data;
     };

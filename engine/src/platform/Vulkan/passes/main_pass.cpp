@@ -4,7 +4,7 @@
 
 #include "function/render/renderer.hpp"
 #include "platform/Vulkan/initializers/initializers.hpp"
-#include "platform/Vulkan/mesh/vulkan_mesh.hpp"
+#include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 
 #include <vector>
@@ -39,13 +39,13 @@ namespace Yutrel
 
         vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[0].pipeline);
 
-        for (auto& pbr : m_render_data->pbrs)
-        {
-            VkDeviceSize offset = 0;
-            vkCmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh->gpu_buffers->vertex_buffer.buffer, &offset);
+        // for (auto& pbr : m_render_data->pbrs)
+        // {
+        //     VkDeviceSize offset = 0;
+        //     vkCmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh->gpu_buffers->vertex_buffer.buffer, &offset);
 
-            vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh->vertices->size(), 1, 0, 0);
-        }
+        //     vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh->vertices->size(), 1, 0, 0);
+        // }
 
         vkCmdEndRenderPass(m_rhi->GetCurrentCommandBuffer());
     }

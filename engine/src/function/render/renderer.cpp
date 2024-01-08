@@ -6,6 +6,7 @@
 #include "core/path/path.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
 #include "resource/asset/asset.hpp"
+#include "resource/asset/mesh.hpp"
 #include "resource/component/component.hpp"
 #include "resource/component/window_ui.hpp"
 
@@ -62,23 +63,23 @@ namespace Yutrel
                                   gecs::resource<BackGroundColor> background_color,
                                   gecs::resource<gecs::mut<AssetManager>> asset_manager)
     {
-        auto render_data        = CreateRef<RenderData>();
-        render_data->ui         = ui->ui;
-        render_data->background = background_color.get();
+        auto swap_data        = CreateRef<SwapData>();
+        swap_data->ui         = ui->ui;
+        swap_data->background = background_color.get();
 
         for (const auto& [entity, pbr_bundle] : pbrs)
         {
+            // 加载模型
             if (!pbr_bundle.mesh->is_loaded)
             {
-                if (!asset_manager->LoadFromFile(pbr_bundle.mesh))
-                {
-                    LOG_ERROR("Failed to load {}", pbr_bundle.mesh->path);
-                }
+                asset_manager->LoadFromFile(pbr_bundle.mesh);
             }
 
-            render_data->pbrs.push_back(&pbr_bundle);
+            // 加载材质
+
+            swap_data->pbrs.push_back(&pbr_bundle);
         }
-        render->renderer->Tick(render_data);
+        render->renderer->Tick(swap_data);
     }
 
 } // namespace Yutrel

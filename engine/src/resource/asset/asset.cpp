@@ -2,23 +2,44 @@
 
 #include "asset.hpp"
 
-#include <stdint.h>
+#include "resource/asset/material.hpp"
+#include "resource/asset/mesh.hpp"
+
 #include <tiny_obj_loader.h>
 
+#include <stdint.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace Yutrel
 {
-    Ref<Mesh> AssetManager::LoadMesh(const std::string& path)
+    Ref<Mesh> AssetManager::AddMesh(const std::string& path)
     {
-        m_meshes.insert({path, CreateRef<Mesh>(path)});
+        static uint32_t id = 1;
+        if (!m_meshes.insert({id, CreateRef<Mesh>(path)}).second)
+        {
+            LOG_ERROR("Failed to add mesh");
+            return nullptr;
+        }
 
-        return m_meshes[path];
+        return m_meshes[id++];
     }
 
-    bool AssetManager::LoadFromFile(Ref<Mesh> mesh)
+    Ref<Material> AssetManager::AddMaterial(const Material& material)
+    {
+        static uint32_t id = 1;
+
+        if (!m_materials.insert({id, CreateRef<Material>(material)}).second)
+        {
+            LOG_ERROR("Failed to add material");
+            return nullptr;
+        }
+
+        return m_materials[id++];
+    }
+
+    void AssetManager::LoadFromFile(Ref<Mesh> mesh)
     {
         LOG_INFO("Load model from {}", mesh->path);
         mesh->vertices = CreateRef<std::vector<Vertex>>();
@@ -33,7 +54,7 @@ namespace Yutrel
         if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, mesh->path.c_str()))
         {
             LOG_ERROR(warn + err);
-            return false;
+            return;
         }
 
         std::unordered_map<Vertex, uint32_t> unique_vertices;
@@ -71,6 +92,5 @@ namespace Yutrel
         }
 
         mesh->is_loaded = true;
-        return true;
     }
 } // namespace Yutrel

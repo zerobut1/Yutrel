@@ -2,8 +2,9 @@
 
 #include "vulkan_rhi.hpp"
 
+#include "platform/Vulkan/asset/vulkan_material.hpp"
+#include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/initializers/initializers.hpp"
-#include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/utils/vulkan_utils.hpp"
 
 #include <GLFW/glfw3.h>
@@ -97,9 +98,6 @@ namespace Yutrel
             return;
         }
 
-        // 重设fence
-        YUTREL_ASSERT(vkResetFences(m_device, 1, &GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to reset fence");
-
         // 重置命令缓冲
         YUTREL_ASSERT(vkResetCommandBuffer(m_cur_command_buffer, 0) == VK_SUCCESS, "Failed to reset command buffer");
 
@@ -113,6 +111,9 @@ namespace Yutrel
     {
         //-------------终止指令缓冲-------------
         YUTREL_ASSERT(vkEndCommandBuffer(m_cur_command_buffer) == VK_SUCCESS, "Failed to end command buffer");
+
+        // 重设fence
+        YUTREL_ASSERT(vkResetFences(m_device, 1, &GetCurrentFrame().render_fence) == VK_SUCCESS, "Failed to reset fence");
 
         // --------------提交指令---------------
         VkCommandBufferSubmitInfo cmd_info = vkinit::CommandBufferSubmitInfo(m_cur_command_buffer);
@@ -903,27 +904,28 @@ namespace Yutrel
         vmaDestroyBuffer(m_allocator, buffer.buffer, buffer.allocation);
     }
 
-    void VulkanRHI::UploadMesh(Ref<Mesh> mesh)
+    Ref<VulkanMesh> VulkanRHI::UploadMesh(Ref<Mesh> mesh)
     {
         const size_t VERTEX_BUFFER_SIZE = mesh->vertices->size() * sizeof(Vertex);
         const size_t INDEX_BUFFER_SIZE  = mesh->indices->size() * sizeof(uint32_t);
 
-        mesh->gpu_buffers = CreateRef<GPUMeshBuffers>();
+        Ref<VulkanMesh> vulkan_mesh = CreateRef<VulkanMesh>();
+        vulkan_mesh->index_count    = mesh->indices->size();
 
         // 顶点缓冲
-        mesh->gpu_buffers->vertex_buffer =
+        vulkan_mesh->vertex_buffer =
             CreateBuffer(VERTEX_BUFFER_SIZE,
                          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
                          VMA_MEMORY_USAGE_GPU_ONLY);
 
         VkBufferDeviceAddressInfo device_address_info{};
         device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-        device_address_info.buffer = mesh->gpu_buffers->vertex_buffer.buffer;
+        device_address_info.buffer = vulkan_mesh->vertex_buffer.buffer;
 
-        mesh->gpu_buffers->vertex_buffer_address = vkGetBufferDeviceAddress(m_device, &device_address_info);
+        vulkan_mesh->vertex_buffer_address = vkGetBufferDeviceAddress(m_device, &device_address_info);
 
         // 索引缓冲
-        mesh->gpu_buffers->index_buffer =
+        vulkan_mesh->index_buffer =
             CreateBuffer(INDEX_BUFFER_SIZE,
                          VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                          VMA_MEMORY_USAGE_GPU_ONLY);
@@ -948,14 +950,14 @@ namespace Yutrel
         vertex_copy.srcOffset = 0;
         vertex_copy.size      = VERTEX_BUFFER_SIZE;
 
-        vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh->gpu_buffers->vertex_buffer.buffer, 1, &vertex_copy);
+        vkCmdCopyBuffer(cmd_buffer, staging.buffer, vulkan_mesh->vertex_buffer.buffer, 1, &vertex_copy);
 
         VkBufferCopy index_copy{0};
         index_copy.dstOffset = 0;
         index_copy.srcOffset = VERTEX_BUFFER_SIZE;
         index_copy.size      = INDEX_BUFFER_SIZE;
 
-        vkCmdCopyBuffer(cmd_buffer, staging.buffer, mesh->gpu_buffers->index_buffer.buffer, 1, &index_copy);
+        vkCmdCopyBuffer(cmd_buffer, staging.buffer, vulkan_mesh->index_buffer.buffer, 1, &index_copy);
 
         EndSingleTimeCommands(cmd_buffer);
 
@@ -963,14 +965,70 @@ namespace Yutrel
         m_main_deletion_queue.PushFunction(
             [=]()
             {
-                vmaDestroyBuffer(m_allocator, mesh->gpu_buffers->vertex_buffer.buffer, mesh->gpu_buffers->vertex_buffer.allocation);
-                vmaDestroyBuffer(m_allocator, mesh->gpu_buffers->index_buffer.buffer, mesh->gpu_buffers->index_buffer.allocation);
+                vmaDestroyBuffer(m_allocator, vulkan_mesh->vertex_buffer.buffer, vulkan_mesh->vertex_buffer.allocation);
+                vmaDestroyBuffer(m_allocator, vulkan_mesh->index_buffer.buffer, vulkan_mesh->index_buffer.allocation);
             });
 
         // 将顶点和索引从内存释放
         mesh->ReleaseVertices();
 
+        // 标记为已加载至GPU
+        mesh->is_uploaded = true;
+
+        // 销毁暂存缓冲区
         DestroyBuffer(staging);
+
+        return vulkan_mesh;
+    }
+
+    AllocatedBuffer VulkanRHI::UploadMaterialData(Ref<Material> material)
+    {
+        const size_t UNIFORM_BUFFER_SIZE = sizeof(VulkanMaterialData);
+
+        // 数据
+        VulkanMaterialData uniform_data{};
+        uniform_data.base_color = material->base_color;
+
+        // unifrom缓冲
+        auto uniform_buffer =
+            CreateBuffer(UNIFORM_BUFFER_SIZE,
+                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                         VMA_MEMORY_USAGE_GPU_ONLY);
+
+        // 暂存缓冲区
+        AllocatedBuffer staging =
+            CreateBuffer(UNIFORM_BUFFER_SIZE,
+                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                         VMA_MEMORY_USAGE_CPU_ONLY);
+
+        // 将数据拷贝到暂存缓冲区
+        void* data = nullptr;
+        vmaMapMemory(m_allocator, staging.allocation, &data);
+        memcpy(data, &uniform_data, UNIFORM_BUFFER_SIZE);
+        vmaUnmapMemory(m_allocator, staging.allocation);
+
+        // 从暂存缓冲区拷贝到gpu
+        VkCommandBuffer cmd_buffer = BeginSingleTimeCommands();
+
+        VkBufferCopy buffer_copy{0};
+        buffer_copy.dstOffset = 0;
+        buffer_copy.srcOffset = 0;
+        buffer_copy.size      = UNIFORM_BUFFER_SIZE;
+
+        vkCmdCopyBuffer(cmd_buffer, staging.buffer, uniform_buffer.buffer, 1, &buffer_copy);
+
+        EndSingleTimeCommands(cmd_buffer);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vmaDestroyBuffer(m_allocator, uniform_buffer.buffer, uniform_buffer.allocation);
+            });
+
+        // 销毁暂存缓冲区
+        DestroyBuffer(staging);
+
+        return uniform_buffer;
     }
 
     void VulkanRHI::TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout)

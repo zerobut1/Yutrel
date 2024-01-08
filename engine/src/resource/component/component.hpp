@@ -1,12 +1,15 @@
 #pragma once
 
-#include "resource/asset/mesh.hpp"
+#include "core/macro.hpp"
+
+#include <glm/glm.hpp>
 
 namespace Yutrel
 {
     struct PbrBundle
     {
-        Ref<Mesh> mesh;
+        Ref<struct Mesh> mesh;
+        Ref<struct Material> material;
     };
 
     struct BackGroundColor

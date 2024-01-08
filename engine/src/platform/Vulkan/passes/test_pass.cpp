@@ -3,10 +3,11 @@
 #include "test_pass.hpp"
 
 #include "function/render/renderer.hpp"
+#include "platform/Vulkan/asset/vulkan_material.hpp"
+#include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/initializers/initializers.hpp"
-#include "platform/Vulkan/mesh/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
-#include <cstddef>
+#include "platform/Vulkan/vulkan_renderer.hpp"
 #include <vulkan/vulkan_core.h>
 
 namespace Yutrel
@@ -26,7 +27,7 @@ namespace Yutrel
         InitTexturePipeline();
     }
 
-    void TestPass::PreparePassData(Ref<struct RenderData> render_data)
+    void TestPass::PreparePassData(Ref<RenderData> render_data)
     {
         m_render_data = render_data;
     }
@@ -231,6 +232,7 @@ namespace Yutrel
         //------------描述符-------------
         RHIDescriptorLayoutCreateInfo descriptor_info;
         descriptor_info.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+        descriptor_info.AddBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         descriptor_info.shader_stages = VK_SHADER_STAGE_FRAGMENT_BIT;
         m_rhi->CreateDescriptorLayout(descriptor_info, &m_descriptor_infos[texture_descriptor].layout);
 
@@ -380,26 +382,38 @@ namespace Yutrel
         projection[1][1] *= -1;
         push_constants.world_matrix = projection * view;
 
-        push_constants.vertex_buffer = m_render_data->pbrs[0]->mesh->gpu_buffers->vertex_buffer_address;
-
-        vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::texture_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
-
-        // 绑定纹理
-        m_descriptor_infos[texture_descriptor].set = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[texture_descriptor].layout);
+        for (auto& pair1 : m_render_data->objects)
         {
-            DescriptorWriter writer;
-            auto& default_data = m_rhi->GetDefaultData();
-            writer.WriteImage(0, default_data.error_image.image_view, default_data.default_sampler_nearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[texture_descriptor].set);
+            Ref<VulkanPBRMaterial> material = pair1.first;
+            auto& mesh_instance             = pair1.second;
+
+            // 绑定材质
+            m_descriptor_infos[texture_descriptor].set = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[texture_descriptor].layout);
+            {
+                DescriptorWriter writer;
+                auto& default_data = m_rhi->GetDefaultData();
+                writer.WriteImage(0, default_data.error_image.image_view, default_data.default_sampler_nearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                writer.WriteBuffer(1, material->uniform_buffer.buffer, sizeof(VulkanMaterialData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+                m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[texture_descriptor].set);
+            }
+            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &m_descriptor_infos[texture_descriptor].set, 0, nullptr);
+
+            for (auto& pair2 : mesh_instance)
+            {
+                Ref<VulkanMesh> mesh = pair2.first;
+                // auto& transform      = pair2.second;
+
+                push_constants.vertex_buffer = mesh->vertex_buffer_address;
+                vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::texture_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
+
+                // 绑定IBO
+                vkCmdBindIndexBuffer(cmd_buffer, mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+                vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(mesh->index_count), 1, 0, 0, 0);
+
+                vkCmdEndRendering(cmd_buffer);
+            }
         }
-        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &m_descriptor_infos[texture_descriptor].set, 0, nullptr);
-
-        // 绑定VBO和IBO
-        vkCmdBindIndexBuffer(cmd_buffer, m_render_data->pbrs[0]->mesh->gpu_buffers->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-        vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(m_render_data->pbrs[0]->mesh->gpu_buffers->index_count), 1, 0, 0, 0);
-
-        vkCmdEndRendering(cmd_buffer);
     }
 
 } // namespace Yutrel

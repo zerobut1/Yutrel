@@ -2,6 +2,8 @@
 
 #include "vulkan_renderer.hpp"
 
+#include "platform/Vulkan/asset/vulkan_asset.hpp"
+#include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/passes/render_pass.hpp"
 #include "platform/Vulkan/pipeline/vulkan_pipeline.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
@@ -10,9 +12,6 @@
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
-#include <vector>
-
-// #include "platform/Vulkan/mesh.hpp"
 
 namespace Yutrel
 {
@@ -34,23 +33,31 @@ namespace Yutrel
         m_render_pipeline = CreateRef<VulkanPipeline>();
         m_render_pipeline->SetRHI(m_rhi);
         m_render_pipeline->Init(pipeline_init_info);
+
+        // 初始化资产管理
+        m_asset_manager = CreateRef<VulkanAssetManager>();
+        m_asset_manager->SetRHI(m_rhi);
+
+        m_render_data = CreateRef<RenderData>();
     }
 
-    void VulkanRenderer::Tick(Ref<RenderData> render_data)
+    void VulkanRenderer::Tick(Ref<SwapData> swap_data)
     {
-        m_render_data = render_data;
-        ProcessRenderData();
+        // 处理渲染数据
+        ProcessRenderData(swap_data);
 
+        // 重建交换链
         if (m_rhi->RequestResize())
         {
             m_rhi->ResizeSwapchain();
         }
 
-        NewImguiFrame();
+        // Imgui
+        NewImguiFrame(swap_data->ui);
 
         m_rhi->PrepareContext();
 
-        m_render_pipeline->PreparePassData(render_data);
+        m_render_pipeline->PreparePassData(m_render_data);
 
         m_render_pipeline->ForwardRender();
     }
@@ -77,26 +84,35 @@ namespace Yutrel
         m_rhi->UpdateSwapchainSize(width, height);
     }
 
-    void VulkanRenderer::ProcessRenderData()
+    void VulkanRenderer::ProcessRenderData(Ref<SwapData> pass_data)
     {
-        for (auto& pbr : m_render_data->pbrs)
-        {
-            if (!pbr->mesh->is_uploaded)
-            {
-                m_rhi->UploadMesh(pbr->mesh);
+        // 背景颜色
+        m_render_data->background = pass_data->background;
 
-                pbr->mesh->is_uploaded = true;
-            }
+        // 物体
+        for (auto pbr : pass_data->pbrs)
+        {
+            // mesh加载到GPU，并释放内存
+            Ref<VulkanMesh> vulkan_mesh = m_asset_manager->SetVulkanMesh(pbr->mesh);
+
+            // 材质的数据加载到GPU
+            Ref<VulkanPBRMaterial> vulkan_material = m_asset_manager->SetVulkanMaterial(pbr->material);
+            // Ref<VulkanPBRMaterial> vulkan_material = nullptr;
+
+            // 存储到render_data
+            auto& objects = m_render_data->objects[vulkan_material][vulkan_mesh];
+            // todo transform组件
+            objects.push_back(glm::mat4{0.0f});
         }
     }
 
-    void VulkanRenderer::NewImguiFrame()
+    void VulkanRenderer::NewImguiFrame(Ref<WindowUI> ui)
     {
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        m_render_data->ui->RenderUI();
+        ui->RenderUI();
 
         ImGui::Render();
     }

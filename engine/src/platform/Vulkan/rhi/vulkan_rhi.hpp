@@ -150,7 +150,9 @@ namespace Yutrel
 
         void DestroyBuffer(const AllocatedBuffer& buffer);
 
-        void UploadMesh(Ref<struct Mesh> mesh);
+        Ref<struct VulkanMesh> UploadMesh(Ref<struct Mesh> mesh);
+
+        AllocatedBuffer UploadMaterialData(Ref<struct Material> material);
 
         // 转换图像布局
         void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout);

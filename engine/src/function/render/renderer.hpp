@@ -73,7 +73,7 @@ namespace Yutrel
         uint32_t height;
     };
 
-    struct RenderData
+    struct SwapData
     {
         Ref<class WindowUI> ui;
 
@@ -86,7 +86,7 @@ namespace Yutrel
     public:
         virtual void Init(RendererInitInfo info) = 0;
 
-        virtual void Tick(Ref<RenderData> render_data) = 0;
+        virtual void Tick(Ref<SwapData> swap_data) = 0;
 
         virtual void Clear() = 0;
 

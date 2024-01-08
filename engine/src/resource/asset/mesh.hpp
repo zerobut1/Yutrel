@@ -12,8 +12,6 @@
 
 namespace Yutrel
 {
-    struct GPUMeshBuffers;
-
     struct Vertex
     {
         alignas(16) glm::vec3 position;
@@ -37,13 +35,15 @@ namespace Yutrel
         Ref<std::vector<Vertex>> vertices;
         Ref<std::vector<uint32_t>> indices;
 
-        Ref<GPUMeshBuffers> gpu_buffers;
-
         Mesh() = default;
         Mesh(const std::string& path)
             : path(path) {}
 
-        void ReleaseVertices();
+        void ReleaseVertices()
+        {
+            vertices.reset();
+            indices.reset();
+        }
     };
 
 } // namespace Yutrel
