@@ -252,9 +252,10 @@ namespace Yutrel
         pipeline_create_info.SetShaders(triangle_vert_shader, texture_frag_shader);
         pipeline_create_info.SetInputTopolygy(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
         pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
-        pipeline_create_info.SetCullMode(VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+        pipeline_create_info.SetCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
         pipeline_create_info.SetMultisamplingNone();
-        pipeline_create_info.EnableBlendingAlphablend();
+        // pipeline_create_info.EnableBlendingAlphablend();
+        pipeline_create_info.DisableBlending();
         pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
         pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
         pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
@@ -377,7 +378,7 @@ namespace Yutrel
         GPUDrawPushConstants push_constants;
 
         // MVP矩阵
-        glm::mat4 view       = glm::lookAt(glm::vec3(2.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 view       = glm::lookAt(glm::vec3(0.0f, -1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)m_draw_extent.width / (float)m_draw_extent.height, 10000.0f, 0.1f);
         projection[1][1] *= -1;
         push_constants.world_matrix = projection * view;
@@ -392,7 +393,9 @@ namespace Yutrel
             {
                 DescriptorWriter writer;
                 auto& default_data = m_rhi->GetDefaultData();
-                writer.WriteImage(0, default_data.error_image.image_view, default_data.default_sampler_nearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                // writer.WriteImage(0, default_data.error_image.image_view, default_data.default_sampler_nearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+                writer.WriteImage(0, material->base_color_texture.image_view, default_data.default_sampler_nearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+
                 writer.WriteBuffer(1, material->uniform_buffer.buffer, sizeof(VulkanMaterialData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
                 m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[texture_descriptor].set);
             }

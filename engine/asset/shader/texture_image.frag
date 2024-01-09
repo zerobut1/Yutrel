@@ -12,6 +12,6 @@ layout(set = 0, binding = 1)uniform MaterialData {
 
 void main()
 {
-    // out_frag_color = texture(u_display_texture, in_UV);
-    out_frag_color = u_mat_data.base_color;
+    out_frag_color = texture(u_display_texture, in_UV);
+    // out_frag_color = u_mat_data.base_color;
 }

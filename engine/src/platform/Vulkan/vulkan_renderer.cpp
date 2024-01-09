@@ -96,13 +96,12 @@ namespace Yutrel
             Ref<VulkanMesh> vulkan_mesh = m_asset_manager->SetVulkanMesh(pbr->mesh);
 
             // 材质的数据加载到GPU
-            Ref<VulkanPBRMaterial> vulkan_material = m_asset_manager->SetVulkanMaterial(pbr->material);
-            // Ref<VulkanPBRMaterial> vulkan_material = nullptr;
+            Ref<VulkanPBRMaterial> vulkan_material = m_asset_manager->SetVulkanMaterial(pbr->material);            
 
             // 存储到render_data
             auto& objects = m_render_data->objects[vulkan_material][vulkan_mesh];
             // todo transform组件
-            objects.push_back(glm::mat4{0.0f});
+            objects.push_back(glm::mat4{1.0f});
         }
     }
 

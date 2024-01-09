@@ -12,6 +12,8 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <vcruntime.h>
+#include <vcruntime_string.h>
 #include <vulkan/vulkan_core.h>
 
 namespace Yutrel
@@ -972,9 +974,6 @@ namespace Yutrel
         // 将顶点和索引从内存释放
         mesh->ReleaseVertices();
 
-        // 标记为已加载至GPU
-        mesh->is_uploaded = true;
-
         // 销毁暂存缓冲区
         DestroyBuffer(staging);
 
@@ -1029,6 +1028,32 @@ namespace Yutrel
         DestroyBuffer(staging);
 
         return uniform_buffer;
+    }
+
+    AllocatedImage VulkanRHI::UploadTexture(Ref<Texture> texture)
+    {
+        auto image = texture->image;
+        VkExtent3D size{};
+        size.width  = image->width;
+        size.height = image->height;
+        size.depth  = 1;
+
+        // 创建gpu图片
+        AllocatedImage new_image;
+        //todo mipmap
+        CreateImage(image->pixels, size, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT, false, &new_image);
+
+        // 释放内存
+        texture->ReleaseImage();
+
+        // 加入删除队列
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                DestroyImage(new_image);
+            });
+
+        return new_image;
     }
 
     void VulkanRHI::TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout)

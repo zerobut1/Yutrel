@@ -4,7 +4,9 @@
 
 #include "resource/asset/material.hpp"
 #include "resource/asset/mesh.hpp"
+#include "resource/asset/texture.hpp"
 
+#include <stb_image.h>
 #include <tiny_obj_loader.h>
 
 #include <stdint.h>
@@ -39,6 +41,19 @@ namespace Yutrel
         return m_materials[id++];
     }
 
+    Ref<Texture> AssetManager::AddTexture(const std::string& path)
+    {
+        static uint32_t id = 1;
+
+        if (!m_textures.insert({id, CreateRef<Texture>(path)}).second)
+        {
+            LOG_ERROR("Failed to add texture");
+            return nullptr;
+        }
+
+        return m_textures[id++];
+    }
+
     void AssetManager::LoadFromFile(Ref<Mesh> mesh)
     {
         LOG_INFO("Load model from {}", mesh->path);
@@ -57,7 +72,7 @@ namespace Yutrel
             return;
         }
 
-        std::unordered_map<Vertex, uint32_t> unique_vertices;
+        std::unordered_map<Vertex, uint32_t> unique_vertices{};
 
         for (const auto& shape : shapes)
         {
@@ -93,4 +108,22 @@ namespace Yutrel
 
         mesh->is_loaded = true;
     }
+
+    void AssetManager::LoadFromFile(Ref<Texture> texture)
+    {
+        LOG_INFO("Load image from {}", texture->path);
+
+        texture->image = CreateRef<Image>();
+
+        // 从文件中读取
+        texture->image->pixels = stbi_load(texture->path.c_str(), &texture->image->width, &texture->image->height, &texture->image->channels, STBI_rgb_alpha);
+
+        if (!texture->image->pixels)
+        {
+            LOG_ERROR("Failed to load image from {}", texture->path);
+        }
+
+        texture->is_loaded = true;
+    }
+
 } // namespace Yutrel

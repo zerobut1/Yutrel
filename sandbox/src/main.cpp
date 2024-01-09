@@ -10,6 +10,7 @@ void StartWorld(gecs::commands cmds,
     auto mesh     = asset_manager->AddMesh("resource/viking_room/viking_room.obj");
     auto material = asset_manager->AddMaterial(Yutrel::Material{
         glm::vec4(0.4f, 0.8f, 1.0f, 1.0f),
+        asset_manager->AddTexture("resource/viking_room/viking_room.png"),
     });
 
     auto entity = cmds.create();

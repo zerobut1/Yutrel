@@ -154,6 +154,8 @@ namespace Yutrel
 
         AllocatedBuffer UploadMaterialData(Ref<struct Material> material);
 
+        AllocatedImage UploadTexture(Ref<struct Texture> texture);
+
         // 转换图像布局
         void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout);
 

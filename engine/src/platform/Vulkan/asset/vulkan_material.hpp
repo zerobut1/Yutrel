@@ -2,6 +2,7 @@
 
 #include "platform/Vulkan/vulkan_types.hpp"
 #include "resource/asset/material.hpp"
+#include "resource/asset/texture.hpp"
 
 namespace Yutrel
 {
@@ -14,6 +15,8 @@ namespace Yutrel
 
     struct VulkanPBRMaterial
     {
+        AllocatedImage base_color_texture;
+
         AllocatedBuffer uniform_buffer;
     };
 } // namespace Yutrel

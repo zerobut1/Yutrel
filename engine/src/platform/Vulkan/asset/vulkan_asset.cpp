@@ -18,9 +18,13 @@ namespace Yutrel
     {
         if (!m_materials.count(material))
         {
+            auto vulkan_material = CreateRef<VulkanPBRMaterial>();
+
             // 加载数据到uniform buffer
-            auto vulkan_material            = CreateRef<VulkanPBRMaterial>();
             vulkan_material->uniform_buffer = m_rhi->UploadMaterialData(material);
+
+            // 加载纹理到GPU
+            vulkan_material->base_color_texture = m_rhi->UploadTexture(material->base_color_texture);
 
             m_materials.insert({material, vulkan_material});
         }

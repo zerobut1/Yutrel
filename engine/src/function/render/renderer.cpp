@@ -6,12 +6,13 @@
 #include "core/path/path.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
 #include "resource/asset/asset.hpp"
+#include "resource/asset/material.hpp"
 #include "resource/asset/mesh.hpp"
+#include "resource/asset/texture.hpp"
 #include "resource/component/component.hpp"
 #include "resource/component/window_ui.hpp"
 
 #include <GLFW/glfw3.h>
-#include <vector>
 
 namespace Yutrel
 {
@@ -75,7 +76,11 @@ namespace Yutrel
                 asset_manager->LoadFromFile(pbr_bundle.mesh);
             }
 
-            // 加载材质
+            // 加载基础色纹理
+            if (!pbr_bundle.material->base_color_texture->is_loaded)
+            {
+                asset_manager->LoadFromFile(pbr_bundle.material->base_color_texture);
+            }
 
             swap_data->pbrs.push_back(&pbr_bundle);
         }

@@ -30,7 +30,6 @@ namespace Yutrel
     {
         std::string path;
         bool is_loaded{false};
-        bool is_uploaded{false};
 
         Ref<std::vector<Vertex>> vertices;
         Ref<std::vector<uint32_t>> indices;
