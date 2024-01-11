@@ -1,8 +1,3 @@
-/**
- * Log类
- * 提供在控制台显示的Log信息
- * 不属于资源
- */
 #pragma once
 
 #include "core/macro.hpp"

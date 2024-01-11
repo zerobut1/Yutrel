@@ -4,6 +4,11 @@
 
 namespace Yutrel
 {
+    void VulkanAssetManager::Init(AssetManagerInitInfo info)
+    {
+        
+    }
+
     Ref<VulkanMesh> VulkanAssetManager::SetVulkanMesh(Ref<Mesh> mesh)
     {
         if (!m_meshes.count(mesh))
@@ -25,6 +30,9 @@ namespace Yutrel
 
             // 加载纹理到GPU
             vulkan_material->base_color_texture = m_rhi->UploadTexture(material->base_color_texture);
+
+            // 分配描述符集
+            // vulkan_material->descriptor_set = m_rhi->
 
             m_materials.insert({material, vulkan_material});
         }

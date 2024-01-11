@@ -1,12 +1,3 @@
-/**
- * 窗口
- * 与平台有关
- * 默认资源之一
- * 提供窗口的创建以及更新
- * 还有事件机制
- * todo 优化事件机制
- * todo 多窗口？
- */
 #pragma once
 
 #include "core/macro.hpp"

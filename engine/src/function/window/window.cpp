@@ -19,6 +19,7 @@ namespace Yutrel
 
     WindowResource::~WindowResource()
     {
+        m_window.reset();
         LOG_INFO("Window Destroyed");
     }
 } // namespace Yutrel

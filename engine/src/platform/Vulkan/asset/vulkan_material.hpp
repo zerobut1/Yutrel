@@ -18,5 +18,7 @@ namespace Yutrel
         AllocatedImage base_color_texture;
 
         AllocatedBuffer uniform_buffer;
+
+        VkDescriptorSet descriptor_set;
     };
 } // namespace Yutrel

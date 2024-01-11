@@ -78,7 +78,7 @@ namespace Yutrel
         {
             compute_descriptor = 0,
             scene_descriptor,
-            texture_descriptor,
+            material_descriptor,
 
             descriptor_count,
         };

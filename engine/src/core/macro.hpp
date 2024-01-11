@@ -1,6 +1,3 @@
-/**
- * 宏定义
- */
 #pragma once
 
 #include <memory>

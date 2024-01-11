@@ -132,6 +132,7 @@ namespace Yutrel
             m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[compute_descriptor].layout);
 
             // 分配描述符集
+            // todo 修改
             m_rhi->AllocateDescriptorSets(m_descriptor_infos[compute_descriptor].layout, &m_descriptor_infos[compute_descriptor].set);
 
             // 写描述符集
@@ -234,14 +235,14 @@ namespace Yutrel
         descriptor_info.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         descriptor_info.AddBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         descriptor_info.shader_stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-        m_rhi->CreateDescriptorLayout(descriptor_info, &m_descriptor_infos[texture_descriptor].layout);
+        m_rhi->CreateDescriptorLayout(descriptor_info, &m_descriptor_infos[material_descriptor].layout);
 
         //------------layout-------------
         VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
         pipeline_layout_info.pushConstantRangeCount     = 1;
         pipeline_layout_info.pPushConstantRanges        = &buffer_range;
         pipeline_layout_info.setLayoutCount             = 1;
-        pipeline_layout_info.pSetLayouts                = &m_descriptor_infos[texture_descriptor].layout;
+        pipeline_layout_info.pSetLayouts                = &m_descriptor_infos[material_descriptor].layout;
 
         m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[pipelines::texture_pipeline].layout);
 
@@ -254,7 +255,6 @@ namespace Yutrel
         pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
         pipeline_create_info.SetCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
         pipeline_create_info.SetMultisamplingNone();
-        // pipeline_create_info.EnableBlendingAlphablend();
         pipeline_create_info.DisableBlending();
         pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
         pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
@@ -389,7 +389,7 @@ namespace Yutrel
             auto& mesh_instance             = pair1.second;
 
             // 绑定材质
-            m_descriptor_infos[texture_descriptor].set = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[texture_descriptor].layout);
+            m_descriptor_infos[material_descriptor].set = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[material_descriptor].layout);
             {
                 DescriptorWriter writer;
                 auto& default_data = m_rhi->GetDefaultData();
@@ -397,9 +397,9 @@ namespace Yutrel
                 writer.WriteImage(0, material->base_color_texture.image_view, default_data.default_sampler_nearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
                 writer.WriteBuffer(1, material->uniform_buffer.buffer, sizeof(VulkanMaterialData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[texture_descriptor].set);
+                m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[material_descriptor].set);
             }
-            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &m_descriptor_infos[texture_descriptor].set, 0, nullptr);
+            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &m_descriptor_infos[material_descriptor].set, 0, nullptr);
 
             for (auto& pair2 : mesh_instance)
             {

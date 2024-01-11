@@ -1,7 +1,3 @@
-/**
- * Yutrel的入口，采用单例类模式设计
- */
-
 #pragma once
 
 #include "core/macro.hpp"

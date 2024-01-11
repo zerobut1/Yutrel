@@ -38,6 +38,7 @@ namespace Yutrel
         m_asset_manager = CreateRef<VulkanAssetManager>();
         m_asset_manager->SetRHI(m_rhi);
 
+        // 初始化渲染数据
         m_render_data = CreateRef<RenderData>();
     }
 
@@ -55,10 +56,13 @@ namespace Yutrel
         // Imgui
         NewImguiFrame(swap_data->ui);
 
+        // 渲染context
         m_rhi->PrepareContext();
 
+        // 将渲染数据传递给管线
         m_render_pipeline->PreparePassData(m_render_data);
 
+        // 前向渲染
         m_render_pipeline->ForwardRender();
     }
 
@@ -96,7 +100,7 @@ namespace Yutrel
             Ref<VulkanMesh> vulkan_mesh = m_asset_manager->SetVulkanMesh(pbr->mesh);
 
             // 材质的数据加载到GPU
-            Ref<VulkanPBRMaterial> vulkan_material = m_asset_manager->SetVulkanMaterial(pbr->material);            
+            Ref<VulkanPBRMaterial> vulkan_material = m_asset_manager->SetVulkanMaterial(pbr->material);
 
             // 存储到render_data
             auto& objects = m_render_data->objects[vulkan_material][vulkan_mesh];

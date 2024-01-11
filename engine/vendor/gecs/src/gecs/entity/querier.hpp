@@ -284,7 +284,7 @@ public:
 
     querier_iterator(pool_container_type pools, const container_type& entities,
                      size_type offset) noexcept
-        : pools_(pools), entities_{entities}, offset_(offset) {}
+        :  entities_{entities}, offset_(offset), pools_(pools) {}
 
     auto operator*() noexcept {
         auto entity = entities_[index()];

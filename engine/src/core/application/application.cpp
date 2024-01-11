@@ -2,17 +2,14 @@
 
 #include "application.hpp"
 
-#include "core/path/path.hpp"
 #include "function/input/input.hpp"
 #include "function/render/renderer.hpp"
 #include "function/window/window.hpp"
 #include "resource/asset/asset.hpp"
 #include "resource/component/component.hpp"
-// #include "core/time/time.hpp"
 
 namespace Yutrel
 {
-    // 单例类设计模式，创建/获取单例
     Application& Application::Create()
     {
         static Application instance;

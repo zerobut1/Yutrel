@@ -1,8 +1,3 @@
-/**
- * 输入检测
- * 与平台有关
- * 默认资源之一
- */
 #pragma once
 
 #include "core/macro.hpp"
