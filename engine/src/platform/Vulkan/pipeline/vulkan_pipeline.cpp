@@ -26,6 +26,7 @@ namespace Yutrel
         // m_main_pass->Init(&main_init_info);
 
         TestPassInitInfo test_init_info{};
+        test_init_info.global_render_data = info.global_render_data;
         m_test_pass->Init(&test_init_info);
 
         ImguiPassInitInfo imgui_init_info{};
@@ -48,6 +49,11 @@ namespace Yutrel
         m_main_pass->PreparePassData(render_data);
         m_test_pass->PreparePassData(render_data);
         m_imgui_pass->PreparePassData(render_data);
+    }
+
+    VkDescriptorSetLayout VulkanPipeline::GetMaterialDescriptorSetLayout()
+    {
+        return std::reinterpret_pointer_cast<TestPass>(m_test_pass)->GetMaterialDescriptorSetLayout();
     }
 
 } // namespace Yutrel

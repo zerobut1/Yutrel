@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/macro.hpp"
+#include "platform/Vulkan/vulkan_renderer.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
 
 #include <vector>
@@ -11,7 +12,9 @@ namespace Yutrel
     struct Mesh;
 
     struct RenderPassInitInfo
-    {};
+    {
+        Ref<GlobalRenderData> global_render_data;
+    };
 
     class RenderPass
     {
@@ -38,5 +41,7 @@ namespace Yutrel
             VkDescriptorSet set;
         };
         std::vector<Descriptor> m_descriptor_infos;
+
+        Ref<GlobalRenderData> m_global_render_data;
     };
 } // namespace Yutrel

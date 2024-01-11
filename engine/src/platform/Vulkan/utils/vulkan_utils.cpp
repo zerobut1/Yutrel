@@ -7,7 +7,7 @@
 
 namespace Yutrel
 {
-    void RHIDynamicPipelineCreateInfo::Clear()
+    void DynamicPipelineCreateInfo::Clear()
     {
         input_assembly       = {};
         input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -31,7 +31,7 @@ namespace Yutrel
         shader_stages.clear();
     }
 
-    void RHIDynamicPipelineCreateInfo::SetShaders(VkShaderModule vertex_shader, VkShaderModule fragment_shader)
+    void DynamicPipelineCreateInfo::SetShaders(VkShaderModule vertex_shader, VkShaderModule fragment_shader)
     {
         shader_stages.clear();
 
@@ -50,25 +50,25 @@ namespace Yutrel
         shader_stages.push_back(info);
     }
 
-    void RHIDynamicPipelineCreateInfo::SetInputTopolygy(VkPrimitiveTopology topology)
+    void DynamicPipelineCreateInfo::SetInputTopolygy(VkPrimitiveTopology topology)
     {
         input_assembly.topology               = topology;
         input_assembly.primitiveRestartEnable = VK_FALSE;
     }
 
-    void RHIDynamicPipelineCreateInfo::SetPolygonMode(VkPolygonMode mode)
+    void DynamicPipelineCreateInfo::SetPolygonMode(VkPolygonMode mode)
     {
         rasterizer.polygonMode = mode;
         rasterizer.lineWidth   = 1.0f;
     }
 
-    void RHIDynamicPipelineCreateInfo::SetCullMode(VkCullModeFlags cull_mode, VkFrontFace front_face)
+    void DynamicPipelineCreateInfo::SetCullMode(VkCullModeFlags cull_mode, VkFrontFace front_face)
     {
         rasterizer.cullMode  = cull_mode;
         rasterizer.frontFace = front_face;
     }
 
-    void RHIDynamicPipelineCreateInfo::SetMultisamplingNone()
+    void DynamicPipelineCreateInfo::SetMultisamplingNone()
     {
         multisampling.sampleShadingEnable   = VK_FALSE;
         multisampling.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
@@ -78,13 +78,13 @@ namespace Yutrel
         multisampling.alphaToOneEnable      = VK_FALSE;
     }
 
-    void RHIDynamicPipelineCreateInfo::DisableBlending()
+    void DynamicPipelineCreateInfo::DisableBlending()
     {
         color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         color_blend_attachment.blendEnable    = VK_FALSE;
     }
 
-    void RHIDynamicPipelineCreateInfo::EnableBlendingAdditive()
+    void DynamicPipelineCreateInfo::EnableBlendingAdditive()
     {
         color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
                                                 VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -97,7 +97,7 @@ namespace Yutrel
         color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
     }
 
-    void RHIDynamicPipelineCreateInfo::EnableBlendingAlphablend()
+    void DynamicPipelineCreateInfo::EnableBlendingAlphablend()
     {
         color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
                                                 VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -110,7 +110,7 @@ namespace Yutrel
         color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
     }
 
-    void RHIDynamicPipelineCreateInfo::SetColorAttachmentFormat(VkFormat format)
+    void DynamicPipelineCreateInfo::SetColorAttachmentFormat(VkFormat format)
     {
         color_attachment_format = format;
 
@@ -118,12 +118,12 @@ namespace Yutrel
         render_info.pColorAttachmentFormats = &color_attachment_format;
     }
 
-    void RHIDynamicPipelineCreateInfo::SetDepthFormat(VkFormat format)
+    void DynamicPipelineCreateInfo::SetDepthFormat(VkFormat format)
     {
         render_info.depthAttachmentFormat = format;
     }
 
-    void RHIDynamicPipelineCreateInfo::DisableDepthTest()
+    void DynamicPipelineCreateInfo::DisableDepthTest()
     {
         depth_stencil.depthTestEnable       = VK_FALSE;
         depth_stencil.depthWriteEnable      = VK_FALSE;
@@ -136,7 +136,7 @@ namespace Yutrel
         depth_stencil.maxDepthBounds        = 1.f;
     }
 
-    void RHIDynamicPipelineCreateInfo::EnableDepthTest(bool depth_write_enable, VkCompareOp op)
+    void DynamicPipelineCreateInfo::EnableDepthTest(bool depth_write_enable, VkCompareOp op)
     {
         depth_stencil.depthTestEnable       = VK_TRUE;
         depth_stencil.depthWriteEnable      = depth_write_enable;
@@ -147,128 +147,6 @@ namespace Yutrel
         depth_stencil.back                  = {};
         depth_stencil.minDepthBounds        = 0.0f;
         depth_stencil.maxDepthBounds        = 1.0f;
-    }
-
-    void DescriptorAllocator::Init(VulkanRHI* rhi, uint32_t initial_sets, std::vector<PoolSizeRatio>& pool_ratios)
-    {
-        m_rhi = rhi;
-
-        m_ratios.clear();
-
-        for (auto r : pool_ratios)
-        {
-            m_ratios.push_back(r);
-        }
-
-        VkDescriptorPool new_pool = CreatePool(initial_sets, pool_ratios);
-
-        m_sets_per_pool = initial_sets * 1.5;
-
-        m_ready_pools.push_back(new_pool);
-    }
-
-    void DescriptorAllocator::ClearPools()
-    {
-        for (auto p : m_ready_pools)
-        {
-            m_rhi->ResetDescriptorPool(p);
-        }
-
-        for (auto p : m_full_pools)
-        {
-            m_rhi->ResetDescriptorPool(p);
-            m_ready_pools.push_back(p);
-        }
-        m_full_pools.clear();
-    }
-
-    void DescriptorAllocator::DestroyPools()
-    {
-        for (auto p : m_ready_pools)
-        {
-            m_rhi->DestroyDescriptorPool(p);
-        }
-        m_ready_pools.clear();
-        for (auto p : m_full_pools)
-        {
-            m_rhi->DestroyDescriptorPool(p);
-        }
-        m_full_pools.clear();
-    }
-
-    VkDescriptorSet DescriptorAllocator::Allocate(VkDescriptorSetLayout layout)
-    {
-        VkDescriptorPool pool_to_use = GetPool();
-
-        VkDescriptorSetAllocateInfo alloc_info{};
-        alloc_info.pNext              = nullptr;
-        alloc_info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        alloc_info.descriptorPool     = pool_to_use;
-        alloc_info.descriptorSetCount = 1;
-        alloc_info.pSetLayouts        = &layout;
-
-        VkDescriptorSet descriptor_set;
-        VkResult result = m_rhi->AllocateDescriptorSets(&alloc_info, &descriptor_set);
-
-        // 若分配失败则重试
-        if (result == VK_ERROR_OUT_OF_POOL_MEMORY || result == VK_ERROR_FRAGMENTED_POOL)
-        {
-            m_full_pools.push_back(pool_to_use);
-
-            pool_to_use               = GetPool();
-            alloc_info.descriptorPool = pool_to_use;
-
-            YUTREL_ASSERT(m_rhi->AllocateDescriptorSets(&alloc_info, &descriptor_set) == VK_SUCCESS, "Failed to allocate descriptor sets");
-        }
-
-        m_ready_pools.push_back(pool_to_use);
-        return descriptor_set;
-    }
-
-    VkDescriptorPool DescriptorAllocator::GetPool()
-    {
-        VkDescriptorPool new_pool;
-        if (m_ready_pools.size() != 0)
-        {
-            new_pool = m_ready_pools.back();
-            m_ready_pools.pop_back();
-        }
-        else
-        {
-            new_pool = CreatePool(m_sets_per_pool, m_ratios);
-
-            m_sets_per_pool = m_sets_per_pool * 1.5;
-            if (m_sets_per_pool > 4092)
-            {
-                m_sets_per_pool = 4092;
-            }
-        }
-
-        return new_pool;
-    }
-
-    VkDescriptorPool DescriptorAllocator::CreatePool(uint32_t set_count, std::vector<PoolSizeRatio>& pool_ratios)
-    {
-        std::vector<VkDescriptorPoolSize> pool_sizes;
-        for (PoolSizeRatio ratio : pool_ratios)
-        {
-            VkDescriptorPoolSize size{};
-            size.type            = ratio.type;
-            size.descriptorCount = static_cast<uint32_t>(ratio.ratio * set_count);
-            pool_sizes.push_back(size);
-        }
-
-        VkDescriptorPoolCreateInfo pool_info{};
-        pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        pool_info.flags         = 0;
-        pool_info.maxSets       = set_count;
-        pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
-        pool_info.pPoolSizes    = pool_sizes.data();
-
-        VkDescriptorPool new_pool;
-        m_rhi->CreateDescriptorPool(&pool_info, &new_pool);
-
-        return new_pool;
     }
 
     void DescriptorWriter::WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type)

@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include <stdint.h>
+#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -21,18 +22,8 @@ namespace Yutrel
 
     struct GPUDrawPushConstants
     {
-        glm::mat4 world_matrix;
+        glm::mat4 model_matrix;
         VkDeviceAddress vertex_buffer;
-    };
-
-    struct GPUSceneData
-    {
-        glm::mat4 view;
-        glm::mat4 proj;
-        glm::mat4 view_proj;
-        glm::vec4 ambient_color;
-        glm::vec4 sunlight_direction; // w for sun power
-        glm::vec4 sunlight_color;
     };
 
     class TestPass final : public RenderPass
@@ -43,6 +34,8 @@ namespace Yutrel
         virtual void PreparePassData(Ref<struct RenderData> render_data) override;
 
         void DrawForward();
+
+        VkDescriptorSetLayout GetMaterialDescriptorSetLayout() const { return m_descriptor_infos[material_descriptor].layout; }
 
     private:
         //--------初始化---------
@@ -76,7 +69,7 @@ namespace Yutrel
 
         enum descriptors : uint8_t
         {
-            compute_descriptor = 0,
+            draw_image_descriptor = 0,
             scene_descriptor,
             material_descriptor,
 
@@ -94,7 +87,5 @@ namespace Yutrel
         AllocatedImage m_depth_image;
 
         Ref<RenderData> m_render_data;
-        // todo 设定场景数据
-        GPUSceneData scene_data;
     };
 } // namespace Yutrel

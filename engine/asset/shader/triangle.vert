@@ -17,9 +17,18 @@ layout(buffer_reference, std430)readonly buffer VertexBuffer {
 //push constants block
 layout(push_constant)uniform constants
 {
-    mat4 render_matrix;
+    mat4 model_matrix;
     VertexBuffer vertexBuffer;
 } PushConstants;
+
+layout(set = 1, binding = 0)uniform SceneData {
+    mat4 view;
+    mat4 proj;
+    mat4 view_proj;
+    vec4 ambient_color;
+    vec4 sunlight_direction; // w for sun power
+    vec4 sunlight_color;
+} scene_data;
 
 void main()
 {
@@ -27,7 +36,8 @@ void main()
     Vertex v = PushConstants.vertexBuffer.vertices[gl_VertexIndex];
     
     //output data
-    gl_Position = PushConstants.render_matrix * vec4(v.position, 1.0f);
+    gl_Position = scene_data.proj * scene_data.view * PushConstants.model_matrix * vec4(v.position, 1.0f);
+    // gl_Position = PushConstants.model_matrix * vec4(v.position, 1.0f);
     outColor = v.normal.xyz;
     outUV = v.uv;
 }

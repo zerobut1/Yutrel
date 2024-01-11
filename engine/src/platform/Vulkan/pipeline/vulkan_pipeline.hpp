@@ -1,6 +1,8 @@
 #pragma once
 
 #include "core/macro.hpp"
+#include "platform/Vulkan/vulkan_renderer.hpp"
+#include "platform/Vulkan/vulkan_types.hpp"
 
 namespace Yutrel
 {
@@ -9,6 +11,7 @@ namespace Yutrel
 
     struct RenderPipelineInitInfo
     {
+        Ref<GlobalRenderData> global_render_data;
     };
 
     class VulkanPipeline
@@ -23,6 +26,8 @@ namespace Yutrel
         void ForwardRender();
 
         void PreparePassData(Ref<struct RenderData> render_data);
+
+        VkDescriptorSetLayout GetMaterialDescriptorSetLayout();
 
     private:
         Ref<VulkanRHI> m_rhi;

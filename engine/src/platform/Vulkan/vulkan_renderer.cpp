@@ -2,6 +2,8 @@
 
 #include "vulkan_renderer.hpp"
 
+// #include "platform/Vulkan/vulkan_types.hpp"
+
 #include "platform/Vulkan/asset/vulkan_asset.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/passes/render_pass.hpp"
@@ -20,7 +22,7 @@ namespace Yutrel
         LOG_INFO("Initialize Vulkan Renderer");
 
         // 初始化RHI
-        RHIInitInfo rhi_init_info;
+        RHIInitInfo rhi_init_info{};
         rhi_init_info.raw_window = info.raw_window;
         rhi_init_info.width      = info.width;
         rhi_init_info.height     = info.height;
@@ -28,18 +30,26 @@ namespace Yutrel
         m_rhi = CreateRef<VulkanRHI>();
         m_rhi->Init(rhi_init_info);
 
+        // 初始化资产管理
+        AssetManagerInitInfo asset_init_info{};
+
+        m_asset_manager = CreateRef<VulkanAssetManager>();
+        m_asset_manager->SetRHI(m_rhi);
+        m_asset_manager->Init(asset_init_info);
+
         // 初始化pipeline
         RenderPipelineInitInfo pipeline_init_info{};
+        pipeline_init_info.global_render_data = m_asset_manager->GetGlobalRenderData();
+
         m_render_pipeline = CreateRef<VulkanPipeline>();
         m_render_pipeline->SetRHI(m_rhi);
         m_render_pipeline->Init(pipeline_init_info);
 
-        // 初始化资产管理
-        m_asset_manager = CreateRef<VulkanAssetManager>();
-        m_asset_manager->SetRHI(m_rhi);
-
         // 初始化渲染数据
         m_render_data = CreateRef<RenderData>();
+
+        // 设定材质的描述符集布局
+        m_asset_manager->SetMaterialDescriptorSetLayout(m_render_pipeline->GetMaterialDescriptorSetLayout());
     }
 
     void VulkanRenderer::Tick(Ref<SwapData> swap_data)
@@ -92,6 +102,16 @@ namespace Yutrel
     {
         // 背景颜色
         m_render_data->background = pass_data->background;
+
+        // 场景信息
+        GPUSceneData scene_data{};
+        scene_data      = GPUSceneData{};
+        scene_data.view = glm::lookAt(glm::vec3(0.0f, -1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        scene_data.proj = glm::perspective(glm::radians(70.f), 1920.0f / 1080.0f, 10000.0f, 0.1f);
+        scene_data.proj[1][1] *= -1;
+        scene_data.view_proj = scene_data.proj * scene_data.view;
+
+        *reinterpret_cast<GPUSceneData*>(m_asset_manager->GetGlobalRenderData()->scene_data_buffer.info.pMappedData) = scene_data;
 
         // 物体
         for (auto pbr : pass_data->pbrs)

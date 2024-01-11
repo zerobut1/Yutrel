@@ -39,7 +39,7 @@ namespace Yutrel
     };
 
     // 动态渲染管线创建信息
-    struct RHIDynamicPipelineCreateInfo
+    struct DynamicPipelineCreateInfo
     {
         // 着色器阶段
         std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
@@ -95,7 +95,7 @@ namespace Yutrel
         void EnableDepthTest(bool depth_write_enable, VkCompareOp op);
     };
 
-    struct RHIDescriptorLayoutCreateInfo
+    struct DescriptorSetLayoutCreateInfo
     {
         std::vector<VkDescriptorSetLayoutBinding> bindings;
 
@@ -115,35 +115,6 @@ namespace Yutrel
         {
             bindings.clear();
         }
-    };
-
-    // todo 将rhi分出来
-    struct DescriptorAllocator
-    {
-    public:
-        struct PoolSizeRatio
-        {
-            VkDescriptorType type;
-            float ratio;
-        };
-
-        void Init(class VulkanRHI* rhi, uint32_t initial_sets, std::vector<PoolSizeRatio>& pool_ratios);
-        void ClearPools();
-        void DestroyPools();
-
-        VkDescriptorSet Allocate(VkDescriptorSetLayout layout);
-
-    private:
-        VkDescriptorPool GetPool();
-        VkDescriptorPool CreatePool(uint32_t set_count, std::vector<PoolSizeRatio>& pool_ratios);
-
-    private:
-        VulkanRHI* m_rhi;
-
-        std::vector<PoolSizeRatio> m_ratios;
-        std::vector<VkDescriptorPool> m_full_pools;
-        std::vector<VkDescriptorPool> m_ready_pools;
-        uint32_t m_sets_per_pool;
     };
 
     struct DescriptorWriter

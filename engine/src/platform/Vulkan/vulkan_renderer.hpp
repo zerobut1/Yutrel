@@ -1,6 +1,7 @@
 #pragma once
 
 #include "function/render/renderer.hpp"
+#include "platform/Vulkan/vulkan_types.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -10,6 +11,21 @@ namespace Yutrel
     class VulkanRHI;
     class VulkanPipeline;
     class VulkanAssetManager;
+
+    struct GPUSceneData
+    {
+        glm::mat4 view;
+        glm::mat4 proj;
+        glm::mat4 view_proj;
+        glm::vec4 ambient_color;
+        glm::vec4 sunlight_direction; // w for sun power
+        glm::vec4 sunlight_color;
+    };
+
+    struct GlobalRenderData
+    {
+        AllocatedBuffer scene_data_buffer;
+    };
 
     struct RenderData
     {

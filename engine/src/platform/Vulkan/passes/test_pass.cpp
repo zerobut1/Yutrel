@@ -8,12 +8,15 @@
 #include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
-#include <vulkan/vulkan_core.h>
+
+#include <array>
 
 namespace Yutrel
 {
     void TestPass::Init(RenderPassInitInfo* info)
     {
+        m_global_render_data = info->global_render_data;
+
         InitDrawImage();
 
         InitDepthImage();
@@ -122,33 +125,41 @@ namespace Yutrel
     {
         m_descriptor_infos.resize(descriptor_count);
 
-        // 计算着色器
+        // 绘制目标图像
         {
             // 创建描述符布局
-            RHIDescriptorLayoutCreateInfo layout_info{};
-            layout_info.shader_stages = VK_SHADER_STAGE_COMPUTE_BIT;
+            DescriptorSetLayoutCreateInfo layout_info{};
             layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+            layout_info.shader_stages = VK_SHADER_STAGE_COMPUTE_BIT;
 
-            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[compute_descriptor].layout);
+            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[draw_image_descriptor].layout);
 
             // 分配描述符集
-            // todo 修改
-            m_rhi->AllocateDescriptorSets(m_descriptor_infos[compute_descriptor].layout, &m_descriptor_infos[compute_descriptor].set);
+            m_rhi->AllocateDescriptorSets(m_descriptor_infos[draw_image_descriptor].layout, &m_descriptor_infos[draw_image_descriptor].set);
 
             // 写描述符集
             DescriptorWriter writer;
             writer.WriteImage(0, m_draw_image.image_view, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
-            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[compute_descriptor].set);
+            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[draw_image_descriptor].set);
         }
 
         // 场景信息
         {
-            RHIDescriptorLayoutCreateInfo layout_info{};
+            // 创建描述符布局
+            DescriptorSetLayoutCreateInfo layout_info{};
             layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
             layout_info.shader_stages = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
             m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[scene_descriptor].layout);
+
+            // 分配描述符集
+            m_rhi->AllocateDescriptorSets(m_descriptor_infos[scene_descriptor].layout, &m_descriptor_infos[scene_descriptor].set);
+
+            // 写描述符集
+            DescriptorWriter writer;
+            writer.WriteBuffer(0, m_global_render_data->scene_data_buffer.buffer, sizeof(GPUSceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[scene_descriptor].set);
         }
     }
 
@@ -158,7 +169,7 @@ namespace Yutrel
         VkPipelineLayoutCreateInfo compute_layout{};
         compute_layout.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         compute_layout.pNext          = nullptr;
-        compute_layout.pSetLayouts    = &m_descriptor_infos[compute_descriptor].layout;
+        compute_layout.pSetLayouts    = &m_descriptor_infos[draw_image_descriptor].layout;
         compute_layout.setLayoutCount = 1;
 
         VkPushConstantRange push_constant{};
@@ -230,37 +241,43 @@ namespace Yutrel
         buffer_range.size       = sizeof(GPUDrawPushConstants);
         buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-        //------------描述符-------------
-        RHIDescriptorLayoutCreateInfo descriptor_info;
+        //------------材质描述符-------------
+        DescriptorSetLayoutCreateInfo descriptor_info;
         descriptor_info.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
         descriptor_info.AddBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         descriptor_info.shader_stages = VK_SHADER_STAGE_FRAGMENT_BIT;
         m_rhi->CreateDescriptorLayout(descriptor_info, &m_descriptor_infos[material_descriptor].layout);
 
         //------------layout-------------
+        std::array<VkDescriptorSetLayout, 2> descriptor_set_layouts{
+            m_descriptor_infos[material_descriptor].layout,
+            m_descriptor_infos[scene_descriptor].layout,
+        };
+
         VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
         pipeline_layout_info.pushConstantRangeCount     = 1;
         pipeline_layout_info.pPushConstantRanges        = &buffer_range;
-        pipeline_layout_info.setLayoutCount             = 1;
-        pipeline_layout_info.pSetLayouts                = &m_descriptor_infos[material_descriptor].layout;
+        pipeline_layout_info.setLayoutCount             = descriptor_set_layouts.size();
+        pipeline_layout_info.pSetLayouts                = descriptor_set_layouts.data();
 
-        m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[pipelines::texture_pipeline].layout);
+        m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[texture_pipeline].layout);
 
         //-----------创建管线----------
-        RHIDynamicPipelineCreateInfo pipeline_create_info;
+        DynamicPipelineCreateInfo pipeline_create_info;
         pipeline_create_info.Clear();
-        pipeline_create_info.pipeline_layout = m_pipelines[pipelines::texture_pipeline].layout;
+        pipeline_create_info.pipeline_layout = m_pipelines[texture_pipeline].layout;
         pipeline_create_info.SetShaders(triangle_vert_shader, texture_frag_shader);
         pipeline_create_info.SetInputTopolygy(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
         pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
         pipeline_create_info.SetCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
         pipeline_create_info.SetMultisamplingNone();
         pipeline_create_info.DisableBlending();
+        // pipeline_create_info.EnableBlendingAdditive();
         pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
         pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
         pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
 
-        m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[pipelines::texture_pipeline].pipeline);
+        m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[texture_pipeline].pipeline);
 
         //--------清除---------
         m_rhi->DestroyShaderModule(triangle_vert_shader);
@@ -302,7 +319,7 @@ namespace Yutrel
 
         vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].pipeline);
 
-        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].layout, 0, 1, &m_descriptor_infos[compute_descriptor].set, 0, nullptr);
+        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].layout, 0, 1, &m_descriptor_infos[draw_image_descriptor].set, 0, nullptr);
 
         ComputePushConstants push_constant;
         push_constant.data1 = m_render_data->background.data1;
@@ -319,26 +336,26 @@ namespace Yutrel
     {
         VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
-        //------------描述符集----------
-        AllocatedBuffer gpu_scene_data_buffer = m_rhi->CreateBuffer(sizeof(GPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+        // //------------描述符集----------
+        // AllocatedBuffer gpu_scene_data_buffer = m_rhi->CreateBuffer(sizeof(GPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-        m_rhi->GetCurrentFrame().deletion_queue.PushFunction(
-            [=]()
-            {
-                m_rhi->DestroyBuffer(gpu_scene_data_buffer);
-            });
+        // m_rhi->GetCurrentFrame().deletion_queue.PushFunction(
+        //     [=]()
+        //     {
+        //         m_rhi->DestroyBuffer(gpu_scene_data_buffer);
+        //     });
 
-        // 写缓冲
-        GPUSceneData* scene_uniform_data = reinterpret_cast<GPUSceneData*>(gpu_scene_data_buffer.info.pMappedData);
-        *scene_uniform_data              = scene_data;
+        // // 写缓冲
+        // GPUSceneData* scene_uniform_data = reinterpret_cast<GPUSceneData*>(gpu_scene_data_buffer.info.pMappedData);
+        // *scene_uniform_data              = scene_data;
 
-        // 创建描述符集
-        VkDescriptorSet global_descriptor = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[scene_descriptor].layout);
+        // // 创建描述符集
+        // VkDescriptorSet global_descriptor = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[scene_descriptor].layout);
 
-        DescriptorWriter writer;
-        writer.WriteBuffer(0, gpu_scene_data_buffer.buffer, sizeof(GPUSceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+        // DescriptorWriter writer;
+        // writer.WriteBuffer(0, gpu_scene_data_buffer.buffer, sizeof(GPUSceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
 
-        m_rhi->UpdateDescriptorSets(writer, global_descriptor);
+        // m_rhi->UpdateDescriptorSets(writer, global_descriptor);
 
         //---------渲染信息----------------
 
@@ -373,39 +390,25 @@ namespace Yutrel
         scissor.extent.height = m_draw_extent.height;
         vkCmdSetScissor(cmd_buffer, 0, 1, &scissor);
 
-        // 推送常量
-        // 将模型矩阵和顶点的设备地址传入
-        GPUDrawPushConstants push_constants;
-
-        // MVP矩阵
-        glm::mat4 view       = glm::lookAt(glm::vec3(0.0f, -1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 projection = glm::perspective(glm::radians(70.f), (float)m_draw_extent.width / (float)m_draw_extent.height, 10000.0f, 0.1f);
-        projection[1][1] *= -1;
-        push_constants.world_matrix = projection * view;
-
         for (auto& pair1 : m_render_data->objects)
         {
             Ref<VulkanPBRMaterial> material = pair1.first;
             auto& mesh_instance             = pair1.second;
 
-            // 绑定材质
-            m_descriptor_infos[material_descriptor].set = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[material_descriptor].layout);
-            {
-                DescriptorWriter writer;
-                auto& default_data = m_rhi->GetDefaultData();
-                // writer.WriteImage(0, default_data.error_image.image_view, default_data.default_sampler_nearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-                writer.WriteImage(0, material->base_color_texture.image_view, default_data.default_sampler_nearest, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-
-                writer.WriteBuffer(1, material->uniform_buffer.buffer, sizeof(VulkanMaterialData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-                m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[material_descriptor].set);
-            }
-            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &m_descriptor_infos[material_descriptor].set, 0, nullptr);
+            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &material->descriptor_set, 0, nullptr);
 
             for (auto& pair2 : mesh_instance)
             {
                 Ref<VulkanMesh> mesh = pair2.first;
                 // auto& transform      = pair2.second;
 
+                // 绑定全局变量描述符
+                vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 1, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
+
+                // 推送常量
+                // 将模型矩阵和顶点的设备地址传入
+                GPUDrawPushConstants push_constants;
+                push_constants.model_matrix  = glm::mat4(1.0f);
                 push_constants.vertex_buffer = mesh->vertex_buffer_address;
                 vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::texture_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
 

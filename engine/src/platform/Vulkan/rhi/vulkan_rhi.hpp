@@ -34,9 +34,6 @@ namespace Yutrel
 
         // 删除队列
         DeletionQueue deletion_queue;
-
-        // 描述符分配
-        DescriptorAllocator descriptors;
     };
 
     struct DefaultData
@@ -112,7 +109,7 @@ namespace Yutrel
                                     const VkAllocationCallbacks* pAllocator,
                                     VkPipeline* pPipelines);
 
-        void CreateDynamicPipelines(const RHIDynamicPipelineCreateInfo& info, VkPipeline* out_pipeline);
+        void CreateDynamicPipelines(const DynamicPipelineCreateInfo& info, VkPipeline* out_pipeline);
 
         void CreateDrawImage(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info, AllocatedImage* out_image);
 
@@ -124,7 +121,7 @@ namespace Yutrel
 
         void DestroyImage(const AllocatedImage& image);
 
-        void CreateDescriptorLayout(RHIDescriptorLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout);
+        void CreateDescriptorLayout(DescriptorSetLayoutCreateInfo& info, VkDescriptorSetLayout* out_layout);
 
         void CreateDescriptorPool(const VkDescriptorPoolCreateInfo* info, VkDescriptorPool* out_pool);
 
@@ -133,8 +130,6 @@ namespace Yutrel
         void DestroyDescriptorPool(VkDescriptorPool pool);
 
         void AllocateDescriptorSets(VkDescriptorSetLayout layout, VkDescriptorSet* out_set);
-
-        VkResult AllocateDescriptorSets(const VkDescriptorSetAllocateInfo* info, VkDescriptorSet* out_set);
 
         void UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies);
 
@@ -146,7 +141,7 @@ namespace Yutrel
         void EndSingleTimeCommands(VkCommandBuffer cmd_buffer);
 
         //----------渲染资源----------
-        AllocatedBuffer CreateBuffer(size_t alloc_size, VkBufferUsageFlags usage_flags, VmaMemoryUsage usage);
+        AllocatedBuffer CreateBuffer(size_t alloc_size, VkBufferUsageFlags usage_flags, VmaMemoryUsage usage, bool need_destroy = false);
 
         void DestroyBuffer(const AllocatedBuffer& buffer);
 

@@ -7,7 +7,7 @@
 namespace Yutrel
 {
     // todo 自动填充
-    struct VulkanMaterialData
+    struct MaterialUniformData
     {
         glm::vec4 base_color;
         glm::vec4 padding[15];

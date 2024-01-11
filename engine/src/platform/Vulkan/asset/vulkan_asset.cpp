@@ -2,11 +2,14 @@
 
 #include "vulkan_asset.hpp"
 
+#include "platform/Vulkan/vulkan_renderer.hpp"
+
 namespace Yutrel
 {
     void VulkanAssetManager::Init(AssetManagerInitInfo info)
     {
-        
+        m_global_render_data                    = CreateRef<GlobalRenderData>();
+        m_global_render_data->scene_data_buffer = m_rhi->CreateBuffer(sizeof(GPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, true);
     }
 
     Ref<VulkanMesh> VulkanAssetManager::SetVulkanMesh(Ref<Mesh> mesh)
@@ -32,7 +35,22 @@ namespace Yutrel
             vulkan_material->base_color_texture = m_rhi->UploadTexture(material->base_color_texture);
 
             // 分配描述符集
-            // vulkan_material->descriptor_set = m_rhi->
+            m_rhi->AllocateDescriptorSets(m_material_descriptor_set_layout, &vulkan_material->descriptor_set);
+
+            // 写描述符集
+            DescriptorWriter writer;
+            auto& default_data = m_rhi->GetDefaultData();
+            writer.WriteImage(0,
+                              vulkan_material->base_color_texture.image_view,
+                              default_data.default_sampler_nearest,
+                              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                              VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            writer.WriteBuffer(1,
+                               vulkan_material->uniform_buffer.buffer,
+                               sizeof(MaterialUniformData),
+                               0,
+                               VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            m_rhi->UpdateDescriptorSets(writer, vulkan_material->descriptor_set);
 
             m_materials.insert({material, vulkan_material});
         }
