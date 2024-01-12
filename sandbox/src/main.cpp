@@ -2,6 +2,7 @@
 
 #include "ui/imgui_ui.hpp"
 
+#include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 
 void StartWorld(gecs::commands cmds,
@@ -22,27 +23,65 @@ void StartWorld(gecs::commands cmds,
         });
 }
 
+void UpdateCamera(gecs::resource<gecs::mut<Yutrel::Camera>> camera,
+                  gecs::resource<Yutrel::Input> input)
+{
+    if (input->IsKeyPressed(Yutrel::Key::W))
+    {
+        camera->MoveFront();
+    }
+    if (input->IsKeyPressed(Yutrel::Key::S))
+    {
+        camera->MoveBack();
+    }
+    if (input->IsKeyPressed(Yutrel::Key::A))
+    {
+        camera->MoveLeft();
+    }
+    if (input->IsKeyPressed(Yutrel::Key::D))
+    {
+        camera->MoveRight();
+    }
+    if (input->IsKeyPressed(Yutrel::Key::Space))
+    {
+        camera->MoveUp();
+    }
+    if (input->IsKeyPressed(Yutrel::Key::LeftShift))
+    {
+        camera->MoveDown();
+    }
+
+    static bool first_mouse = true;
+    if (input->IsMousePressed(Yutrel::Mouse::ButtonRight))
+    {
+        static glm::vec2 last_pos;
+        glm::vec2 cur_pos = input->GetCursorPos();
+        if (first_mouse)
+        {
+            last_pos    = cur_pos;
+            first_mouse = false;
+        }
+        camera->MoveDirection(cur_pos.x - last_pos.x, last_pos.y - cur_pos.y);
+        last_pos = cur_pos;
+    }
+    else
+    {
+        first_mouse = true;
+    }
+
+    camera->Updata(0.001f);
+}
+
 int main()
 {
-    // app.AddDefaultPlugin()
-    //     .SetResource(Yutrel::CreateRef<EditorUI>(1920, 1080))
-    //     .SetResource(Framebuffers(1902, 1080))
-    //     .SetResource(Shaders())
-    //     .SetResource(UniformBuffers())
-    //     .AddStartupSystem(SpawnCamera)
-    //     .AddStartupSystem(SpawnLight)
-    //     .AddStartupSystem(SpawnSkybox)
-    //     .AddStartupSystem(SpawnPBRScene)
-    //     .AddSystem(UpdateScene)
-    //     .AddSystem(DrawPBRScene)
-    //     .AddSystem(DrawUI);
-
     Yutrel::Application::Create()
         .Init("Sandbox", 1920, 1080)
         .AddResource<Yutrel::UIResource>(Yutrel::CreateRef<ImguiUI>())
         .AddResource<Yutrel::BackGroundColor>()
+        .AddResource<Yutrel::Camera>(glm::vec3{0.0f, 0.0f, 3.0f})
         .AddStartupSystem<StartWorld>()
         .AddSystem<ImguiUI::UpdateData>()
+        .AddSystem<UpdateCamera>()
         .Run();
 
     return 0;

@@ -78,6 +78,8 @@ namespace Yutrel
         Ref<class WindowUI> ui;
 
         BackGroundColor background;
+        glm::mat4 view_matrix;
+
         std::vector<const PbrBundle*> pbrs;
     };
 
@@ -106,6 +108,7 @@ namespace Yutrel
                            gecs::resource<RendererResource> render,
                            gecs::resource<class UIResource> ui,
                            gecs::resource<BackGroundColor> background_color,
+                           gecs::resource<class Camera> camera,
                            gecs::resource<gecs::mut<class AssetManager>> asset_manager);
 
     public:

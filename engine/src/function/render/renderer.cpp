@@ -9,6 +9,7 @@
 #include "resource/asset/material.hpp"
 #include "resource/asset/mesh.hpp"
 #include "resource/asset/texture.hpp"
+#include "resource/component/camera/camera.hpp"
 #include "resource/component/component.hpp"
 #include "resource/component/window_ui.hpp"
 
@@ -46,12 +47,14 @@ namespace Yutrel
                                   gecs::resource<RendererResource> render,
                                   gecs::resource<UIResource> ui,
                                   gecs::resource<BackGroundColor> background_color,
+                                  gecs::resource<Camera> camera,
                                   gecs::resource<gecs::mut<AssetManager>> asset_manager)
     {
         // 处理要交换给renderer的数据
-        auto swap_data        = CreateRef<SwapData>();
-        swap_data->ui         = ui->ui;
-        swap_data->background = background_color.get();
+        auto swap_data         = CreateRef<SwapData>();
+        swap_data->ui          = ui->ui;
+        swap_data->background  = background_color.get();
+        swap_data->view_matrix = camera->GetViewMatrix();
 
         for (const auto& [entity, pbr_bundle] : pbrs)
         {

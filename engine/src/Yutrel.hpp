@@ -13,6 +13,7 @@
 #include "resource/asset/asset.hpp"
 #include "resource/asset/material.hpp"
 #include "resource/asset/mesh.hpp"
+#include "resource/component/camera/camera.hpp"
 #include "resource/component/component.hpp"
 #include "resource/component/window_ui.hpp"
 

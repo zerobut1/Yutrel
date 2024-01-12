@@ -14,6 +14,7 @@
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -104,10 +105,11 @@ namespace Yutrel
         m_render_data->background = pass_data->background;
 
         // 场景信息
+        VkExtent2D swapchain_extent = m_rhi->GetSwapChainInfo().extent;
         GPUSceneData scene_data{};
         scene_data      = GPUSceneData{};
-        scene_data.view = glm::lookAt(glm::vec3(0.0f, -1.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        scene_data.proj = glm::perspective(glm::radians(70.f), 1920.0f / 1080.0f, 10000.0f, 0.1f);
+        scene_data.view = pass_data->view_matrix;
+        scene_data.proj = glm::perspective(glm::radians(70.f), (float)swapchain_extent.width / (float)swapchain_extent.height, 10000.0f, 0.1f);
         scene_data.proj[1][1] *= -1;
         scene_data.view_proj = scene_data.proj * scene_data.view;
 
