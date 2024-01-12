@@ -102,12 +102,7 @@ namespace Yutrel
 
         void CreateGraphicsPipelines(const RHIGraphicsPipelineCreateInfo& info, VkPipeline* out_pipeline);
 
-        // todo 用rhipipelinecreateinfo初始化
-        void CreateComputePipelines(VkPipelineCache pipelineCache,
-                                    uint32_t createInfoCount,
-                                    const VkComputePipelineCreateInfo* pCreateInfos,
-                                    const VkAllocationCallbacks* pAllocator,
-                                    VkPipeline* pPipelines);
+        void CreateComputePipelines(VkPipelineCache pipeline_cache, const VkComputePipelineCreateInfo* info, VkPipeline* out_pipeline);
 
         void CreateDynamicPipelines(const DynamicPipelineCreateInfo& info, VkPipeline* out_pipeline);
 

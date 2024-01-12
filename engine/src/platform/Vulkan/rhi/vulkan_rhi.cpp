@@ -567,14 +567,10 @@ namespace Yutrel
         *out_pipeline = pipeline;
     }
 
-    void VulkanRHI::CreateComputePipelines(VkPipelineCache pipelineCache,
-                                           uint32_t createInfoCount,
-                                           const VkComputePipelineCreateInfo* pCreateInfos,
-                                           const VkAllocationCallbacks* pAllocator,
-                                           VkPipeline* pPipelines)
+    void VulkanRHI::CreateComputePipelines(VkPipelineCache pipeline_cache, const VkComputePipelineCreateInfo* info, VkPipeline* out_pipeline)
     {
         VkPipeline pipeline;
-        YUTREL_ASSERT(vkCreateComputePipelines(m_device, pipelineCache, createInfoCount, pCreateInfos, pAllocator, &pipeline) == VK_SUCCESS, "Failed to create compute pipelines");
+        YUTREL_ASSERT(vkCreateComputePipelines(m_device, pipeline_cache, 1, info, nullptr, &pipeline) == VK_SUCCESS, "Failed to create compute pipelines");
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -582,7 +578,7 @@ namespace Yutrel
                 vkDestroyPipeline(m_device, pipeline, nullptr);
             });
 
-        *pPipelines = pipeline;
+        *out_pipeline = pipeline;
     }
 
     void VulkanRHI::CreateDynamicPipelines(const DynamicPipelineCreateInfo& info, VkPipeline* out_pipeline)

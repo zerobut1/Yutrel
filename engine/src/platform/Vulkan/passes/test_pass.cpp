@@ -3,423 +3,196 @@
 #include "test_pass.hpp"
 
 #include "function/render/renderer.hpp"
-#include "platform/Vulkan/asset/vulkan_material.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
-#include "platform/Vulkan/vulkan_renderer.hpp"
 
-#include <array>
+#include <vector>
 
 namespace Yutrel
 {
     void TestPass::Init(RenderPassInitInfo* info)
     {
-        m_global_render_data = info->global_render_data;
-
-        InitDrawImage();
-
-        InitDepthImage();
-
-        InitDescriptors();
-
-        m_pipelines.resize(pipelines::pipeline_count);
-
-        InitComputePipeline();
-
-        InitTexturePipeline();
+        InitRenderPass();
+        InitFramebuffer();
+        InitPipeline();
     }
 
-    void TestPass::PreparePassData(Ref<RenderData> render_data)
+    void TestPass::PreparePassData(Ref<struct RenderData> render_data)
     {
         m_render_data = render_data;
     }
 
     void TestPass::DrawForward()
     {
-        PrepareDrawImage();
+        // 设定清除颜色
+        VkClearValue clear_value;
+        float flash       = abs(sin(m_rhi->GetCurrentFrameCount() / 144.0f));
+        clear_value.color = {{0.0f, 0.0f, flash, 1.0f}};
 
-        //--------绘制------------
-        // 清除图像
-        DrawBackground();
+        //----------Renderpass--------------
+        VkRenderPassBeginInfo render_pass_info = vkinit::RenderPassBeginInfo(m_render_pass, m_rhi->GetSwapChainInfo().extent, m_swapchain_framebuffers[m_rhi->GetCurrentSwapchainImageIndex()]);
+        render_pass_info.clearValueCount       = 1;
+        render_pass_info.pClearValues          = &clear_value;
 
-        // 图像格式转换为颜色缓冲
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_draw_image.image,
-                               VK_IMAGE_LAYOUT_GENERAL,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        // 深度图像格式转换为深度附件
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_depth_image.image,
-                               VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+        vkCmdBeginRenderPass(m_rhi->GetCurrentCommandBuffer(), &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-        // 绘制几何图形
-        DrawGeometry();
+        vkCmdBindPipeline(m_rhi->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[0].pipeline);
 
-        // 将渲染图像布局转换为传输源布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_draw_image.image,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        // for (auto& pbr : m_render_data->pbrs)
+        // {
+        //     VkDeviceSize offset = 0;
+        //     vkCmdBindVertexBuffers(m_rhi->GetCurrentCommandBuffer(), 0, 1, &pbr->mesh->gpu_buffers->vertex_buffer.buffer, &offset);
 
-        //-----------------------
-        CopyToSwapchain();
+        //     vkCmdDraw(m_rhi->GetCurrentCommandBuffer(), pbr->mesh->vertices->size(), 1, 0, 0);
+        // }
+
+        vkCmdEndRenderPass(m_rhi->GetCurrentCommandBuffer());
     }
 
-    void TestPass::InitDrawImage()
+    void TestPass::InitRenderPass()
     {
-        VkExtent3D draw_image_extent{
-            3840,
-            2160,
-            1,
-        };
+        // renderpass的颜色附件
+        VkAttachmentDescription color_attachment{};
+        color_attachment.format         = m_rhi->GetSwapChainInfo().image_format;
+        color_attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
+        color_attachment.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        color_attachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+        color_attachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        color_attachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+        color_attachment.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-        // 设为16位浮点格式以获得更高的精度
-        m_draw_image.image_format = VK_FORMAT_R16G16B16A16_SFLOAT;
-        m_draw_image.image_extent = draw_image_extent;
+        // subpass的颜色附件引用
+        VkAttachmentReference color_attachment_ref{};
+        color_attachment_ref.attachment = 0;
+        color_attachment_ref.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        VkImageUsageFlags draw_image_usages{};
-        draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_STORAGE_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        // subpass 1个
+        VkSubpassDescription subpass{};
+        subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments    = &color_attachment_ref;
 
-        VkImageCreateInfo draw_image_create_info = vkinit::ImageCreateInfo(m_draw_image.image_format, draw_image_usages, m_draw_image.image_extent);
+        // 创建renderpass
+        VkRenderPassCreateInfo render_pass_info{};
+        render_pass_info.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        render_pass_info.attachmentCount = 1;
+        render_pass_info.pAttachments    = &color_attachment;
+        render_pass_info.subpassCount    = 1;
+        render_pass_info.pSubpasses      = &subpass;
 
-        // 将图像放至GPU only内存
-        VmaAllocationCreateInfo draw_image_alloc_info{};
-        draw_image_alloc_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
-        draw_image_alloc_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        m_rhi->CreateDrawImage(&draw_image_create_info, &draw_image_alloc_info, &m_draw_image);
-
-        // 创建图像视图
-        VkImageViewCreateInfo draw_image_view_info = vkinit::ImageViewCreateInfo(m_draw_image.image_format, m_draw_image.image, VK_IMAGE_ASPECT_COLOR_BIT);
-
-        m_rhi->CreateDrawImageView(&draw_image_view_info, &m_draw_image);
+        m_rhi->CreateRenderPass(&render_pass_info, &m_render_pass);
     }
 
-    void TestPass::InitDepthImage()
+    void TestPass::InitFramebuffer()
     {
-        m_depth_image.image_format = VK_FORMAT_D32_SFLOAT;
-        m_depth_image.image_extent = m_draw_image.image_extent;
+        // 为交换链的每一个图像视图创建帧缓冲
+        const auto& swapchain_info = m_rhi->GetSwapChainInfo();
 
-        VkImageUsageFlags depth_image_usages{};
-        depth_image_usages |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        m_swapchain_framebuffers.resize(swapchain_info.image_views->size());
 
-        VkImageCreateInfo depth_image_info = vkinit::ImageCreateInfo(m_depth_image.image_format, depth_image_usages, m_depth_image.image_extent);
+        VkFramebufferCreateInfo info = vkinit::FramebufferCreateInfo(m_render_pass, swapchain_info.extent);
 
-        VmaAllocationCreateInfo depth_image_alloc_info{};
-        depth_image_alloc_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
-        depth_image_alloc_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        m_rhi->CreateDrawImage(&depth_image_info, &depth_image_alloc_info, &m_depth_image);
-
-        VkImageViewCreateInfo depth_view_info = vkinit::ImageViewCreateInfo(m_depth_image.image_format, m_depth_image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
-
-        m_rhi->CreateDrawImageView(&depth_view_info, &m_depth_image);
-    }
-
-    void TestPass::InitDescriptors()
-    {
-        m_descriptor_infos.resize(descriptor_count);
-
-        // 绘制目标图像
+        for (int i = 0; i < swapchain_info.image_views->size(); i++)
         {
-            // 创建描述符布局
-            DescriptorSetLayoutCreateInfo layout_info{};
-            layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
-            layout_info.shader_stages = VK_SHADER_STAGE_COMPUTE_BIT;
+            info.pAttachments = &(*swapchain_info.image_views)[i];
 
-            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[draw_image_descriptor].layout);
-
-            // 分配描述符集
-            m_rhi->AllocateDescriptorSets(m_descriptor_infos[draw_image_descriptor].layout, &m_descriptor_infos[draw_image_descriptor].set);
-
-            // 写描述符集
-            DescriptorWriter writer;
-            writer.WriteImage(0, m_draw_image.image_view, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
-
-            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[draw_image_descriptor].set);
-        }
-
-        // 场景信息
-        {
-            // 创建描述符布局
-            DescriptorSetLayoutCreateInfo layout_info{};
-            layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            layout_info.shader_stages = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-
-            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[scene_descriptor].layout);
-
-            // 分配描述符集
-            m_rhi->AllocateDescriptorSets(m_descriptor_infos[scene_descriptor].layout, &m_descriptor_infos[scene_descriptor].set);
-
-            // 写描述符集
-            DescriptorWriter writer;
-            writer.WriteBuffer(0, m_global_render_data->scene_data_buffer.buffer, sizeof(GPUSceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[scene_descriptor].set);
+            m_rhi->CreateFramebuffer(&info, &m_swapchain_framebuffers[i]);
         }
     }
 
-    void TestPass::InitComputePipeline()
+    void TestPass::InitPipeline()
     {
-        // layout
-        VkPipelineLayoutCreateInfo compute_layout{};
-        compute_layout.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        compute_layout.pNext          = nullptr;
-        compute_layout.pSetLayouts    = &m_descriptor_infos[draw_image_descriptor].layout;
-        compute_layout.setLayoutCount = 1;
+        m_pipelines.resize(1);
 
-        VkPushConstantRange push_constant{};
-        push_constant.offset     = 0;
-        push_constant.size       = sizeof(ComputePushConstants);
-        push_constant.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
-        compute_layout.pushConstantRangeCount = 1;
-        compute_layout.pPushConstantRanges    = &push_constant;
-
-        m_rhi->CreatePipelineLayout(&compute_layout, &m_pipelines[compute_pipeline].layout);
-
-        // shader
-        // clang-format off
-        std::vector<unsigned char> compute_code{
-            #include "gradient.comp.spv.h"
-        };
-        // clang-format on
-        VkShaderModule compute_shader;
-        if (!m_rhi->CreateShaderModule(compute_code, &compute_shader))
-        {
-            LOG_ERROR("Failed to create compute shader");
-        }
-
-        VkPipelineShaderStageCreateInfo stageinfo{};
-        stageinfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        stageinfo.pNext  = nullptr;
-        stageinfo.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
-        stageinfo.module = compute_shader;
-        stageinfo.pName  = "main";
-
-        VkComputePipelineCreateInfo computePipelineCreateInfo{};
-        computePipelineCreateInfo.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-        computePipelineCreateInfo.pNext  = nullptr;
-        computePipelineCreateInfo.layout = m_pipelines[compute_pipeline].layout;
-        computePipelineCreateInfo.stage  = stageinfo;
-
-        m_rhi->CreateComputePipelines(VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &m_pipelines[compute_pipeline].pipeline);
-
-        // 清除着色器模块
-        m_rhi->DestroyShaderModule(compute_shader);
-    }
-
-    void TestPass::InitTexturePipeline()
-    {
-        //----------shader--------------
+        //-------------着色器模块-------------
         // clang-format off
         std::vector<unsigned char> triangle_vert_code{
             #include "triangle.vert.spv.h"
         };
-        std::vector<unsigned char> texture_frag_code{
-            #include "texture_image.frag.spv.h"
+        std::vector<unsigned char> triangle_frag_code{
+            #include "triangle.frag.spv.h"
         };
         // clang-format on
+
+        // 因为着色器中出现错误很常见，所以此处不用assert
         VkShaderModule triangle_vert_shader;
         if (!m_rhi->CreateShaderModule(triangle_vert_code, &triangle_vert_shader))
         {
-            LOG_ERROR("Failed to create vertex shader");
+            LOG_ERROR("Failed to create triangle vert shader");
         }
-        VkShaderModule texture_frag_shader;
-        if (!m_rhi->CreateShaderModule(texture_frag_code, &texture_frag_shader))
+
+        VkShaderModule triangle_frag_shader;
+        if (!m_rhi->CreateShaderModule(triangle_frag_code, &triangle_frag_shader))
         {
-            LOG_ERROR("Failed to create fragment shader");
+            LOG_ERROR("Failed to create triangle frag shader");
         }
 
-        //------------推送常量------------
-        VkPushConstantRange buffer_range{};
-        buffer_range.offset     = 0;
-        buffer_range.size       = sizeof(GPUDrawPushConstants);
-        buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        //-----------管线布局-------------
+        VkPipelineLayoutCreateInfo layout_info = vkinit::PipelineLayoutCreateInfo();
 
-        //------------材质描述符-------------
-        DescriptorSetLayoutCreateInfo descriptor_info;
-        descriptor_info.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-        descriptor_info.AddBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-        descriptor_info.shader_stages = VK_SHADER_STAGE_FRAGMENT_BIT;
-        m_rhi->CreateDescriptorLayout(descriptor_info, &m_descriptor_infos[material_descriptor].layout);
+        m_rhi->CreatePipelineLayout(&layout_info, &m_pipelines[0].layout);
 
-        //------------layout-------------
-        std::array<VkDescriptorSetLayout, 2> descriptor_set_layouts{
-            m_descriptor_infos[material_descriptor].layout,
-            m_descriptor_infos[scene_descriptor].layout,
-        };
+        //----------顶点状态-------------
+        // VertexInputDescription vertex_description = Vertex::GetVertexDescription();
 
-        VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
-        pipeline_layout_info.pushConstantRangeCount     = 1;
-        pipeline_layout_info.pPushConstantRanges        = &buffer_range;
-        pipeline_layout_info.setLayoutCount             = descriptor_set_layouts.size();
-        pipeline_layout_info.pSetLayouts                = descriptor_set_layouts.data();
+        //-----------视口状态------------
+        VkPipelineViewportStateCreateInfo viewport_state_info{};
+        viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewport_state_info.pNext = nullptr;
 
-        m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[texture_pipeline].layout);
+        // 暂时只有一个视口一个剪刀
+        // auto swapchain_info               = m_rhi->GetSwapChainInfo();
+        // viewport_state_info.viewportCount = 1;
+        // viewport_state_info.pViewports    = &swapchain_info.viewport;
+        // viewport_state_info.scissorCount  = 1;
+        // viewport_state_info.pScissors     = &swapchain_info.scissor;
 
-        //-----------创建管线----------
-        DynamicPipelineCreateInfo pipeline_create_info;
-        pipeline_create_info.Clear();
-        pipeline_create_info.pipeline_layout = m_pipelines[texture_pipeline].layout;
-        pipeline_create_info.SetShaders(triangle_vert_shader, texture_frag_shader);
-        pipeline_create_info.SetInputTopolygy(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-        pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
-        pipeline_create_info.SetCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-        pipeline_create_info.SetMultisamplingNone();
-        pipeline_create_info.DisableBlending();
-        // pipeline_create_info.EnableBlendingAdditive();
-        pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
-        pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
-        pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
+        //------------颜色混合-------------
+        VkPipelineColorBlendAttachmentState color_blend_attachment = vkinit::ColorBlendAttachmentState();
+        // 暂设为不混合
+        VkPipelineColorBlendStateCreateInfo color_blending_info{};
+        color_blending_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        color_blending_info.pNext = nullptr;
 
-        m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[texture_pipeline].pipeline);
+        color_blending_info.logicOpEnable   = VK_FALSE;
+        color_blending_info.logicOp         = VK_LOGIC_OP_COPY;
+        color_blending_info.attachmentCount = 1;
+        color_blending_info.pAttachments    = &color_blend_attachment;
 
-        //--------清除---------
+        //------------创建管线-----------
+        RHIGraphicsPipelineCreateInfo pipeline_create_info{};
+        // 布局
+        pipeline_create_info.pipeline_layout = m_pipelines[0].layout;
+        // 着色器
+        pipeline_create_info.shader_stages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, triangle_vert_shader));
+        pipeline_create_info.shader_stages.push_back(vkinit::PipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangle_frag_shader));
+        // 顶点输入
+        // pipeline_create_info.vertex_input                                 = vkinit::VertexInputStateCreateInfo();
+        // pipeline_create_info.vertex_input.vertexAttributeDescriptionCount = vertex_description.attributes.size();
+        // pipeline_create_info.vertex_input.pVertexAttributeDescriptions    = vertex_description.attributes.data();
+        // pipeline_create_info.vertex_input.vertexBindingDescriptionCount   = vertex_description.bindings.size();
+        // pipeline_create_info.vertex_input.pVertexBindingDescriptions      = vertex_description.bindings.data();
+        // 图元装配
+        pipeline_create_info.input_assembly = vkinit::InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+        // 视口状态
+        pipeline_create_info.viewport_state = viewport_state_info;
+        // 光栅化
+        pipeline_create_info.rasterizer = vkinit::RasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
+        // msaa
+        pipeline_create_info.multisampling = vkinit::MultiSamplingStateCreateInfo();
+        // 颜色混合
+        pipeline_create_info.color_blend = color_blending_info;
+        // render pass
+        pipeline_create_info.render_pass = m_render_pass;
+        pipeline_create_info.subpass     = 0;
+
+        m_rhi->CreateGraphicsPipelines(pipeline_create_info, &m_pipelines[0].pipeline);
+
+        //------------删除着色器模块--------------
         m_rhi->DestroyShaderModule(triangle_vert_shader);
-        m_rhi->DestroyShaderModule(texture_frag_shader);
-    }
-
-    void TestPass::PrepareDrawImage()
-    {
-        // 设置渲染图像范围
-        m_draw_extent.width  = std::min(m_rhi->GetSwapChainInfo().extent.width, m_draw_image.image_extent.width) * m_render_scale;
-        m_draw_extent.height = std::min(m_rhi->GetSwapChainInfo().extent.height, m_draw_image.image_extent.height) * m_render_scale;
-
-        // 将渲染图像布局转换为通用布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_draw_image.image,
-                               VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_GENERAL);
-    }
-
-    void TestPass::CopyToSwapchain()
-    {
-        // 将交换链布局转换为传输目标布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_rhi->GetCurrentSwapchainImage(),
-                               VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-        // 将渲染图像拷贝至交换链
-        m_rhi->CopyImageToImage(m_rhi->GetCurrentCommandBuffer(),
-                                m_draw_image.image,
-                                m_rhi->GetCurrentSwapchainImage(),
-                                m_draw_extent,
-                                m_rhi->GetSwapChainInfo().extent);
-    }
-
-    void TestPass::DrawBackground()
-    {
-        auto cmd_buffer = m_rhi->GetCurrentCommandBuffer();
-
-        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].pipeline);
-
-        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].layout, 0, 1, &m_descriptor_infos[draw_image_descriptor].set, 0, nullptr);
-
-        ComputePushConstants push_constant;
-        push_constant.data1 = m_render_data->background.data1;
-        push_constant.data2 = m_render_data->background.data2;
-        push_constant.data3 = m_render_data->background.data3;
-        push_constant.data4 = m_render_data->background.data4;
-
-        vkCmdPushConstants(cmd_buffer, m_pipelines[compute_pipeline].layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constant);
-
-        vkCmdDispatch(cmd_buffer, std::ceil(m_draw_extent.width / 16.0), std::ceil(m_draw_extent.height / 16.0), 1);
-    }
-
-    void TestPass::DrawGeometry()
-    {
-        VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
-
-        // //------------描述符集----------
-        // AllocatedBuffer gpu_scene_data_buffer = m_rhi->CreateBuffer(sizeof(GPUSceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-        // m_rhi->GetCurrentFrame().deletion_queue.PushFunction(
-        //     [=]()
-        //     {
-        //         m_rhi->DestroyBuffer(gpu_scene_data_buffer);
-        //     });
-
-        // // 写缓冲
-        // GPUSceneData* scene_uniform_data = reinterpret_cast<GPUSceneData*>(gpu_scene_data_buffer.info.pMappedData);
-        // *scene_uniform_data              = scene_data;
-
-        // // 创建描述符集
-        // VkDescriptorSet global_descriptor = m_rhi->GetCurrentFrame().descriptors.Allocate(m_descriptor_infos[scene_descriptor].layout);
-
-        // DescriptorWriter writer;
-        // writer.WriteBuffer(0, gpu_scene_data_buffer.buffer, sizeof(GPUSceneData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-
-        // m_rhi->UpdateDescriptorSets(writer, global_descriptor);
-
-        //---------渲染信息----------------
-
-        // 颜色附件
-        VkRenderingAttachmentInfo color_attachment = vkinit::AttachmentInfo(m_draw_image.image_view, nullptr, VK_IMAGE_LAYOUT_GENERAL);
-
-        // 深度附件
-        VkRenderingAttachmentInfo depth_attachment = vkinit::DepthAttachmentInfo(m_depth_image.image_view, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
-
-        // 开始渲染
-        VkRenderingInfo render_info = vkinit::RenderingInfo(m_draw_extent, &color_attachment, &depth_attachment);
-        vkCmdBeginRendering(cmd_buffer, &render_info);
-
-        // 绑定管线
-        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[pipelines::texture_pipeline].pipeline);
-
-        // 设定viewport
-        VkViewport viewport{};
-        viewport.x        = 0;
-        viewport.y        = 0;
-        viewport.width    = m_draw_extent.width;
-        viewport.height   = m_draw_extent.height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-        vkCmdSetViewport(cmd_buffer, 0, 1, &viewport);
-
-        // 设定scissor
-        VkRect2D scissor{};
-        scissor.offset.x      = 0;
-        scissor.offset.y      = 0;
-        scissor.extent.width  = m_draw_extent.width;
-        scissor.extent.height = m_draw_extent.height;
-        vkCmdSetScissor(cmd_buffer, 0, 1, &scissor);
-
-        for (auto& pair1 : m_render_data->objects)
-        {
-            Ref<VulkanPBRMaterial> material = pair1.first;
-            auto& mesh_instance             = pair1.second;
-
-            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &material->descriptor_set, 0, nullptr);
-
-            for (auto& pair2 : mesh_instance)
-            {
-                Ref<VulkanMesh> mesh = pair2.first;
-                // auto& transform      = pair2.second;
-
-                // 绑定全局变量描述符
-                vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 1, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
-
-                // 推送常量
-                // 将模型矩阵和顶点的设备地址传入
-                GPUDrawPushConstants push_constants;
-                push_constants.model_matrix  = glm::mat4(1.0f);
-                push_constants.vertex_buffer = mesh->vertex_buffer_address;
-                vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::texture_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
-
-                // 绑定IBO
-                vkCmdBindIndexBuffer(cmd_buffer, mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-                vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(mesh->index_count), 1, 0, 0, 0);
-
-                vkCmdEndRendering(cmd_buffer);
-            }
-        }
+        m_rhi->DestroyShaderModule(triangle_frag_shader);
     }
 
 } // namespace Yutrel

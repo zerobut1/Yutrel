@@ -5,10 +5,10 @@ layout(location = 1)in vec2 in_UV;
 
 layout(location = 0)out vec4 out_frag_color;
 
-layout(set = 0, binding = 0)uniform sampler2D u_display_texture;
-layout(set = 0, binding = 1)uniform MaterialData {
+layout(set = 0, binding = 0)uniform MaterialData {
     vec4 base_color;
 } u_mat_data;
+layout(set = 0, binding = 1)uniform sampler2D u_display_texture;
 
 void main()
 {

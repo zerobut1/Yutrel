@@ -33,7 +33,8 @@ namespace Yutrel
         Ref<VulkanRHI> m_rhi;
 
         Ref<RenderPass> m_main_pass;
-        Ref<RenderPass> m_test_pass;
         Ref<RenderPass> m_imgui_pass;
+
+        Ref<RenderPass> m_test_pass;
     };
 } // namespace Yutrel

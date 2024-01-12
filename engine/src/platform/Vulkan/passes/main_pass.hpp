@@ -2,12 +2,29 @@
 
 #include "platform/Vulkan/passes/render_pass.hpp"
 
+#include <glm/glm.hpp>
+
 #include <stdint.h>
+#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
     struct MainPassInitInfo : RenderPassInitInfo
     {};
+
+    struct ComputePushConstants
+    {
+        glm::vec4 data1;
+        glm::vec4 data2;
+        glm::vec4 data3;
+        glm::vec4 data4;
+    };
+
+    struct GPUDrawPushConstants
+    {
+        glm::mat4 model_matrix;
+        VkDeviceAddress vertex_buffer;
+    };
 
     class MainPass final : public RenderPass
     {
@@ -18,15 +35,54 @@ namespace Yutrel
 
         void DrawForward();
 
-    private:
-        void InitRenderPass();
-        void InitFramebuffer();
-        void InitPipeline();
+        VkDescriptorSetLayout GetMaterialDescriptorSetLayout() const { return m_descriptor_infos[material_descriptor].layout; }
 
     private:
-        VkRenderPass m_render_pass;
+        //--------初始化---------
+        void InitDrawImage();
 
-        std::vector<VkFramebuffer> m_swapchain_framebuffers;
+        void InitDepthImage();
+
+        void InitDescriptors();
+
+        void InitComputePipeline();
+
+        void InitTexturePipeline();
+
+        //---------绘制------------
+        void PrepareDrawImage();
+
+        void CopyToSwapchain();
+
+        void DrawBackground();
+
+        void DrawGeometry();
+
+    private:
+        enum pipelines : uint8_t
+        {
+            compute_pipeline = 0,
+            texture_pipeline,
+
+            pipeline_count,
+        };
+
+        enum descriptors : uint8_t
+        {
+            draw_image_descriptor = 0,
+            scene_descriptor,
+            material_descriptor,
+
+            descriptor_count,
+        };
+
+        // 绘制范围
+        VkExtent2D m_draw_extent;
+
+        // 绘制到的图像
+        AllocatedImage m_draw_image;
+        // 深度图像
+        AllocatedImage m_depth_image;
 
         Ref<RenderData> m_render_data;
     };
