@@ -88,7 +88,7 @@ namespace Yutrel
     public:
         virtual void Init(RendererInitInfo info) = 0;
 
-        virtual void Tick(Ref<SwapData> swap_data) = 0;
+        virtual struct EngineStatus Tick(Ref<SwapData> swap_data) = 0;
 
         virtual void Clear() = 0;
 
@@ -109,6 +109,7 @@ namespace Yutrel
                            gecs::resource<class UIResource> ui,
                            gecs::resource<BackGroundColor> background_color,
                            gecs::resource<class Camera> camera,
+                           gecs::resource<gecs::mut<struct EngineStatus>> status,
                            gecs::resource<gecs::mut<class AssetManager>> asset_manager);
 
     public:

@@ -44,6 +44,7 @@ namespace Yutrel
 
         // 默认资源
         auto cmds = reg.commands();
+        cmds.emplace_resource<EngineStatus>();
         cmds.emplace_resource<WindowResource>(title, width, height);
         cmds.emplace_resource<Input>();
         cmds.emplace_resource<RendererResource>();
@@ -64,10 +65,17 @@ namespace Yutrel
 
         LOG_INFO("Start Running");
         auto window = m_world.res<WindowResource>()->GetWindow();
+        auto status = m_world.res<gecs::mut<EngineStatus>>();
         // 主循环
         while (!window->ShouldClose())
         {
+            auto start = std::chrono::system_clock::now();
+
             m_world.update();
+
+            auto end          = std::chrono::system_clock::now();
+            auto elapsed      = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+            status->frametime = elapsed.count() / 1000.f;
         }
 
         LOG_INFO("Shutdown");

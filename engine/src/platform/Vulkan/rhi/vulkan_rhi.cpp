@@ -714,7 +714,7 @@ namespace Yutrel
         // 将图像数据存入暂存缓冲区
         size_t data_size = size.depth * size.width * size.height * 4;
 
-        AllocatedBuffer upload_buffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+        AllocatedBuffer upload_buffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
         memcpy(upload_buffer.info.pMappedData, data, data_size);
 

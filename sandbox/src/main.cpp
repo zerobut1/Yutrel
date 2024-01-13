@@ -8,10 +8,24 @@
 void StartWorld(gecs::commands cmds,
                 gecs::resource<gecs::mut<Yutrel::AssetManager>> asset_manager)
 {
-    auto mesh     = asset_manager->AddMesh("resource/viking_room/viking_room.obj");
+    // auto mesh     = asset_manager->AddMesh("resource/viking_room/viking_room.obj");
+    // auto material = asset_manager->AddMaterial(Yutrel::Material{
+    //     glm::vec4(0.4f, 0.8f, 1.0f, 1.0f),
+    //     asset_manager->AddTexture("resource/viking_room/viking_room.png"),
+    // });
+
+    // auto entity = cmds.create();
+    // cmds.emplace<Yutrel::PbrBundle>(
+    //     entity,
+    //     Yutrel::PbrBundle{
+    //         mesh,
+    //         material,
+    //     });
+
+    auto mesh     = asset_manager->AddMesh("resource/lost_empire/lost_empire.obj");
     auto material = asset_manager->AddMaterial(Yutrel::Material{
         glm::vec4(0.4f, 0.8f, 1.0f, 1.0f),
-        asset_manager->AddTexture("resource/viking_room/viking_room.png"),
+        asset_manager->AddTexture("resource/lost_empire/lost_empire-RGBA.png"),
     });
 
     auto entity = cmds.create();
@@ -78,7 +92,7 @@ int main()
         .Init("Sandbox", 1920, 1080)
         .AddResource<Yutrel::UIResource>(Yutrel::CreateRef<ImguiUI>())
         .AddResource<Yutrel::BackGroundColor>()
-        .AddResource<Yutrel::Camera>(glm::vec3{0.0f, 0.0f, 3.0f})
+        .AddResource<Yutrel::Camera>(glm::vec3{-5.0f, 15.0f, 5.0f})
         .AddStartupSystem<StartWorld>()
         .AddSystem<ImguiUI::UpdateData>()
         .AddSystem<UpdateCamera>()

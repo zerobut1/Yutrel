@@ -48,6 +48,7 @@ namespace Yutrel
                                   gecs::resource<UIResource> ui,
                                   gecs::resource<BackGroundColor> background_color,
                                   gecs::resource<Camera> camera,
+                                  gecs::resource<gecs::mut<EngineStatus>> status,
                                   gecs::resource<gecs::mut<AssetManager>> asset_manager)
     {
         // 处理要交换给renderer的数据
@@ -74,7 +75,11 @@ namespace Yutrel
         }
 
         // 渲染器渲染一帧
-        render->renderer->Tick(swap_data);
+        auto renderer_status      = render->renderer->Tick(swap_data);
+        status->drawcall_count    = renderer_status.drawcall_count;
+        status->triangle_count    = renderer_status.triangle_count;
+        status->mesh_draw_time    = renderer_status.mesh_draw_time;
+        status->renderer_tick_time = renderer_status.renderer_tick_time;
     }
 
 } // namespace Yutrel

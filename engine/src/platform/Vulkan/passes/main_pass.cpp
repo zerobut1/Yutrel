@@ -37,8 +37,10 @@ namespace Yutrel
         m_render_data = render_data;
     }
 
-    void MainPass::DrawForward()
+    RendererStatus MainPass::DrawForward()
     {
+        RendererStatus status{};
+
         PrepareDrawImage();
 
         //--------绘制------------
@@ -57,7 +59,7 @@ namespace Yutrel
                                VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
         // 绘制几何图形
-        DrawGeometry();
+        status = DrawGeometry();
 
         // 将渲染图像布局转换为传输源布局
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
@@ -67,6 +69,8 @@ namespace Yutrel
 
         //-----------------------
         CopyToSwapchain();
+
+        return status;
     }
 
     void MainPass::InitDrawImage()
@@ -264,6 +268,7 @@ namespace Yutrel
         pipeline_create_info.SetMultisamplingNone();
         pipeline_create_info.DisableBlending();
         // pipeline_create_info.EnableBlendingAdditive();
+        // pipeline_create_info.EnableBlendingAlphablend();
         pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
         pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
         pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
@@ -322,8 +327,14 @@ namespace Yutrel
         vkCmdDispatch(cmd_buffer, std::ceil(m_draw_extent.width / 16.0), std::ceil(m_draw_extent.height / 16.0), 1);
     }
 
-    void MainPass::DrawGeometry()
+    RendererStatus MainPass::DrawGeometry()
     {
+        RendererStatus status{};
+        status.drawcall_count = 0;
+        status.triangle_count = 0;
+
+        auto start = std::chrono::system_clock::now();
+
         VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
         //---------渲染信息----------------
@@ -387,8 +398,17 @@ namespace Yutrel
                 vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(mesh->index_count), 1, 0, 0, 0);
 
                 vkCmdEndRendering(cmd_buffer);
+
+                status.drawcall_count++;
+                status.triangle_count += mesh->index_count / 3;
             }
         }
+        auto end     = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+        status.mesh_draw_time = elapsed.count() / 1000.f;
+
+        return status;
     }
 
 } // namespace Yutrel

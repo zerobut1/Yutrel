@@ -4,7 +4,6 @@
 #include "core/log/log.hpp"
 #include "core/macro.hpp"
 #include "core/path/path.hpp"
-#include "core/time/time.hpp"
 #include "function/input/input.hpp"
 #include "function/input/inputcode/key_codes.hpp"
 #include "function/input/inputcode/mouse_codes.hpp"

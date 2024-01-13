@@ -33,7 +33,7 @@ namespace Yutrel
 
         virtual void PreparePassData(Ref<struct RenderData> render_data) override;
 
-        void DrawForward();
+        RendererStatus DrawForward();
 
         VkDescriptorSetLayout GetMaterialDescriptorSetLayout() const { return m_descriptor_infos[material_descriptor].layout; }
 
@@ -56,7 +56,7 @@ namespace Yutrel
 
         void DrawBackground();
 
-        void DrawGeometry();
+        RendererStatus DrawGeometry();
 
     private:
         enum pipelines : uint8_t

@@ -2,8 +2,7 @@
 
 #include "vulkan_renderer.hpp"
 
-// #include "platform/Vulkan/vulkan_types.hpp"
-
+#include "core/application/application.hpp"
 #include "platform/Vulkan/asset/vulkan_asset.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/passes/render_pass.hpp"
@@ -53,8 +52,12 @@ namespace Yutrel
         m_asset_manager->SetMaterialDescriptorSetLayout(m_render_pipeline->GetMaterialDescriptorSetLayout());
     }
 
-    void VulkanRenderer::Tick(Ref<SwapData> swap_data)
+    EngineStatus VulkanRenderer::Tick(Ref<SwapData> swap_data)
     {
+        EngineStatus status{};
+
+        auto start = std::chrono::system_clock::now();
+
         // 处理渲染数据
         ProcessRenderData(swap_data);
 
@@ -74,7 +77,18 @@ namespace Yutrel
         m_render_pipeline->PreparePassData(m_render_data);
 
         // 前向渲染
-        m_render_pipeline->ForwardRender();
+        RendererStatus renderer_status = m_render_pipeline->ForwardRender();
+
+        status.drawcall_count = renderer_status.drawcall_count;
+        status.triangle_count = renderer_status.triangle_count;
+        status.mesh_draw_time = renderer_status.mesh_draw_time;
+
+        auto end     = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+        status.renderer_tick_time = elapsed.count() / 1000.f;
+
+        return status;
     }
 
     void VulkanRenderer::Clear()

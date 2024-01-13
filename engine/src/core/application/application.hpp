@@ -9,6 +9,15 @@
 
 namespace Yutrel
 {
+    struct EngineStatus
+    {
+        float frametime;
+        int triangle_count;
+        int drawcall_count;
+        float renderer_tick_time;
+        float mesh_draw_time;
+    };
+
     class Application final
     {
     public:

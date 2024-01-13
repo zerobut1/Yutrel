@@ -32,6 +32,8 @@ namespace Yutrel
         m_window = glfwCreateWindow(m_width, m_height, title.c_str(), nullptr, nullptr);
         YUTREL_ASSERT(m_window, "Failed to create window!");
 
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
         glfwSetWindowUserPointer(m_window, this);
 
         // 设置回调函数

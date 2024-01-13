@@ -7,7 +7,8 @@ class ImguiUI : public Yutrel::WindowUI
 public:
     virtual void RenderUI() override;
 
-    static void UpdateData(gecs::resource<Yutrel::UIResource> ui,
+    static void UpdateData(gecs::resource<gecs::mut<Yutrel::UIResource>> ui,
+                           gecs::resource<Yutrel::EngineStatus> status,
                            gecs::resource<gecs::mut<Yutrel::BackGroundColor>> background_color);
 
 public:
@@ -17,4 +18,7 @@ public:
         {0.2f, 0.2f, 0.2f, 0.0f},
         {0.2f, 0.2f, 0.2f, 0.0f},
     };
+
+    Yutrel::EngineStatus status;
+    uint32_t fps;
 };

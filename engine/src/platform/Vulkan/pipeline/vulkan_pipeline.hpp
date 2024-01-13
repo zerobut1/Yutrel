@@ -23,7 +23,7 @@ namespace Yutrel
 
         void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
 
-        void ForwardRender();
+        RendererStatus ForwardRender();
 
         void PreparePassData(Ref<struct RenderData> render_data);
 
