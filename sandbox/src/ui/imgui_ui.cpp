@@ -31,23 +31,22 @@ void ImguiUI::RenderUI()
 
 void ImguiUI::UpdateData(gecs::resource<gecs::mut<Yutrel::UIResource>> ui,
                          gecs::resource<Yutrel::EngineStatus> status,
+                         gecs::resource<Yutrel::Time> time,
                          gecs::resource<gecs::mut<Yutrel::BackGroundColor>> background_color)
 {
     auto imgui_ui = std::reinterpret_pointer_cast<ImguiUI>(ui->ui);
 
     // 每0.5秒更新一次
-    static uint32_t frame_count = 0;
-    static float duration       = 0.0f;
+    static float duration = 0.0f;
 
-    frame_count++;
     duration += status->frametime;
     if (duration >= 500.0f)
     {
-        imgui_ui->fps    = (frame_count / duration) * 1000;
         imgui_ui->status = status.get();
-        frame_count      = 0;
         duration         = 0.0f;
     }
 
     background_color.get() = imgui_ui->background;
+
+    imgui_ui->fps = time->GetFPS();
 }

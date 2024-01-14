@@ -11,7 +11,7 @@ set_languages("c++17")
 -- add_cxxflags("/utf-8")
 
 -- 通用
-add_requires("glfw","glm","spdlog","stb","assimp","tinyobjloader")
+add_requires("glfw","glm","spdlog","stb","assimp","tinyobjloader","tinygltf")
 
 -- OpenGL
 add_requires("glad")

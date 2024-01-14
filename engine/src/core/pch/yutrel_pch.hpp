@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -16,5 +17,5 @@
 
 #include <gecs/gecs.hpp>
 
-#include "core/macro.hpp"
 #include "core/log/log.hpp"
+#include "core/macro.hpp"

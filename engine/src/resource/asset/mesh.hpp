@@ -28,12 +28,7 @@ namespace Yutrel
 
     struct Mesh
     {
-        std::string path;
-        bool is_loaded{false};
-
-        Ref<std::vector<Vertex>> vertices;
-        Ref<std::vector<uint32_t>> indices;
-
+    public:
         Mesh() = default;
         Mesh(const std::string& path)
             : path(path) {}
@@ -43,6 +38,13 @@ namespace Yutrel
             vertices.reset();
             indices.reset();
         }
+
+    public:
+        std::string path;
+        bool is_loaded{false};
+
+        Ref<std::vector<Vertex>> vertices;
+        Ref<std::vector<uint32_t>> indices;
     };
 
 } // namespace Yutrel

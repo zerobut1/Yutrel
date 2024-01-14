@@ -16,11 +16,7 @@ namespace Yutrel
 
     struct Texture
     {
-        std::string path;
-        bool is_loaded{false};
-
-        Ref<Image> image;
-
+    public:
         Texture() = default;
         Texture(const std::string& path)
             : path(path) {}
@@ -30,5 +26,11 @@ namespace Yutrel
             stbi_image_free(image->pixels);
             image.reset();
         }
+
+    public:
+        std::string path;
+        bool is_loaded{false};
+
+        Ref<Image> image;
     };
 } // namespace Yutrel

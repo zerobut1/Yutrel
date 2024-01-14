@@ -41,6 +41,8 @@ namespace Yutrel
     {
         RendererStatus status{};
 
+        auto start = std::chrono::system_clock::now();
+
         PrepareDrawImage();
 
         //--------绘制------------
@@ -69,6 +71,11 @@ namespace Yutrel
 
         //-----------------------
         CopyToSwapchain();
+
+        auto end     = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+        status.mesh_draw_time = elapsed.count() / 1000.f;
 
         return status;
     }
@@ -333,8 +340,6 @@ namespace Yutrel
         status.drawcall_count = 0;
         status.triangle_count = 0;
 
-        auto start = std::chrono::system_clock::now();
-
         VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
         //---------渲染信息----------------
@@ -403,10 +408,6 @@ namespace Yutrel
                 status.triangle_count += mesh->index_count / 3;
             }
         }
-        auto end     = std::chrono::system_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-        status.mesh_draw_time = elapsed.count() / 1000.f;
 
         return status;
     }

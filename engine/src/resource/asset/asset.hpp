@@ -18,6 +18,8 @@ namespace Yutrel
 
         Ref<struct Texture> AddTexture(const std::string& path);
 
+        Ref<struct GLTFScene> AddGLTFScene(const std::string& path);
+
         void LoadFromFile(Ref<Mesh> mesh);
 
         void LoadFromFile(Ref<Texture> texture);
@@ -28,5 +30,7 @@ namespace Yutrel
         std::unordered_map<uint32_t, Ref<Material>> m_materials;
 
         std::unordered_map<uint32_t, Ref<Texture>> m_textures;
+
+        std::unordered_map<uint32_t, Ref<GLTFScene>> m_gltf_scenes;
     };
 } // namespace Yutrel

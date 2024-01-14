@@ -29,7 +29,7 @@ void StartWorld(gecs::commands cmds,
     });
 
     auto entity = cmds.create();
-    cmds.emplace<Yutrel::PbrBundle>(
+    cmds.emplace_bundle<Yutrel::PbrBundle>(
         entity,
         Yutrel::PbrBundle{
             mesh,

@@ -2,6 +2,7 @@
 
 #include "asset.hpp"
 
+#include "resource/asset/gltf_scene.hpp"
 #include "resource/asset/material.hpp"
 #include "resource/asset/mesh.hpp"
 #include "resource/asset/texture.hpp"
@@ -52,6 +53,19 @@ namespace Yutrel
         }
 
         return m_textures[id++];
+    }
+
+    Ref<GLTFScene> AssetManager::AddGLTFScene(const std::string& path)
+    {
+        static uint32_t id = 1;
+
+        if (!m_gltf_scenes.insert({id, CreateRef<GLTFScene>(path)}).second)
+        {
+            LOG_ERROR("Failed to add texture");
+            return nullptr;
+        }
+
+        return m_gltf_scenes[id++];
     }
 
     void AssetManager::LoadFromFile(Ref<Mesh> mesh)

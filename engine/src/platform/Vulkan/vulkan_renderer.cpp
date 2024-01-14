@@ -130,13 +130,13 @@ namespace Yutrel
         *reinterpret_cast<GPUSceneData*>(m_asset_manager->GetGlobalRenderData()->scene_data_buffer.info.pMappedData) = scene_data;
 
         // 物体
-        for (auto pbr : pass_data->pbrs)
+        for (auto object : pass_data->objects)
         {
             // mesh加载到GPU，并释放内存
-            Ref<VulkanMesh> vulkan_mesh = m_asset_manager->SetVulkanMesh(pbr->mesh);
+            Ref<VulkanMesh> vulkan_mesh = m_asset_manager->SetVulkanMesh(object.mesh);
 
             // 材质的数据加载到GPU
-            Ref<VulkanPBRMaterial> vulkan_material = m_asset_manager->SetVulkanMaterial(pbr->material);
+            Ref<VulkanPBRMaterial> vulkan_material = m_asset_manager->SetVulkanMaterial(object.material);
 
             // 存储到render_data
             auto& objects = m_render_data->objects[vulkan_material][vulkan_mesh];

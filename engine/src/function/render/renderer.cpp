@@ -6,6 +6,7 @@
 #include "core/path/path.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
 #include "resource/asset/asset.hpp"
+#include "resource/asset/gltf_scene.hpp"
 #include "resource/asset/material.hpp"
 #include "resource/asset/mesh.hpp"
 #include "resource/asset/texture.hpp"
@@ -43,7 +44,8 @@ namespace Yutrel
         render->renderer->Init(info);
     }
 
-    void RendererResource::Update(gecs::querier<PbrBundle> pbrs,
+    void RendererResource::Update(gecs::querier<Ref<Mesh>, Ref<Material>> objects,
+                                  //   gecs::querier<GLTFScene> gltf_scenes,
                                   gecs::resource<RendererResource> render,
                                   gecs::resource<UIResource> ui,
                                   gecs::resource<BackGroundColor> background_color,
@@ -57,28 +59,36 @@ namespace Yutrel
         swap_data->background  = background_color.get();
         swap_data->view_matrix = camera->GetViewMatrix();
 
-        for (const auto& [entity, pbr_bundle] : pbrs)
+        for (const auto& [entity, mesh, material] : objects)
         {
             // 加载模型
-            if (!pbr_bundle.mesh->is_loaded)
+            if (!mesh->is_loaded)
             {
-                asset_manager->LoadFromFile(pbr_bundle.mesh);
+                asset_manager->LoadFromFile(mesh);
             }
 
             // 加载基础色纹理
-            if (!pbr_bundle.material->base_color_texture->is_loaded)
+            if (!material->base_color_texture->is_loaded)
             {
-                asset_manager->LoadFromFile(pbr_bundle.material->base_color_texture);
+                asset_manager->LoadFromFile(material->base_color_texture);
             }
 
-            swap_data->pbrs.push_back(&pbr_bundle);
+            swap_data->objects.push_back(SwapData::Object{mesh, material});
         }
 
+        // for (const auto& [entity, scene] : gltf_scenes)
+        // {
+        //     if (!scene.is_loaded)
+        //     {
+        //         // asset_manager->LoadFromFile(scene);
+        //     }
+        // }
+
         // 渲染器渲染一帧
-        auto renderer_status      = render->renderer->Tick(swap_data);
-        status->drawcall_count    = renderer_status.drawcall_count;
-        status->triangle_count    = renderer_status.triangle_count;
-        status->mesh_draw_time    = renderer_status.mesh_draw_time;
+        auto renderer_status       = render->renderer->Tick(swap_data);
+        status->drawcall_count     = renderer_status.drawcall_count;
+        status->triangle_count     = renderer_status.triangle_count;
+        status->mesh_draw_time     = renderer_status.mesh_draw_time;
         status->renderer_tick_time = renderer_status.renderer_tick_time;
     }
 

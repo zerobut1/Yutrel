@@ -80,7 +80,13 @@ namespace Yutrel
         BackGroundColor background;
         glm::mat4 view_matrix;
 
-        std::vector<const PbrBundle*> pbrs;
+        struct Object
+        {
+            Ref<Mesh> mesh;
+            Ref<Material> material;
+        };
+
+        std::vector<Object> objects;
     };
 
     class Renderer
@@ -104,7 +110,8 @@ namespace Yutrel
         static void Init(gecs::resource<RendererResource> render,
                          gecs::resource<WindowResource> window);
 
-        static void Update(gecs::querier<struct PbrBundle> pbrs,
+        static void Update(gecs::querier<Ref<Mesh>, Ref<Material>> objects,
+                        //    gecs::querier<struct GLTFScene> gltf_scenes,
                            gecs::resource<RendererResource> render,
                            gecs::resource<class UIResource> ui,
                            gecs::resource<BackGroundColor> background_color,
