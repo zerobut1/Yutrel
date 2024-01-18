@@ -140,8 +140,8 @@ namespace Yutrel
 
             // 存储到render_data
             auto& objects = m_render_data->objects[vulkan_material][vulkan_mesh];
-            // todo transform组件
-            objects.push_back(glm::mat4{1.0f});
+
+            objects.push_back(object.transform.model_matrix);
         }
     }
 

@@ -402,12 +402,11 @@ namespace Yutrel
 
                 vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(mesh->index_count), 1, 0, 0, 0);
 
-                vkCmdEndRendering(cmd_buffer);
-
                 status.drawcall_count++;
                 status.triangle_count += mesh->index_count / 3;
             }
         }
+        vkCmdEndRendering(cmd_buffer);
 
         return status;
     }

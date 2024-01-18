@@ -32,7 +32,11 @@ namespace Yutrel
             vulkan_material->uniform_buffer = m_rhi->UploadMaterialData(material);
 
             // 加载纹理到GPU
-            vulkan_material->base_color_texture = m_rhi->UploadTexture(material->base_color_texture);
+            if (!m_textures.count(material->base_color_texture))
+            {
+                m_textures.insert({material->base_color_texture, m_rhi->UploadTexture(material->base_color_texture)});
+            }
+            vulkan_material->base_color_texture = m_textures[material->base_color_texture];
 
             // 分配描述符集
             m_rhi->AllocateDescriptorSets(m_material_descriptor_set_layout, &vulkan_material->descriptor_set);

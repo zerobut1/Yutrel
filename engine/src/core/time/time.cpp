@@ -28,7 +28,6 @@ namespace Yutrel
 
         frame_count++;
         duration += time->Elapse();
-        LOG_WARN("{0},{1}", frame_count, duration);
         // 0.5秒更新一次
         if (duration >= 500000)
         {

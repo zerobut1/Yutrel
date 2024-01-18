@@ -1,8 +1,14 @@
 #pragma once
 
 #include <string>
+
 namespace Yutrel
 {
+    struct Primitives
+    {
+        std::vector<gecs::entity> entities;
+    };
+
     struct GLTFScene
     {
     public:
@@ -12,6 +18,7 @@ namespace Yutrel
 
     public:
         std::string path;
+        std::string root_path;
         bool is_loaded{false};
     };
 } // namespace Yutrel

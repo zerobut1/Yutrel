@@ -7,6 +7,7 @@ layout(location = 1)out vec2 outUV;
 struct Vertex {
     vec3 position;
     vec3 normal;
+    vec3 tangent;
     vec2 uv;
 };
 

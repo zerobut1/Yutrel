@@ -35,6 +35,7 @@ namespace Yutrel
         VkDescriptorSetLayout m_material_descriptor_set_layout;
 
         std::unordered_map<Ref<Mesh>, Ref<VulkanMesh>> m_meshes;
+        std::unordered_map<Ref<Texture>, AllocatedImage> m_textures;
         std::unordered_map<Ref<Material>, Ref<VulkanPBRMaterial>> m_materials;
 
         Ref<GlobalRenderData> m_global_render_data;

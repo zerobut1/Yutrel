@@ -44,7 +44,7 @@ namespace Yutrel
         render->renderer->Init(info);
     }
 
-    void RendererResource::Update(gecs::querier<Ref<Mesh>, Ref<Material>> objects,
+    void RendererResource::Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
                                   //   gecs::querier<GLTFScene> gltf_scenes,
                                   gecs::resource<RendererResource> render,
                                   gecs::resource<UIResource> ui,
@@ -59,21 +59,9 @@ namespace Yutrel
         swap_data->background  = background_color.get();
         swap_data->view_matrix = camera->GetViewMatrix();
 
-        for (const auto& [entity, mesh, material] : objects)
+        for (const auto& [entity, mesh, material, transform] : objects)
         {
-            // 加载模型
-            if (!mesh->is_loaded)
-            {
-                asset_manager->LoadFromFile(mesh);
-            }
-
-            // 加载基础色纹理
-            if (!material->base_color_texture->is_loaded)
-            {
-                asset_manager->LoadFromFile(material->base_color_texture);
-            }
-
-            swap_data->objects.push_back(SwapData::Object{mesh, material});
+            swap_data->objects.push_back(SwapData::Object{mesh, material, transform});
         }
 
         // for (const auto& [entity, scene] : gltf_scenes)

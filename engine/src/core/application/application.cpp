@@ -57,6 +57,9 @@ namespace Yutrel
             .regist_startup_system<RendererResource::Init>()
             .regist_update_system<Time::Update>()
             .regist_update_system<WindowResource::Update>()
+            .regist_update_system<AssetManager::LoadGLTFScenes>()
+            .regist_update_system<AssetManager::LoadMeshes>()
+            .regist_update_system<AssetManager::LoadMaterials>()
             .regist_update_system<RendererResource::Update>();
 
         return *this;

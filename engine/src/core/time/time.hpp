@@ -1,6 +1,10 @@
 #pragma once
 
+#include <gecs/gecs.hpp>
+
 #include <chrono>
+#include <stdint.h>
+
 namespace Yutrel
 {
     class Time final
@@ -13,6 +17,8 @@ namespace Yutrel
         Time& operator=(Time&&)      = default;
 
         uint32_t GetFPS() const { return m_fps; }
+        // 获得以秒为单位的delta_time
+        float GetDeltaTime() const { return (float)Elapse() / 1000000; }
 
         // 返回以微秒为单位的时间
         uint32_t Elapse() const;

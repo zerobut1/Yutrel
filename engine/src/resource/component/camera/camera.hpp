@@ -38,6 +38,7 @@ namespace Yutrel
         glm::vec3 m_world_position{0.0f, 0.0f, 5.0f};
 
         // 参数
+        float m_speed{3.0f};
         float m_mouse_sensitivity{0.005f};
     };
 } // namespace Yutrel

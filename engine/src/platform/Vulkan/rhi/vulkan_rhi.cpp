@@ -266,13 +266,15 @@ namespace Yutrel
         //--------创建描述符池-----------
         // todo 控制描述符池大小
         std::vector<VkDescriptorPoolSize> sizes{
-            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 10},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 200},
+            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 200},
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 200},
         };
 
         VkDescriptorPoolCreateInfo pool_create_info{};
         pool_create_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pool_create_info.flags         = 0;
-        pool_create_info.maxSets       = 10;
+        pool_create_info.maxSets       = 200;
         pool_create_info.poolSizeCount = static_cast<uint32_t>(sizes.size());
         pool_create_info.pPoolSizes    = sizes.data();
 
@@ -284,26 +286,6 @@ namespace Yutrel
             {
                 vkDestroyDescriptorPool(m_device, m_descriptor_pool, nullptr);
             });
-
-        // //------------创建每帧动态分配的描述符池---------
-        // for (int i = 0; i < FRAME_OVERLAP; i++)
-        // {
-        //     std::vector<DescriptorAllocator::PoolSizeRatio> frame_sizes = {
-        //         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3},
-        //         {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3},
-        //         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3},
-        //         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
-        //     };
-
-        //     m_frames[i].descriptors = DescriptorAllocator{};
-        //     m_frames[i].descriptors.Init(this, 1000, frame_sizes);
-
-        //     m_main_deletion_queue.PushFunction(
-        //         [&, i]()
-        //         {
-        //             m_frames[i].descriptors.DestroyPools();
-        //         });
-        // }
     }
 
     void VulkanRHI::InitSyncStructures()
@@ -822,7 +804,12 @@ namespace Yutrel
         info.pSetLayouts        = &layout;
 
         VkDescriptorSet set;
-        YUTREL_ASSERT(vkAllocateDescriptorSets(m_device, &info, &set) == VK_SUCCESS, "Failed to allocate descriptor sets");
+
+        auto result = vkAllocateDescriptorSets(m_device, &info, &set);
+
+        YUTREL_ASSERT(result == VK_SUCCESS, "");
+
+        // YUTREL_ASSERT(vkAllocateDescriptorSets(m_device, &info, &set) == VK_SUCCESS, "Failed to allocate descriptor sets");
 
         *out_set = set;
     }

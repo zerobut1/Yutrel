@@ -14,13 +14,14 @@ namespace Yutrel
 {
     struct Vertex
     {
-        alignas(16) glm::vec3 position;
+        alignas(16) glm::vec3 pos;
         alignas(16) glm::vec3 normal;
+        alignas(16) glm::vec3 tangent;
         alignas(8) glm::vec2 uv;
 
         bool operator==(const Vertex& other) const
         {
-            return position == other.position &&
+            return pos == other.pos &&
                    normal == other.normal &&
                    uv == other.uv;
         }
@@ -57,7 +58,7 @@ namespace std
     {
         size_t operator()(Yutrel::Vertex const& vertex) const
         {
-            return ((hash<glm::vec3>()(vertex.position) ^
+            return ((hash<glm::vec3>()(vertex.pos) ^
                      (hash<glm::vec3>()(vertex.normal) << 1)) >>
                     1) ^
                    (hash<glm::vec2>()(vertex.uv) << 1);

@@ -84,6 +84,7 @@ namespace Yutrel
         {
             Ref<Mesh> mesh;
             Ref<Material> material;
+            Transform transform;
         };
 
         std::vector<Object> objects;
@@ -110,8 +111,8 @@ namespace Yutrel
         static void Init(gecs::resource<RendererResource> render,
                          gecs::resource<WindowResource> window);
 
-        static void Update(gecs::querier<Ref<Mesh>, Ref<Material>> objects,
-                        //    gecs::querier<struct GLTFScene> gltf_scenes,
+        static void Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
+                           //    gecs::querier<struct GLTFScene> gltf_scenes,
                            gecs::resource<RendererResource> render,
                            gecs::resource<class UIResource> ui,
                            gecs::resource<BackGroundColor> background_color,

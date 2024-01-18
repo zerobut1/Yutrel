@@ -1,11 +1,14 @@
 #pragma once
 
 #include "core/macro.hpp"
+#include "resource/component/component.hpp"
+
+#include <gecs/gecs.hpp>
+#include <tiny_gltf.h>
 
 #include <stdint.h>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
+#include <vector>
 
 namespace Yutrel
 {
@@ -24,13 +27,33 @@ namespace Yutrel
 
         void LoadFromFile(Ref<Texture> texture);
 
+        void LoadFromFile(gecs::entity scene_entity, Ref<GLTFScene> scene, const Transform& transform, Children& children, gecs::commands& cmd);
+
+        void LoadNode(const tinygltf::Node& in_node,
+                      const tinygltf::Model& model,
+                      const Transform& transform,
+                      const std::vector<Ref<Texture>>& images,
+                      gecs::entity* parent,
+                      Children& children,
+                      gecs::commands& cmd);
+
+        static void LoadMeshes(gecs::querier<Ref<Mesh>> meshes,
+                               gecs::resource<gecs::mut<AssetManager>> asset_manager);
+
+        static void LoadMaterials(gecs::querier<Ref<Material>> materials,
+                                  gecs::resource<gecs::mut<AssetManager>> asset_manager);
+
+        static void LoadGLTFScenes(gecs::querier<Ref<GLTFScene>, Transform, gecs::mut<Children>> scenes,
+                                   gecs::resource<gecs::mut<AssetManager>> asset_manager,
+                                   gecs::commands cmd);
+
     private:
-        std::unordered_map<uint32_t, Ref<Mesh>> m_meshes;
+        std::vector<Ref<Mesh>> m_meshes;
 
-        std::unordered_map<uint32_t, Ref<Material>> m_materials;
+        std::vector<Ref<Material>> m_materials;
 
-        std::unordered_map<uint32_t, Ref<Texture>> m_textures;
+        std::vector<Ref<Texture>> m_textures;
 
-        std::unordered_map<uint32_t, Ref<GLTFScene>> m_gltf_scenes;
+        std::vector<Ref<GLTFScene>> m_gltf_scenes;
     };
 } // namespace Yutrel

@@ -16,7 +16,7 @@ namespace Yutrel
         m_direction = glm::normalize(front);
         m_right     = glm::normalize(glm::cross(m_direction, glm::vec3{0.0f, 1.0f, 0.0f}));
 
-        glm::vec3 velocity = m_world_velocity * delta_time;
+        glm::vec3 velocity = m_world_velocity * delta_time * m_speed;
         m_world_velocity   = glm::vec3(0.0f);
         m_world_position += velocity;
     }
