@@ -51,7 +51,7 @@ namespace Yutrel
                                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
             writer.WriteImage(1,
                               vulkan_material->base_color_texture.image_view,
-                              default_data.default_sampler_nearest,
+                              default_data.default_sampler_linear,
                               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                               VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
             m_rhi->UpdateDescriptorSets(writer, vulkan_material->descriptor_set);

@@ -147,10 +147,13 @@ namespace Yutrel
         AllocatedImage UploadTexture(Ref<struct Texture> texture);
 
         // 转换图像布局
-        void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout);
+        void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout, uint32_t mip_levels = 1);
 
         // 拷贝图像
         void CopyImageToImage(VkCommandBuffer cmd_buffer, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size);
+
+        // 生成mipmap
+        void GenerateMipmaps(VkCommandBuffer cmd_buffer, VkImage image, VkExtent2D image_size);
 
     private:
         //--------初始化----------
@@ -191,6 +194,8 @@ namespace Yutrel
         VkDebugUtilsMessengerEXT m_debug_messenger;
         // 物理设备
         VkPhysicalDevice m_physical_device;
+        // 物理设备属性
+        VkPhysicalDeviceProperties m_physical_device_properties;
         // 逻辑设备
         VkDevice m_device;
         // 窗口表面

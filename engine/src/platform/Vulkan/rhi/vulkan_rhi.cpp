@@ -12,9 +12,10 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+
+#include <stdint.h>
 #include <vcruntime.h>
 #include <vcruntime_string.h>
-#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -167,23 +168,28 @@ namespace Yutrel
         // 创建窗口表面
         glfwCreateWindowSurface(m_instance, raw_window, nullptr, &m_surface);
 
-        // vulkan 1.3 特性
-        VkPhysicalDeviceVulkan13Features features_13{};
-        features_13.dynamicRendering = true;
-        features_13.synchronization2 = true;
+        // 设备特性
+        VkPhysicalDeviceFeatures device_features{};
+        device_features.samplerAnisotropy = VK_TRUE;
 
         // vulkan 1.2 特性
         VkPhysicalDeviceVulkan12Features features_12{};
         features_12.bufferDeviceAddress = true;
         features_12.descriptorIndexing  = true;
 
+        // vulkan 1.3 特性
+        VkPhysicalDeviceVulkan13Features features_13{};
+        features_13.dynamicRendering = true;
+        features_13.synchronization2 = true;
+
         // 选择物理设备
         vkb::PhysicalDeviceSelector selector{vkb_instance};
         vkb::PhysicalDevice physical_device =
             selector
                 .set_minimum_version(1, 3)
-                .set_required_features_13(features_13)
+                .set_required_features(device_features)
                 .set_required_features_12(features_12)
+                .set_required_features_13(features_13)
                 .set_surface(m_surface)
                 .select()
                 .value();
@@ -204,8 +210,9 @@ namespace Yutrel
                                      .value();
 
         // 获取设备
-        m_physical_device = physical_device.physical_device;
-        m_device          = vkb_device.device;
+        m_physical_device            = physical_device.physical_device;
+        m_physical_device_properties = vkb_device.physical_device.properties;
+        m_device                     = vkb_device.device;
 
         // 获取图形队列
         m_graphics_queue        = vkb_device.get_queue(vkb::QueueType::graphics).value();
@@ -424,14 +431,28 @@ namespace Yutrel
 
         // 默认采样器
         VkSamplerCreateInfo sampler_info{};
-        sampler_info.sType     = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        sampler_info.magFilter = VK_FILTER_NEAREST;
-        sampler_info.minFilter = VK_FILTER_NEAREST;
+        sampler_info.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        sampler_info.magFilter               = VK_FILTER_NEAREST;
+        sampler_info.minFilter               = VK_FILTER_NEAREST;
+        sampler_info.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        sampler_info.anisotropyEnable        = VK_TRUE;
+        sampler_info.maxAnisotropy           = m_physical_device_properties.limits.maxSamplerAnisotropy;
+        sampler_info.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        sampler_info.unnormalizedCoordinates = VK_FALSE;
+        sampler_info.compareEnable           = VK_FALSE;
+        sampler_info.compareOp               = VK_COMPARE_OP_ALWAYS;
+        sampler_info.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        sampler_info.mipLodBias              = 0.0f;
+        sampler_info.minLod                  = 0.0f;
+        sampler_info.maxLod                  = VK_LOD_CLAMP_NONE;
 
         vkCreateSampler(m_device, &sampler_info, nullptr, &m_default_data.default_sampler_nearest);
 
         sampler_info.magFilter = VK_FILTER_LINEAR;
         sampler_info.minFilter = VK_FILTER_LINEAR;
+
         vkCreateSampler(m_device, &sampler_info, nullptr, &m_default_data.default_sampler_linear);
 
         m_main_deletion_queue.PushFunction(
@@ -663,14 +684,13 @@ namespace Yutrel
         new_image.image_extent = size;
 
         VkImageCreateInfo img_info = vkinit::ImageCreateInfo(format, usage, size);
-        // 是否mipmap
         if (mipmapped)
         {
             img_info.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(size.width, size.height)))) + 1;
         }
 
+        // 将图片保存至GPU上
         VmaAllocationCreateInfo allocinfo{};
-        // 设为GPU内存
         allocinfo.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
         allocinfo.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
@@ -694,41 +714,56 @@ namespace Yutrel
     void VulkanRHI::CreateImage(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped, AllocatedImage* out_image)
     {
         // 将图像数据存入暂存缓冲区
-        size_t data_size = size.depth * size.width * size.height * 4;
+        size_t data_size    = size.depth * size.width * size.height * 4;
+        uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(size.width, size.height)))) + 1;
 
-        AllocatedBuffer upload_buffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+        // CPU_TO_GPU内存有时可能会不够大
+        // AllocatedBuffer upload_buffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+        AllocatedBuffer upload_buffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
         memcpy(upload_buffer.info.pMappedData, data, data_size);
 
         AllocatedImage new_image;
         CreateImage(size, format, usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, mipmapped, &new_image);
 
-        // 将数据拷贝到GPU图像
+        // 转换格式
         VkCommandBuffer cmd_buffer = BeginSingleTimeCommands();
+        {
+            // 转换布局
+            TransitionImage(cmd_buffer,
+                            new_image.image,
+                            VK_IMAGE_LAYOUT_UNDEFINED,
+                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                            mipmapped ? mip_levels : 1);
 
-        TransitionImage(cmd_buffer,
-                        new_image.image,
-                        VK_IMAGE_LAYOUT_UNDEFINED,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            // 图像拷贝到GPU
+            VkBufferImageCopy copyRegion{};
+            copyRegion.bufferOffset      = 0;
+            copyRegion.bufferRowLength   = 0;
+            copyRegion.bufferImageHeight = 0;
 
-        VkBufferImageCopy copyRegion{};
-        copyRegion.bufferOffset      = 0;
-        copyRegion.bufferRowLength   = 0;
-        copyRegion.bufferImageHeight = 0;
+            copyRegion.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            copyRegion.imageSubresource.mipLevel       = 0;
+            copyRegion.imageSubresource.baseArrayLayer = 0;
+            copyRegion.imageSubresource.layerCount     = 1;
+            copyRegion.imageExtent                     = size;
 
-        copyRegion.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        copyRegion.imageSubresource.mipLevel       = 0;
-        copyRegion.imageSubresource.baseArrayLayer = 0;
-        copyRegion.imageSubresource.layerCount     = 1;
-        copyRegion.imageExtent                     = size;
+            vkCmdCopyBufferToImage(cmd_buffer, upload_buffer.buffer, new_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
-        vkCmdCopyBufferToImage(cmd_buffer, upload_buffer.buffer, new_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
-
-        TransitionImage(cmd_buffer,
-                        new_image.image,
-                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
+            // 生成mipmap
+            if (mipmapped)
+            {
+                GenerateMipmaps(cmd_buffer, new_image.image, {size.width, size.height});
+            }
+            else
+            {
+                TransitionImage(cmd_buffer,
+                                new_image.image,
+                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                mipmapped ? mip_levels : 1);
+            }
+        }
         EndSingleTimeCommands(cmd_buffer);
 
         DestroyBuffer(upload_buffer);
@@ -1022,8 +1057,7 @@ namespace Yutrel
 
         // 创建gpu图片
         AllocatedImage new_image;
-        // todo mipmap
-        CreateImage(image->pixels, size, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT, false, &new_image);
+        CreateImage(image->pixels, size, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_SAMPLED_BIT, true, &new_image);
 
         // 释放内存
         texture->ReleaseImage();
@@ -1038,7 +1072,7 @@ namespace Yutrel
         return new_image;
     }
 
-    void VulkanRHI::TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout)
+    void VulkanRHI::TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout, uint32_t mip_levels)
     {
         VkImageMemoryBarrier2 imageBarrier{};
         imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -1052,9 +1086,10 @@ namespace Yutrel
         imageBarrier.oldLayout = cur_layout;
         imageBarrier.newLayout = new_layout;
 
-        VkImageAspectFlags aspectMask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-        imageBarrier.subresourceRange = vkinit::ImageSubresourceRange(aspectMask);
-        imageBarrier.image            = image;
+        VkImageAspectFlags aspectMask            = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+        imageBarrier.subresourceRange            = vkinit::ImageSubresourceRange(aspectMask);
+        imageBarrier.subresourceRange.levelCount = mip_levels;
+        imageBarrier.image                       = image;
 
         VkDependencyInfo depInfo{};
         depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
@@ -1102,6 +1137,87 @@ namespace Yutrel
         blit_info.pRegions       = &blit_region;
 
         vkCmdBlitImage2(cmd_buffer, &blit_info);
+    }
+
+    void VulkanRHI::GenerateMipmaps(VkCommandBuffer cmd_buffer, VkImage image, VkExtent2D image_size)
+    {
+        uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(image_size.width, image_size.height)))) + 1;
+
+        for (int mip = 0; mip < mip_levels; mip++)
+        {
+            VkExtent2D half_size = image_size;
+            half_size.width /= 2;
+            half_size.height /= 2;
+
+            VkImageMemoryBarrier2 image_barrier{};
+            image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            image_barrier.pNext = nullptr;
+
+            image_barrier.srcStageMask  = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            image_barrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
+            image_barrier.dstStageMask  = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            image_barrier.dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+
+            image_barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            image_barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+            VkImageAspectFlags aspect_mask              = VK_IMAGE_ASPECT_COLOR_BIT;
+            image_barrier.subresourceRange              = vkinit::ImageSubresourceRange(aspect_mask);
+            image_barrier.subresourceRange.levelCount   = 1;
+            image_barrier.subresourceRange.baseMipLevel = mip;
+            image_barrier.image                         = image;
+
+            VkDependencyInfo dep_info{};
+            dep_info.sType                   = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+            dep_info.pNext                   = nullptr;
+            dep_info.imageMemoryBarrierCount = 1;
+            dep_info.pImageMemoryBarriers    = &image_barrier;
+
+            vkCmdPipelineBarrier2(cmd_buffer, &dep_info);
+
+            if (mip < mip_levels - 1)
+            {
+                VkImageBlit2 blit_region{};
+                blit_region.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+                blit_region.pNext = nullptr;
+
+                blit_region.srcOffsets[1].x = image_size.width;
+                blit_region.srcOffsets[1].y = image_size.height;
+                blit_region.srcOffsets[1].z = 1;
+
+                blit_region.dstOffsets[1].x = half_size.width;
+                blit_region.dstOffsets[1].y = half_size.height;
+                blit_region.dstOffsets[1].z = 1;
+
+                blit_region.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                blit_region.srcSubresource.baseArrayLayer = 0;
+                blit_region.srcSubresource.layerCount     = 1;
+                blit_region.srcSubresource.mipLevel       = mip;
+
+                blit_region.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                blit_region.dstSubresource.baseArrayLayer = 0;
+                blit_region.dstSubresource.layerCount     = 1;
+                blit_region.dstSubresource.mipLevel       = mip + 1;
+
+                VkBlitImageInfo2 blit_info{};
+                blit_info.sType          = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+                blit_info.pNext          = nullptr;
+                blit_info.dstImage       = image;
+                blit_info.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+                blit_info.srcImage       = image;
+                blit_info.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                blit_info.filter         = VK_FILTER_LINEAR;
+                blit_info.regionCount    = 1;
+                blit_info.pRegions       = &blit_region;
+
+                vkCmdBlitImage2(cmd_buffer, &blit_info);
+
+                image_size = half_size;
+            }
+        }
+
+        // 转换布局
+        TransitionImage(cmd_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels);
     }
 
     void VulkanRHI::UpdateSwapchainSize(uint32_t width, uint32_t height)
