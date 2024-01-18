@@ -140,6 +140,30 @@ namespace Yutrel
                 images.emplace_back(AddTexture(scene->root_path + gltf_image.uri));
             }
 
+            // 加载所有的材质
+            std::vector<Ref<Material>> materials;
+            for (size_t i = 0; i < model.materials.size(); i++)
+            {
+                auto material = materials.emplace_back(AddMaterial({}));
+
+                tinygltf::Material gltf_material = model.materials[i];
+                {
+                    if (gltf_material.values.find("baseColorFactor") != gltf_material.values.end())
+                    {
+                        material->base_color = glm::make_vec4(gltf_material.values["baseColorFactor"].ColorFactor().data());
+                    }
+                    if (gltf_material.values.find("baseColorTexture") != gltf_material.values.end())
+                    {
+                        material->base_color_texture = images[gltf_material.values["baseColorTexture"].TextureIndex()];
+                    }
+                    // Get the normal map texture index
+                    // if (gltf_material.additionalValues.find("normalTexture") != gltf_material.additionalValues.end())
+                    // {
+                    //     material.normalTextureIndex = gltf_material.additionalValues["normalTexture"].TextureIndex();
+                    // }
+                }
+            }
+
             // 暂时只加载文件中的第一个场景
             const tinygltf::Scene& gltf_scene = model.scenes[0];
             for (size_t i = 0; i < gltf_scene.nodes.size(); i++)
@@ -154,7 +178,7 @@ namespace Yutrel
 
                 // 加载每个node的primitive，以及子node
                 // Children node_children;
-                LoadNode(gltf_node, model, transform, images, &scene_entity, children, cmd);
+                LoadNode(gltf_node, model, transform, materials, &scene_entity, children, cmd);
 
                 // // 每个node的子entity
                 // cmd.emplace_bundle(node, NodeBundle{
@@ -175,7 +199,7 @@ namespace Yutrel
     void AssetManager::LoadNode(const tinygltf::Node& in_node,
                                 const tinygltf::Model& model,
                                 const Transform& transform,
-                                const std::vector<Ref<Texture>>& images,
+                                const std::vector<Ref<Material>>& materials,
                                 gecs::entity* parent,
                                 Children& children,
                                 gecs::commands& cmd)
@@ -217,7 +241,7 @@ namespace Yutrel
             Children node_children{};
             for (size_t i = 0; i < in_node.children.size(); i++)
             {
-                LoadNode(model.nodes[in_node.children[i]], model, transform, images, &node, node_children, cmd);
+                LoadNode(model.nodes[in_node.children[i]], model, transform, materials, &node, node_children, cmd);
             }
             cmd.emplace<Children>(node, node_children);
         }
@@ -334,24 +358,7 @@ namespace Yutrel
                 cmd.emplace<Ref<Mesh>>(primitive, mesh);
 
                 // 材质
-                Material material{};
-                tinygltf::Material gltf_material = model.materials[gltf_primitive.material];
-                {
-                    if (gltf_material.values.find("baseColorFactor") != gltf_material.values.end())
-                    {
-                        material.base_color = glm::make_vec4(gltf_material.values["baseColorFactor"].ColorFactor().data());
-                    }
-                    if (gltf_material.values.find("baseColorTexture") != gltf_material.values.end())
-                    {
-                        material.base_color_texture = images[gltf_material.values["baseColorTexture"].TextureIndex()];
-                    }
-                    // Get the normal map texture index
-                    // if (gltf_material.additionalValues.find("normalTexture") != gltf_material.additionalValues.end())
-                    // {
-                    //     material.normalTextureIndex = gltf_material.additionalValues["normalTexture"].TextureIndex();
-                    // }
-                }
-                cmd.emplace<Ref<Material>>(primitive, AddMaterial(std::move(material)));
+                cmd.emplace<Ref<Material>>(primitive, materials[gltf_primitive.material]);
             }
         }
     }

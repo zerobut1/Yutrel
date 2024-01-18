@@ -11,6 +11,7 @@
 #include "platform/Vulkan/vulkan_renderer.hpp"
 
 #include <array>
+#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -24,12 +25,7 @@ namespace Yutrel
 
         InitDescriptors();
 
-        // 管线
-        m_pipelines.resize(pipeline_count);
-
-        InitComputePipeline();
-
-        InitTexturePipeline();
+        InitPipelines();
     }
 
     void MainPass::PreparePassData(Ref<RenderData> render_data)
@@ -46,13 +42,10 @@ namespace Yutrel
         PrepareDrawImage();
 
         //--------绘制------------
-        // 清除图像
-        DrawBackground();
-
         // 图像格式转换为颜色缓冲
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
                                m_draw_image.image,
-                               VK_IMAGE_LAYOUT_GENERAL,
+                               VK_IMAGE_LAYOUT_UNDEFINED,
                                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         // 深度图像格式转换为深度附件
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
@@ -186,117 +179,70 @@ namespace Yutrel
         }
     }
 
-    void MainPass::InitComputePipeline()
+    void MainPass::InitPipelines()
     {
-        // layout
-        VkPipelineLayoutCreateInfo compute_layout{};
-        compute_layout.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        compute_layout.pNext          = nullptr;
-        compute_layout.pSetLayouts    = &m_descriptor_infos[draw_image_descriptor].layout;
-        compute_layout.setLayoutCount = 1;
+        m_pipelines.resize(pipeline_count);
 
-        VkPushConstantRange push_constant{};
-        push_constant.offset     = 0;
-        push_constant.size       = sizeof(ComputePushConstants);
-        push_constant.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
-        compute_layout.pushConstantRangeCount = 1;
-        compute_layout.pPushConstantRanges    = &push_constant;
-
-        m_rhi->CreatePipelineLayout(&compute_layout, &m_pipelines[compute_pipeline].layout);
-
-        // shader
-        VkShaderModule compute_shader;
-        if (!m_rhi->CreateShaderModule(COMPUTE_CODE, &compute_shader))
         {
-            LOG_ERROR("Failed to create compute shader");
+            //----------shader--------------
+            VkShaderModule triangle_vert_shader;
+            if (!m_rhi->CreateShaderModule(TRIANGLE_VERT_CODE, &triangle_vert_shader))
+            {
+                LOG_ERROR("Failed to create vertex shader");
+            }
+            VkShaderModule texture_frag_shader;
+            if (!m_rhi->CreateShaderModule(TEXTURE_FRAG_CODE, &texture_frag_shader))
+            {
+                LOG_ERROR("Failed to create fragment shader");
+            }
+
+            //------------推送常量------------
+            VkPushConstantRange buffer_range{};
+            buffer_range.offset     = 0;
+            buffer_range.size       = sizeof(PushConstants);
+            buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+            //-----------管线布局-------------
+            std::array<VkDescriptorSetLayout, 2> descriptor_set_layouts{
+                m_descriptor_infos[material_descriptor].layout,
+                m_descriptor_infos[scene_descriptor].layout,
+            };
+
+            VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
+            pipeline_layout_info.pushConstantRangeCount     = 1;
+            pipeline_layout_info.pPushConstantRanges        = &buffer_range;
+            pipeline_layout_info.setLayoutCount             = descriptor_set_layouts.size();
+            pipeline_layout_info.pSetLayouts                = descriptor_set_layouts.data();
+            m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[main_pipeline].layout);
+
+            //-----------创建管线----------
+            DynamicPipelineCreateInfo pipeline_create_info;
+            pipeline_create_info.Clear();
+            pipeline_create_info.pipeline_layout = m_pipelines[main_pipeline].layout;
+            pipeline_create_info.SetShaders(triangle_vert_shader, texture_frag_shader);
+            pipeline_create_info.SetInputTopolygy(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+            pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
+            pipeline_create_info.SetCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+            pipeline_create_info.SetMultisamplingNone();
+            pipeline_create_info.DisableBlending();
+            // pipeline_create_info.EnableBlendingAdditive();
+            // pipeline_create_info.EnableBlendingAlphablend();
+            pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
+            pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
+            pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
+
+            m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[main_pipeline].pipeline);
+
+            //--------清除---------
+            m_rhi->DestroyShaderModule(triangle_vert_shader);
+            m_rhi->DestroyShaderModule(texture_frag_shader);
         }
-
-        VkPipelineShaderStageCreateInfo stageinfo{};
-        stageinfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        stageinfo.pNext  = nullptr;
-        stageinfo.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
-        stageinfo.module = compute_shader;
-        stageinfo.pName  = "main";
-
-        VkComputePipelineCreateInfo computePipelineCreateInfo{};
-        computePipelineCreateInfo.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-        computePipelineCreateInfo.pNext  = nullptr;
-        computePipelineCreateInfo.layout = m_pipelines[compute_pipeline].layout;
-        computePipelineCreateInfo.stage  = stageinfo;
-
-        m_rhi->CreateComputePipelines(VK_NULL_HANDLE, &computePipelineCreateInfo, &m_pipelines[compute_pipeline].pipeline);
-
-        // 清除着色器模块
-        m_rhi->DestroyShaderModule(compute_shader);
-    }
-
-    void MainPass::InitTexturePipeline()
-    {
-        //----------shader--------------
-        VkShaderModule triangle_vert_shader;
-        if (!m_rhi->CreateShaderModule(TRIANGLE_VERT_CODE, &triangle_vert_shader))
-        {
-            LOG_ERROR("Failed to create vertex shader");
-        }
-        VkShaderModule texture_frag_shader;
-        if (!m_rhi->CreateShaderModule(TEXTURE_FRAG_CODE, &texture_frag_shader))
-        {
-            LOG_ERROR("Failed to create fragment shader");
-        }
-
-        //------------推送常量------------
-        VkPushConstantRange buffer_range{};
-        buffer_range.offset     = 0;
-        buffer_range.size       = sizeof(GPUDrawPushConstants);
-        buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-        //-----------管线布局-------------
-        std::array<VkDescriptorSetLayout, 2> descriptor_set_layouts{
-            m_descriptor_infos[material_descriptor].layout,
-            m_descriptor_infos[scene_descriptor].layout,
-        };
-
-        VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
-        pipeline_layout_info.pushConstantRangeCount     = 1;
-        pipeline_layout_info.pPushConstantRanges        = &buffer_range;
-        pipeline_layout_info.setLayoutCount             = descriptor_set_layouts.size();
-        pipeline_layout_info.pSetLayouts                = descriptor_set_layouts.data();
-        m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[texture_pipeline].layout);
-
-        //-----------创建管线----------
-        DynamicPipelineCreateInfo pipeline_create_info;
-        pipeline_create_info.Clear();
-        pipeline_create_info.pipeline_layout = m_pipelines[texture_pipeline].layout;
-        pipeline_create_info.SetShaders(triangle_vert_shader, texture_frag_shader);
-        pipeline_create_info.SetInputTopolygy(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-        pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
-        pipeline_create_info.SetCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-        pipeline_create_info.SetMultisamplingNone();
-        pipeline_create_info.DisableBlending();
-        // pipeline_create_info.EnableBlendingAdditive();
-        // pipeline_create_info.EnableBlendingAlphablend();
-        pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
-        pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
-        pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
-
-        m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[texture_pipeline].pipeline);
-
-        //--------清除---------
-        m_rhi->DestroyShaderModule(triangle_vert_shader);
-        m_rhi->DestroyShaderModule(texture_frag_shader);
     }
 
     void MainPass::PrepareDrawImage()
     {
         // 设置渲染图像范围
         m_draw_extent = m_rhi->GetSwapChainInfo().extent;
-
-        // 将渲染图像布局转换为通用布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_draw_image.image,
-                               VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_GENERAL);
     }
 
     void MainPass::CopyToSwapchain()
@@ -315,25 +261,6 @@ namespace Yutrel
                                 m_rhi->GetSwapChainInfo().extent);
     }
 
-    void MainPass::DrawBackground()
-    {
-        auto cmd_buffer = m_rhi->GetCurrentCommandBuffer();
-
-        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].pipeline);
-
-        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipelines[compute_pipeline].layout, 0, 1, &m_descriptor_infos[draw_image_descriptor].set, 0, nullptr);
-
-        ComputePushConstants push_constant{};
-        push_constant.data1 = m_render_data->background.data1;
-        push_constant.data2 = m_render_data->background.data2;
-        push_constant.data3 = m_render_data->background.data3;
-        push_constant.data4 = m_render_data->background.data4;
-
-        vkCmdPushConstants(cmd_buffer, m_pipelines[compute_pipeline].layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constant);
-
-        vkCmdDispatch(cmd_buffer, std::ceil(m_draw_extent.width / 16.0), std::ceil(m_draw_extent.height / 16.0), 1);
-    }
-
     RendererStatus MainPass::DrawGeometry()
     {
         RendererStatus status{};
@@ -343,8 +270,12 @@ namespace Yutrel
         VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
         //---------渲染信息----------------
+        // 清除信息
+        VkClearValue clear_value{};
+        clear_value.color = {{0.4f, 0.8f, 1.0f, 1.0f}};
+
         // 颜色附件
-        VkRenderingAttachmentInfo color_attachment = vkinit::AttachmentInfo(m_draw_image.image_view, nullptr, VK_IMAGE_LAYOUT_GENERAL);
+        VkRenderingAttachmentInfo color_attachment = vkinit::AttachmentInfo(m_draw_image.image_view, &clear_value, VK_IMAGE_LAYOUT_GENERAL);
 
         // 深度附件
         VkRenderingAttachmentInfo depth_attachment = vkinit::DepthAttachmentInfo(m_depth_image.image_view, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
@@ -354,7 +285,7 @@ namespace Yutrel
         vkCmdBeginRendering(cmd_buffer, &render_info);
 
         // 绑定管线
-        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[pipelines::texture_pipeline].pipeline);
+        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[pipelines::main_pipeline].pipeline);
 
         // 设定viewport
         VkViewport viewport{};
@@ -375,7 +306,7 @@ namespace Yutrel
         vkCmdSetScissor(cmd_buffer, 0, 1, &scissor);
 
         // 绑定全局变量描述符
-        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 1, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
+        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 1, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
 
         for (auto& pair1 : m_render_data->objects)
         {
@@ -383,7 +314,7 @@ namespace Yutrel
             auto& mesh_instance             = pair1.second;
 
             // 绑定材质描述符
-            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[texture_pipeline].layout, 0, 1, &material->descriptor_set, 0, nullptr);
+            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 0, 1, &material->descriptor_set, 0, nullptr);
 
             for (auto& pair2 : mesh_instance)
             {
@@ -392,10 +323,10 @@ namespace Yutrel
 
                 // 推送常量
                 // 将模型矩阵和顶点的设备地址传入
-                GPUDrawPushConstants push_constants;
+                PushConstants push_constants;
                 push_constants.model_matrix  = transform[0];
                 push_constants.vertex_buffer = mesh->vertex_buffer_address;
-                vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::texture_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
+                vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::main_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &push_constants);
 
                 // 绑定IBO
                 vkCmdBindIndexBuffer(cmd_buffer, mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);

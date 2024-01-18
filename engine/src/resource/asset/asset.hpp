@@ -32,7 +32,7 @@ namespace Yutrel
         void LoadNode(const tinygltf::Node& in_node,
                       const tinygltf::Model& model,
                       const Transform& transform,
-                      const std::vector<Ref<Texture>>& images,
+                      const std::vector<Ref<Material>>& materials,
                       gecs::entity* parent,
                       Children& children,
                       gecs::commands& cmd);

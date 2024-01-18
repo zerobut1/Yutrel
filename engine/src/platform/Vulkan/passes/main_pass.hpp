@@ -12,15 +12,7 @@ namespace Yutrel
     struct MainPassInitInfo : RenderPassInitInfo
     {};
 
-    struct ComputePushConstants
-    {
-        glm::vec4 data1;
-        glm::vec4 data2;
-        glm::vec4 data3;
-        glm::vec4 data4;
-    };
-
-    struct GPUDrawPushConstants
+    struct PushConstants
     {
         glm::mat4 model_matrix;
         VkDeviceAddress vertex_buffer;
@@ -45,24 +37,19 @@ namespace Yutrel
 
         void InitDescriptors();
 
-        void InitComputePipeline();
-
-        void InitTexturePipeline();
+        void InitPipelines();
 
         //---------绘制------------
         void PrepareDrawImage();
 
         void CopyToSwapchain();
 
-        void DrawBackground();
-
         RendererStatus DrawGeometry();
 
     private:
         enum pipelines : uint8_t
         {
-            compute_pipeline = 0,
-            texture_pipeline,
+            main_pipeline = 0,
 
             pipeline_count,
         };
@@ -78,7 +65,6 @@ namespace Yutrel
 
         // 绘制范围
         VkExtent2D m_draw_extent;
-
         // 绘制到的图像
         AllocatedImage m_draw_image;
         // 深度图像

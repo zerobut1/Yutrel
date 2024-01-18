@@ -77,7 +77,6 @@ namespace Yutrel
     {
         Ref<class WindowUI> ui;
 
-        BackGroundColor background;
         glm::mat4 view_matrix;
 
         struct Object
@@ -86,7 +85,6 @@ namespace Yutrel
             Ref<Material> material;
             Transform transform;
         };
-
         std::vector<Object> objects;
     };
 
@@ -115,7 +113,6 @@ namespace Yutrel
                            //    gecs::querier<struct GLTFScene> gltf_scenes,
                            gecs::resource<RendererResource> render,
                            gecs::resource<class UIResource> ui,
-                           gecs::resource<BackGroundColor> background_color,
                            gecs::resource<class Camera> camera,
                            gecs::resource<gecs::mut<struct EngineStatus>> status,
                            gecs::resource<gecs::mut<class AssetManager>> asset_manager);

@@ -115,9 +115,6 @@ namespace Yutrel
 
     void VulkanRenderer::ProcessRenderData(Ref<SwapData> pass_data)
     {
-        // 背景颜色
-        m_render_data->background = pass_data->background;
-
         // 场景信息
         VkExtent2D swapchain_extent = m_rhi->GetSwapChainInfo().extent;
         GPUSceneData scene_data{};

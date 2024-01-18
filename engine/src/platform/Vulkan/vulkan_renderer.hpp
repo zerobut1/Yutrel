@@ -36,7 +36,6 @@ namespace Yutrel
 
     struct RenderData
     {
-        BackGroundColor background;
         std::unordered_map<Ref<struct VulkanPBRMaterial>, std::unordered_map<Ref<struct VulkanMesh>, std::vector<glm::mat4>>> objects;
     };
 

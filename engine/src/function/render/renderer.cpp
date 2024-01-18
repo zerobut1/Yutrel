@@ -48,7 +48,6 @@ namespace Yutrel
                                   //   gecs::querier<GLTFScene> gltf_scenes,
                                   gecs::resource<RendererResource> render,
                                   gecs::resource<UIResource> ui,
-                                  gecs::resource<BackGroundColor> background_color,
                                   gecs::resource<Camera> camera,
                                   gecs::resource<gecs::mut<EngineStatus>> status,
                                   gecs::resource<gecs::mut<AssetManager>> asset_manager)
@@ -56,7 +55,6 @@ namespace Yutrel
         // 处理要交换给renderer的数据
         auto swap_data         = CreateRef<SwapData>();
         swap_data->ui          = ui->ui;
-        swap_data->background  = background_color.get();
         swap_data->view_matrix = camera->GetViewMatrix();
 
         for (const auto& [entity, mesh, material, transform] : objects)

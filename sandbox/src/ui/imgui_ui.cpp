@@ -17,22 +17,11 @@ void ImguiUI::RenderUI()
         ImGui::Text("draws %i", status.drawcall_count);
         ImGui::End();
     }
-
-    if (ImGui::Begin("background"))
-    {
-        ImGui::InputFloat4("data1", (float*)&background.data1);
-        ImGui::InputFloat4("data2", (float*)&background.data2);
-        ImGui::InputFloat4("data3", (float*)&background.data3);
-        ImGui::InputFloat4("data4", (float*)&background.data4);
-
-        ImGui::End();
-    }
 }
 
 void ImguiUI::UpdateData(gecs::resource<gecs::mut<Yutrel::UIResource>> ui,
                          gecs::resource<Yutrel::EngineStatus> status,
-                         gecs::resource<Yutrel::Time> time,
-                         gecs::resource<gecs::mut<Yutrel::BackGroundColor>> background_color)
+                         gecs::resource<Yutrel::Time> time)
 {
     auto imgui_ui = std::reinterpret_pointer_cast<ImguiUI>(ui->ui);
 
@@ -45,8 +34,6 @@ void ImguiUI::UpdateData(gecs::resource<gecs::mut<Yutrel::UIResource>> ui,
         imgui_ui->status = status.get();
         duration         = 0.0f;
     }
-
-    background_color.get() = imgui_ui->background;
 
     imgui_ui->fps = time->GetFPS();
 }
