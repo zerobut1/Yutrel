@@ -714,8 +714,7 @@ namespace Yutrel
     void VulkanRHI::CreateImage(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped, AllocatedImage* out_image)
     {
         // 将图像数据存入暂存缓冲区
-        size_t data_size    = size.depth * size.width * size.height * 4;
-        uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(size.width, size.height)))) + 1;
+        size_t data_size = size.depth * size.width * size.height * 4;
 
         // CPU_TO_GPU内存有时可能会不够大
         // AllocatedBuffer upload_buffer = CreateBuffer(data_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
@@ -733,8 +732,7 @@ namespace Yutrel
             TransitionImage(cmd_buffer,
                             new_image.image,
                             VK_IMAGE_LAYOUT_UNDEFINED,
-                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                            mipmapped ? mip_levels : 1);
+                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
             // 图像拷贝到GPU
             VkBufferImageCopy copyRegion{};
@@ -760,8 +758,7 @@ namespace Yutrel
                 TransitionImage(cmd_buffer,
                                 new_image.image,
                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                mipmapped ? mip_levels : 1);
+                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             }
         }
         EndSingleTimeCommands(cmd_buffer);
@@ -1072,7 +1069,7 @@ namespace Yutrel
         return new_image;
     }
 
-    void VulkanRHI::TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout, uint32_t mip_levels)
+    void VulkanRHI::TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout)
     {
         VkImageMemoryBarrier2 imageBarrier{};
         imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -1086,10 +1083,9 @@ namespace Yutrel
         imageBarrier.oldLayout = cur_layout;
         imageBarrier.newLayout = new_layout;
 
-        VkImageAspectFlags aspectMask            = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-        imageBarrier.subresourceRange            = vkinit::ImageSubresourceRange(aspectMask);
-        imageBarrier.subresourceRange.levelCount = mip_levels;
-        imageBarrier.image                       = image;
+        VkImageAspectFlags aspectMask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+        imageBarrier.subresourceRange = vkinit::ImageSubresourceRange(aspectMask);
+        imageBarrier.image            = image;
 
         VkDependencyInfo depInfo{};
         depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
@@ -1217,7 +1213,7 @@ namespace Yutrel
         }
 
         // 转换布局
-        TransitionImage(cmd_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_levels);
+        TransitionImage(cmd_buffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
 
     void VulkanRHI::UpdateSwapchainSize(uint32_t width, uint32_t height)

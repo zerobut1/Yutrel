@@ -240,7 +240,7 @@ namespace Yutrel
             VkImageSubresourceRange sub_image{};
             sub_image.aspectMask     = aspect_mask;
             sub_image.baseMipLevel   = 0;
-            sub_image.levelCount     = 1;
+            sub_image.levelCount     = VK_REMAINING_MIP_LEVELS;
             sub_image.baseArrayLayer = 0;
             sub_image.layerCount     = 1;
 

@@ -147,7 +147,7 @@ namespace Yutrel
         AllocatedImage UploadTexture(Ref<struct Texture> texture);
 
         // 转换图像布局
-        void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout, uint32_t mip_levels = 1);
+        void TransitionImage(VkCommandBuffer cmd_buffer, VkImage image, VkImageLayout cur_layout, VkImageLayout new_layout);
 
         // 拷贝图像
         void CopyImageToImage(VkCommandBuffer cmd_buffer, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size);
