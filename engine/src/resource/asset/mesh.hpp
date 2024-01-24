@@ -16,7 +16,7 @@ namespace Yutrel
     {
         alignas(16) glm::vec3 pos;
         alignas(16) glm::vec3 normal;
-        alignas(16) glm::vec3 tangent;
+        alignas(16) glm::vec4 tangent;
         alignas(8) glm::vec2 uv;
 
         bool operator==(const Vertex& other) const

@@ -17,6 +17,8 @@ namespace Yutrel
 
         glm::mat4 GetRotationMatrix() const;
 
+        glm::vec4 GetPosition() const;
+
         // 移动
         void MoveFront();
         void MoveBack();

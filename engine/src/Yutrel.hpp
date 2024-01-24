@@ -16,6 +16,7 @@
 #include "resource/asset/mesh.hpp"
 #include "resource/component/camera/camera.hpp"
 #include "resource/component/component.hpp"
+#include "resource/component/light.hpp"
 #include "resource/component/window_ui.hpp"
 
 #include <gecs/gecs.hpp>

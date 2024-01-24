@@ -12,5 +12,6 @@ namespace Yutrel
     {
         glm::vec4 base_color;
         Ref<Texture> base_color_texture;
+        Ref<Texture> normal_texture;
     };
 } // namespace Yutrel

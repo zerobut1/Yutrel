@@ -16,6 +16,7 @@ namespace Yutrel
     struct VulkanPBRMaterial
     {
         AllocatedImage base_color_texture;
+        AllocatedImage normal_texture;
 
         AllocatedBuffer uniform_buffer;
 

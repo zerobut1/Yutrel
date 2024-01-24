@@ -2,6 +2,7 @@
 
 #include "function/window/window.hpp"
 #include "resource/component/component.hpp"
+#include "resource/component/light.hpp"
 
 #include <stdint.h>
 #include <vector>
@@ -78,6 +79,9 @@ namespace Yutrel
         Ref<class WindowUI> ui;
 
         glm::mat4 view_matrix;
+        glm::vec4 view_position;
+
+        DirectionLight direction_light;
 
         struct Object
         {
@@ -110,7 +114,7 @@ namespace Yutrel
                          gecs::resource<WindowResource> window);
 
         static void Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
-                           //    gecs::querier<struct GLTFScene> gltf_scenes,
+                           gecs::querier<DirectionLight> direction_lights,
                            gecs::resource<RendererResource> render,
                            gecs::resource<class UIResource> ui,
                            gecs::resource<class Camera> camera,

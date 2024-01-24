@@ -1,13 +1,15 @@
 #version 450
 #extension GL_EXT_buffer_reference : require
 
-layout(location = 0)out vec3 outColor;
-layout(location = 1)out vec2 outUV;
+layout(location = 0)out vec2 out_uv;
+layout(location = 1)out vec3 out_normal;
+layout(location = 2)out vec4 out_tangent;
+layout(location = 3)out vec3 out_view_vec;
 
 struct Vertex {
     vec3 position;
     vec3 normal;
-    vec3 tangent;
+    vec4 tangent;
     vec2 uv;
 };
 
@@ -15,30 +17,32 @@ layout(buffer_reference, std430)readonly buffer VertexBuffer {
     Vertex vertices[];
 };
 
-//push constants block
 layout(push_constant)uniform constants
 {
     mat4 model_matrix;
-    VertexBuffer vertexBuffer;
-} PushConstants;
+    VertexBuffer vertex_buffer;
+} push_constants;
 
 layout(set = 1, binding = 0)uniform SceneData {
     mat4 view;
     mat4 proj;
     mat4 view_proj;
+    vec4 view_position;
     vec4 ambient_color;
-    vec4 sunlight_direction; // w for sun power
+    vec4 sunlight_direction;
     vec4 sunlight_color;
-} scene_data;
+} u_scene_data;
 
 void main()
 {
-    //load vertex data from device adress
-    Vertex v = PushConstants.vertexBuffer.vertices[gl_VertexIndex];
     
-    //output data
-    gl_Position = scene_data.proj * scene_data.view * PushConstants.model_matrix * vec4(v.position, 1.0f);
-    // gl_Position = PushConstants.model_matrix * vec4(v.position, 1.0f);
-    outColor = v.normal.xyz;
-    outUV = v.uv;
+    Vertex v = push_constants.vertex_buffer.vertices[gl_VertexIndex];
+    vec4 pos = push_constants.model_matrix * vec4(v.position, 1.0f);
+    
+    gl_Position = u_scene_data.proj * u_scene_data.view * pos;
+    
+    out_uv = v.uv;
+    out_normal = mat3(push_constants.model_matrix) * v.normal;
+    out_tangent = v.tangent;
+    out_view_vec = u_scene_data.view_position.xyz - pos.xyz;
 }

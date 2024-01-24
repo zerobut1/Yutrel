@@ -45,7 +45,7 @@ namespace Yutrel
     }
 
     void RendererResource::Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
-                                  //   gecs::querier<GLTFScene> gltf_scenes,
+                                  gecs::querier<DirectionLight> direction_lights,
                                   gecs::resource<RendererResource> render,
                                   gecs::resource<UIResource> ui,
                                   gecs::resource<Camera> camera,
@@ -53,22 +53,21 @@ namespace Yutrel
                                   gecs::resource<gecs::mut<AssetManager>> asset_manager)
     {
         // 处理要交换给renderer的数据
-        auto swap_data         = CreateRef<SwapData>();
-        swap_data->ui          = ui->ui;
-        swap_data->view_matrix = camera->GetViewMatrix();
+        auto swap_data           = CreateRef<SwapData>();
+        swap_data->ui            = ui->ui;
+        swap_data->view_matrix   = camera->GetViewMatrix();
+        swap_data->view_position = camera->GetPosition();
 
-        for (const auto& [entity, mesh, material, transform] : objects)
+        // todo 多光源的时候怎么处理
+        for (const auto& [_, light] : direction_lights)
+        {
+            swap_data->direction_light = light;
+        }
+
+        for (const auto& [_, mesh, material, transform] : objects)
         {
             swap_data->objects.push_back(SwapData::Object{mesh, material, transform});
         }
-
-        // for (const auto& [entity, scene] : gltf_scenes)
-        // {
-        //     if (!scene.is_loaded)
-        //     {
-        //         // asset_manager->LoadFromFile(scene);
-        //     }
-        // }
 
         // 渲染器渲染一帧
         auto renderer_status       = render->renderer->Tick(swap_data);

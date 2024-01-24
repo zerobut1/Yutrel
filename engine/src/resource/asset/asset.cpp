@@ -156,11 +156,10 @@ namespace Yutrel
                     {
                         material->base_color_texture = images[gltf_material.values["baseColorTexture"].TextureIndex()];
                     }
-                    // Get the normal map texture index
-                    // if (gltf_material.additionalValues.find("normalTexture") != gltf_material.additionalValues.end())
-                    // {
-                    //     material.normalTextureIndex = gltf_material.additionalValues["normalTexture"].TextureIndex();
-                    // }
+                    if (gltf_material.additionalValues.find("normalTexture") != gltf_material.additionalValues.end())
+                    {
+                        material->normal_texture = images[gltf_material.additionalValues["normalTexture"].TextureIndex()];
+                    }
                 }
             }
 
@@ -381,9 +380,14 @@ namespace Yutrel
         for (const auto& [entity, material] : materials)
         {
             // 基础色纹理
-            if (!material->base_color_texture->is_loaded)
+            if (material->base_color_texture && !material->base_color_texture->is_loaded)
             {
                 asset_manager->LoadFromFile(material->base_color_texture);
+            }
+            // 法线纹理
+            if (material->normal_texture && !material->normal_texture->is_loaded)
+            {
+                asset_manager->LoadFromFile(material->normal_texture);
             }
         }
     }

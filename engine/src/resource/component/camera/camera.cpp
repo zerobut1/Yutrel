@@ -36,6 +36,11 @@ namespace Yutrel
         return glm::toMat4(yaw_rotation) * glm::toMat4(pitch_rotation);
     }
 
+    glm::vec4 Camera::GetPosition() const
+    {
+        return glm::vec4(m_world_position, 0.0f);
+    }
+
     void Camera::MoveFront()
     {
         m_world_velocity += m_direction;

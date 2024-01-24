@@ -122,7 +122,10 @@ namespace Yutrel
         scene_data.view = pass_data->view_matrix;
         scene_data.proj = glm::perspective(glm::radians(70.f), (float)swapchain_extent.width / (float)swapchain_extent.height, 10000.0f, 0.1f);
         scene_data.proj[1][1] *= -1;
-        scene_data.view_proj = scene_data.proj * scene_data.view;
+        scene_data.view_proj          = scene_data.proj * scene_data.view;
+        scene_data.view_position      = pass_data->view_position;
+        scene_data.sunlight_direction = glm::vec4(pass_data->direction_light.direction, pass_data->direction_light.intensity);
+        scene_data.sunlight_color     = glm::vec4(pass_data->direction_light.color, 1.0f);
 
         *reinterpret_cast<GPUSceneData*>(m_asset_manager->GetGlobalRenderData()->scene_data_buffer.info.pMappedData) = scene_data;
 

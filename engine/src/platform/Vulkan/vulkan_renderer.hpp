@@ -24,6 +24,7 @@ namespace Yutrel
         glm::mat4 view;
         glm::mat4 proj;
         glm::mat4 view_proj;
+        glm::vec4 view_position;
         glm::vec4 ambient_color;
         glm::vec4 sunlight_direction; // w for sun power
         glm::vec4 sunlight_color;

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <gecs/gecs.hpp>
+
 #include <string>
+#include <vector>
 
 namespace Yutrel
 {
