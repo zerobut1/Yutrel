@@ -33,12 +33,8 @@ namespace Yutrel
         m_render_data = render_data;
     }
 
-    RendererStatus MainPass::DrawForward()
+    void MainPass::DrawForward()
     {
-        RendererStatus status{};
-
-        auto start = std::chrono::system_clock::now();
-
         PrepareDrawImage();
 
         //--------绘制------------
@@ -54,7 +50,7 @@ namespace Yutrel
                                VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
 
         // 绘制几何图形
-        status = DrawGeometry();
+        DrawGeometry();
 
         // 将渲染图像布局转换为传输源布局
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
@@ -64,13 +60,6 @@ namespace Yutrel
 
         //-----------------------
         CopyToSwapchain();
-
-        auto end     = std::chrono::system_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-        status.mesh_draw_time = elapsed.count() / 1000.f;
-
-        return status;
     }
 
     void MainPass::InitDrawImage()
@@ -263,11 +252,8 @@ namespace Yutrel
                                 m_rhi->GetSwapChainInfo().extent);
     }
 
-    RendererStatus MainPass::DrawGeometry()
+    void MainPass::DrawGeometry()
     {
-        RendererStatus status{};
-        status.drawcall_count = 0;
-        status.triangle_count = 0;
 
         VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
@@ -334,14 +320,9 @@ namespace Yutrel
                 vkCmdBindIndexBuffer(cmd_buffer, mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
                 vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(mesh->index_count), 1, 0, 0, 0);
-
-                status.drawcall_count++;
-                status.triangle_count += mesh->index_count / 3;
             }
         }
         vkCmdEndRendering(cmd_buffer);
-
-        return status;
     }
 
 } // namespace Yutrel

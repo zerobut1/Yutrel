@@ -33,16 +33,14 @@ namespace Yutrel
         // m_main_pass->Init(&main_init_info);
     }
 
-    RendererStatus VulkanPipeline::ForwardRender()
+    void VulkanPipeline::ForwardRender()
     {
         m_rhi->PrepareBeforePass();
 
-        RendererStatus status = std::dynamic_pointer_cast<MainPass>(m_main_pass)->DrawForward();
+        std::dynamic_pointer_cast<MainPass>(m_main_pass)->DrawForward();
         std::dynamic_pointer_cast<ImguiPass>(m_imgui_pass)->DrawImgui();
 
         m_rhi->SubmitRendering();
-
-        return status;
     }
 
     void VulkanPipeline::PreparePassData(Ref<RenderData> render_data)

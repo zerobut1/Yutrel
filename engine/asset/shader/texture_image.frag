@@ -31,7 +31,6 @@ void main()
     vec3 N = normalize(in_normal);
     vec3 T = normalize(in_tangent.xyz);
     vec3 B = cross(in_normal, in_tangent.xyz) * in_tangent.w;
-    // vec3 B = cross(in_normal, in_tangent.xyz);
     mat3 TBN = mat3(T, B, N);
     N = TBN * normalize(texture(u_normal_texture, in_uv).xyz * 2.0 - vec3(1.0));
     

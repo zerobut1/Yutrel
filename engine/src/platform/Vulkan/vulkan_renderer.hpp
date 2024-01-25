@@ -12,13 +12,6 @@ namespace Yutrel
     class VulkanPipeline;
     class VulkanAssetManager;
 
-    struct RendererStatus
-    {
-        int triangle_count;
-        int drawcall_count;
-        float mesh_draw_time;
-    };
-
     struct GPUSceneData
     {
         glm::mat4 view;
@@ -45,7 +38,7 @@ namespace Yutrel
     public:
         virtual void Init(RendererInitInfo info) override;
 
-        virtual EngineStatus Tick(Ref<SwapData> swap_data) override;
+        virtual void Tick(Ref<SwapData> swap_data) override;
 
         virtual void Clear() override;
 
