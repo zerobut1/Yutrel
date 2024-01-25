@@ -148,17 +148,22 @@ namespace Yutrel
 
                 tinygltf::Material gltf_material = model.materials[i];
                 {
-                    if (gltf_material.values.find("baseColorFactor") != gltf_material.values.end())
+                    material->base_color_factor = glm::make_vec4(gltf_material.pbrMetallicRoughness.baseColorFactor.data());
+                    material->metallic_factor   = gltf_material.pbrMetallicRoughness.metallicFactor;
+                    material->roughness_factor  = gltf_material.pbrMetallicRoughness.roughnessFactor;
+
+                    // 加载三种贴图
+                    if (gltf_material.pbrMetallicRoughness.baseColorTexture.index != -1)
                     {
-                        material->base_color = glm::make_vec4(gltf_material.values["baseColorFactor"].ColorFactor().data());
+                        material->base_color_texture = images[gltf_material.pbrMetallicRoughness.baseColorTexture.index];
                     }
-                    if (gltf_material.values.find("baseColorTexture") != gltf_material.values.end())
+                    if (gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                     {
-                        material->base_color_texture = images[gltf_material.values["baseColorTexture"].TextureIndex()];
+                        material->metallic_roughness_texture = images[gltf_material.pbrMetallicRoughness.metallicRoughnessTexture.index];
                     }
-                    if (gltf_material.additionalValues.find("normalTexture") != gltf_material.additionalValues.end())
+                    if (gltf_material.normalTexture.index != -1)
                     {
-                        material->normal_texture = images[gltf_material.additionalValues["normalTexture"].TextureIndex()];
+                        material->normal_texture = images[gltf_material.normalTexture.index];
                     }
                 }
             }
@@ -169,22 +174,8 @@ namespace Yutrel
             {
                 const tinygltf::Node gltf_node = model.nodes[gltf_scene.nodes[i]];
 
-                // // 每个SceneBundle的entity中，保存若干个子entity，即gltf的node
-                // auto node = cmd.create();
-
-                // // 将node保存至scene的子节点中
-                // children.entities.emplace_back(node);
-
-                // 加载每个node的primitive，以及子node
-                // Children node_children;
+                // 每个SceneBundle的entity中，保存若干个子entity，即gltf的nodes
                 LoadNode(gltf_node, model, transform, materials, &scene_entity, children, cmd);
-
-                // // 每个node的子entity
-                // cmd.emplace_bundle(node, NodeBundle{
-                //                              transform,
-                //                              std::move(node_children),
-                //                              Primitives{},
-                //                          });
             }
         }
         else
@@ -203,6 +194,7 @@ namespace Yutrel
                                 Children& children,
                                 gecs::commands& cmd)
     {
+        // 每个node的父entity指向scene的entity或者父node
         auto node = cmd.create();
         // 父节点
         if (parent != nullptr)
@@ -246,6 +238,7 @@ namespace Yutrel
         }
 
         // primitives
+        // 每个node保存若干个primitive子entity
         if (in_node.mesh > -1)
         {
             const tinygltf::Mesh gltf_mesh = model.meshes[in_node.mesh];
@@ -383,6 +376,11 @@ namespace Yutrel
             if (material->base_color_texture && !material->base_color_texture->is_loaded)
             {
                 asset_manager->LoadFromFile(material->base_color_texture);
+            }
+            // 金属度粗糙度纹理
+            if (material->metallic_roughness_texture && !material->metallic_roughness_texture->is_loaded)
+            {
+                asset_manager->LoadFromFile(material->metallic_roughness_texture);
             }
             // 法线纹理
             if (material->normal_texture && !material->normal_texture->is_loaded)

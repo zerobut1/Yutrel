@@ -9,13 +9,16 @@ namespace Yutrel
     // todo 自动填充
     struct MaterialUniformData
     {
-        glm::vec4 base_color;
-        glm::vec4 padding[15];
+        glm::vec4 base_color_factor;
+        float metallic_factor;
+        float roughness_factor;
+        float padding[58];
     };
 
     struct VulkanPBRMaterial
     {
         AllocatedImage base_color_texture;
+        AllocatedImage metallic_roughness_texture;
         AllocatedImage normal_texture;
 
         AllocatedBuffer uniform_buffer;

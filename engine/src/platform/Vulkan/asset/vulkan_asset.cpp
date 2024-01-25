@@ -32,19 +32,21 @@ namespace Yutrel
             vulkan_material->uniform_buffer = m_rhi->UploadMaterialData(material);
 
             // 加载纹理到GPU
-            if (!m_textures.count(material->base_color_texture))
+            if (material->base_color_texture && !m_textures.count(material->base_color_texture))
             {
-                if (material->base_color_texture)
-                {
-                    m_textures.insert({material->base_color_texture, m_rhi->UploadTexture(material->base_color_texture)});
-                }
-                if (material->normal_texture)
-                {
-                    m_textures.insert({material->normal_texture, m_rhi->UploadTexture(material->normal_texture)});
-                }
+                m_textures.insert({material->base_color_texture, m_rhi->UploadTexture(material->base_color_texture)});
             }
-            vulkan_material->base_color_texture = m_textures[material->base_color_texture];
-            vulkan_material->normal_texture     = m_textures[material->normal_texture];
+            if (material->metallic_roughness_texture && !m_textures.count(material->metallic_roughness_texture))
+            {
+                m_textures.insert({material->metallic_roughness_texture, m_rhi->UploadTexture(material->metallic_roughness_texture)});
+            }
+            if (material->normal_texture && !m_textures.count(material->normal_texture))
+            {
+                m_textures.insert({material->normal_texture, m_rhi->UploadTexture(material->normal_texture)});
+            }
+            vulkan_material->base_color_texture         = m_textures[material->base_color_texture];
+            vulkan_material->metallic_roughness_texture = m_textures[material->metallic_roughness_texture];
+            vulkan_material->normal_texture             = m_textures[material->normal_texture];
 
             // 分配描述符集
             m_rhi->AllocateDescriptorSets(m_material_descriptor_set_layout, &vulkan_material->descriptor_set);
@@ -63,6 +65,11 @@ namespace Yutrel
                               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                               VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
             writer.WriteImage(2,
+                              material->metallic_roughness_texture ? vulkan_material->metallic_roughness_texture.image_view : m_rhi->GetDefaultData().white_image.image_view,
+                              default_data.default_sampler_linear,
+                              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                              VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            writer.WriteImage(3,
                               material->normal_texture ? vulkan_material->normal_texture.image_view : m_rhi->GetDefaultData().white_image.image_view,
                               default_data.default_sampler_linear,
                               VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,

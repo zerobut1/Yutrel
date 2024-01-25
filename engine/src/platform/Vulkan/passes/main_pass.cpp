@@ -174,6 +174,7 @@ namespace Yutrel
             layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
             layout_info.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
             layout_info.AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+            layout_info.AddBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
             layout_info.shader_stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 
             m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[material_descriptor].layout);

@@ -1000,7 +1000,7 @@ namespace Yutrel
 
         // 数据
         MaterialUniformData uniform_data{};
-        uniform_data.base_color = material->base_color;
+        uniform_data.base_color_factor = material->base_color_factor;
 
         // unifrom缓冲
         auto uniform_buffer =
