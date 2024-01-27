@@ -14,4 +14,12 @@ namespace Yutrel
     static const std::vector<unsigned char> TEXTURE_FRAG_CODE{
         #include "texture_image.frag.spv.h"
     };
+
+    static const std::vector<unsigned char>  SHADOWMAP_VERT_CODE{
+        #include "shadowmap.vert.spv.h"
+    };
+
+    static const std::vector<unsigned char> SHADOWMAP_FRAG_CODE{
+        #include "shadowmap.frag.spv.h"
+    };
 } // namespace Yutrel

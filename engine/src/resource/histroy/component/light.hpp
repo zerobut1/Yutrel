@@ -21,11 +21,11 @@ namespace Yutrel
         float intensity;
     };
 
-    class DirectionLight : public Light
+    class DirectionalLight : public Light
     {
     public:
-        DirectionLight() = default;
-        DirectionLight(const glm::vec3& color, const glm::vec3& direction, float intensity = 1.0f);
+        DirectionalLight() = default;
+        DirectionalLight(const glm::vec3& color, const glm::vec3& direction, float intensity = 1.0f);
 
     public:
         glm::vec3 direction;

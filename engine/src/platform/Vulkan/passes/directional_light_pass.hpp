@@ -9,13 +9,16 @@
 
 namespace Yutrel
 {
-    struct MainPassInitInfo : RenderPassInitInfo
+    struct DirectionalLightPassInitInfo : RenderPassInitInfo
+    {};
+
+    struct PushConstants
     {
-        AllocatedImage directional_light_shadowmap;
-        VkSampler shadowmap_sampler;
+        glm::mat4 light_MVP;
+        VkDeviceAddress vertex_buffer;
     };
 
-    class MainPass final : public RenderPass
+    class DirectionalLightPass final : public RenderPass
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;
@@ -24,7 +27,10 @@ namespace Yutrel
 
         void DrawForward();
 
-        VkDescriptorSetLayout GetMaterialDescriptorSetLayout() const { return m_descriptor_infos[material_descriptor].layout; }
+    public:
+        // 深度图像
+        AllocatedImage m_depth_image;
+        VkSampler m_depth_sampler;
 
     private:
         //--------初始化---------
@@ -37,11 +43,7 @@ namespace Yutrel
         void InitPipelines();
 
         //---------绘制------------
-        void PrepareDrawImage();
-
-        void CopyToSwapchain();
-
-        void DrawGeometry();
+        void Draw();
 
     private:
         enum pipelines : uint8_t
@@ -53,29 +55,16 @@ namespace Yutrel
 
         enum descriptors : uint8_t
         {
-            scene_descriptor = 0,
-            material_descriptor,
+            light_descriptor = 0,
 
             descriptor_count,
         };
 
-        struct
-        {
-            glm::mat4 model_matrix;
-            glm::mat4 directional_light_VP;
-            VkDeviceAddress vertex_buffer;
-        } m_push_constants;
-
         // 绘制范围
         VkExtent2D m_draw_extent;
-        // 绘制到的图像
-        AllocatedImage m_draw_image;
-        // 深度图像
-        AllocatedImage m_depth_image;
 
-        // 平行光shadowmap
-        AllocatedImage m_directional_light_shadowmap;
-        VkSampler m_shadowmap_sampler;
+        // 绘制图像
+        AllocatedImage m_draw_image;
 
         Ref<RenderData> m_render_data;
     };

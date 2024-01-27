@@ -67,8 +67,8 @@
 // void SpawnLight(Yutrel::Commands& cmd, Yutrel::Resources resources)
 // {
 //     // SUN (direction light)
-//     cmd.Spawn<Yutrel::DirectionLight>(
-//         Yutrel::DirectionLight(glm::vec3(1.0f), glm::normalize(glm::vec3(1.0f, -1.0f, -1.0f))));
+//     cmd.Spawn<Yutrel::DirectionalLight>(
+//         Yutrel::DirectionalLight(glm::vec3(1.0f), glm::normalize(glm::vec3(1.0f, -1.0f, -1.0f))));
 
 //     // 点光源
 //     Yutrel::Transform transform;
@@ -151,7 +151,7 @@
 //     auto shaders = resources.Get<Shaders>();
 
 //     // 获取sun
-//     auto sun         = querier.Get<Yutrel::DirectionLight>(querier.Query<Yutrel::DirectionLight>()[0]);
+//     auto sun         = querier.Get<Yutrel::DirectionalLight>(querier.Query<Yutrel::DirectionalLight>()[0]);
 //     SunData sun_data = {glm::vec4(sun.color, 1.0f),
 //                         glm::vec4(sun.direction, 0.0f),
 //                         glm::vec4(sun.intensity)};
@@ -431,7 +431,7 @@
 //     }
 //     center /= corners.size();
 
-//     auto sun = querier.Get<Yutrel::DirectionLight>(querier.Query<Yutrel::DirectionLight>()[0]);
+//     auto sun = querier.Get<Yutrel::DirectionalLight>(querier.Query<Yutrel::DirectionalLight>()[0]);
 
 //     const auto lightView = glm::lookAt(center - sun.direction, center, glm::vec3(0.0f, 1.0f, 0.0f));
 

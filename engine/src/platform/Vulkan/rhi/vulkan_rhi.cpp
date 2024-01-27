@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <vcruntime.h>
 #include <vcruntime_string.h>
+#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -448,12 +449,12 @@ namespace Yutrel
         sampler_info.minLod                  = 0.0f;
         sampler_info.maxLod                  = VK_LOD_CLAMP_NONE;
 
-        vkCreateSampler(m_device, &sampler_info, nullptr, &m_default_data.default_sampler_nearest);
+        CreateSampler(&sampler_info, &m_default_data.default_sampler_nearest);
 
         sampler_info.magFilter = VK_FILTER_LINEAR;
         sampler_info.minFilter = VK_FILTER_LINEAR;
 
-        vkCreateSampler(m_device, &sampler_info, nullptr, &m_default_data.default_sampler_linear);
+        CreateSampler(&sampler_info, &m_default_data.default_sampler_linear);
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -462,8 +463,6 @@ namespace Yutrel
                 DestroyImage(m_default_data.grey_image);
                 DestroyImage(m_default_data.black_image);
                 DestroyImage(m_default_data.error_image);
-                vkDestroySampler(m_device, m_default_data.default_sampler_nearest, nullptr);
-                vkDestroySampler(m_device, m_default_data.default_sampler_linear, nullptr);
             });
     }
 
@@ -860,6 +859,20 @@ namespace Yutrel
         vkUpdateDescriptorSets(m_device, static_cast<uint32_t>(writer.writes.size()), writer.writes.data(), 0, nullptr);
     }
 
+    void VulkanRHI::CreateSampler(const VkSamplerCreateInfo* info, VkSampler* out_sampler)
+    {
+        VkSampler sampler;
+        YUTREL_ASSERT(vkCreateSampler(m_device, info, nullptr, &sampler) == VK_SUCCESS, "Failed to create framebuffer");
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vkDestroySampler(m_device, sampler, nullptr);
+            });
+
+        *out_sampler = sampler;
+    }
+
     VkCommandBuffer VulkanRHI::BeginSingleTimeCommands()
     {
         VkCommandBufferAllocateInfo alloc_info = vkinit::CommandBufferAllocateInfo(m_rhi_command_pool, 1, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -1002,7 +1015,7 @@ namespace Yutrel
         MaterialUniformData uniform_data{};
         uniform_data.base_color_factor = material->base_color_factor;
 
-        // unifrom缓冲
+        // uniform缓冲
         auto uniform_buffer =
             CreateBuffer(UNIFORM_BUFFER_SIZE,
                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
@@ -1083,7 +1096,7 @@ namespace Yutrel
         imageBarrier.oldLayout = cur_layout;
         imageBarrier.newLayout = new_layout;
 
-        VkImageAspectFlags aspectMask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+        VkImageAspectFlags aspectMask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) || (new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
         imageBarrier.subresourceRange = vkinit::ImageSubresourceRange(aspectMask);
         imageBarrier.image            = image;
 

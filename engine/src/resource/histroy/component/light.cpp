@@ -9,7 +9,7 @@ namespace Yutrel
     {
     }
 
-    DirectionLight::DirectionLight(const glm::vec3& color, const glm::vec3& direction, float intensity)
+    DirectionalLight::DirectionalLight(const glm::vec3& color, const glm::vec3& direction, float intensity)
         : Light(color, intensity), direction(direction)
     {
     }

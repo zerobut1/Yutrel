@@ -21,9 +21,9 @@ void SetUp(gecs::commands cmds,
         });
 
     auto sun = cmds.create();
-    Yutrel::DirectionLight direction_light{};
-    direction_light.direction = glm::normalize(glm::vec3(-1.0f, -1.0f, 1.0f));
-    cmds.emplace<Yutrel::DirectionLight>(sun, std::move(direction_light));
+    Yutrel::DirectionalLight directional_light{};
+    directional_light.direction = glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f));
+    cmds.emplace<Yutrel::DirectionalLight>(sun, std::move(directional_light));
 }
 
 void UpdateCamera(gecs::resource<gecs::mut<Yutrel::Camera>> camera,

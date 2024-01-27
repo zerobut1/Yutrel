@@ -9,6 +9,7 @@
 #include <functional>
 #include <stdint.h>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 struct GLFWwindow;
 
@@ -129,6 +130,8 @@ namespace Yutrel
         void UpdateDescriptorSets(uint32_t descriptor_write_count, const VkWriteDescriptorSet* p_descriptor_writes, uint32_t descriptor_copy_count, const VkCopyDescriptorSet* p_descriptor_copies);
 
         void UpdateDescriptorSets(DescriptorWriter& writer, VkDescriptorSet set);
+
+        void CreateSampler(const VkSamplerCreateInfo* info, VkSampler* out_sampler);
 
         //----------单次指令----------
         VkCommandBuffer BeginSingleTimeCommands();

@@ -4,6 +4,7 @@ layout(location = 0)in vec2 in_uv;
 layout(location = 1)in vec3 in_normal;
 layout(location = 2)in vec4 in_tangent;
 layout(location = 3)in vec3 in_view_vec;
+layout(location = 4)in vec4 out_directional_light_shadow_coord;
 
 layout(location = 0)out vec4 out_frag_color;
 
@@ -23,9 +24,26 @@ layout(set = 1, binding = 0)uniform SceneData {
     vec4 sunlight_direction;
     vec4 sunlight_color;
 } u_scene_data;
+layout(set = 1, binding = 1)uniform sampler2D u_directional_light_shadowmap;
+
+float TextureProj(vec4 shadow_coord, vec2 off)
+{
+    float shadow = 1.0;
+    if (shadow_coord.z > -1.0 && shadow_coord.z < 1.0)
+    {
+        float dist = texture(u_directional_light_shadowmap, shadow_coord.st + off).r;
+        if (shadow_coord.w > 0.0 && dist < shadow_coord.z)
+        {
+            shadow = 0.1;
+        }
+    }
+    return shadow;
+}
 
 void main()
 {
+    float shadow = TextureProj(out_directional_light_shadow_coord / out_directional_light_shadow_coord.w, vec2(0.0));
+    
     vec4 color = texture(u_base_color_texture, in_uv);
     
     vec3 N = normalize(in_normal);
@@ -40,6 +58,6 @@ void main()
     vec3 R = reflect(-L, N);
     vec3 diffuse = max(dot(N, L), ambient).rrr;
     float specular = pow(max(dot(R, V), 0.0), 32.0);
-    // out_frag_color = vec4(diffuse * color.rgb + specular, color.a);
-    out_frag_color = texture(u_metallic_roughness_texture, in_uv);
+    out_frag_color = vec4((diffuse * color.rgb + specular) * shadow, color.a);
+    
 }

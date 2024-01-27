@@ -100,19 +100,24 @@ namespace Yutrel
 
     void VulkanRenderer::ProcessRenderData(Ref<SwapData> pass_data)
     {
-        // 场景信息
+        // 场景信息加载到uniform buffer
         VkExtent2D swapchain_extent = m_rhi->GetSwapChainInfo().extent;
-        GPUSceneData scene_data{};
-        scene_data      = GPUSceneData{};
+        SceneUniformData scene_data{};
+        scene_data      = SceneUniformData{};
         scene_data.view = pass_data->view_matrix;
         scene_data.proj = glm::perspective(glm::radians(70.f), (float)swapchain_extent.width / (float)swapchain_extent.height, 10000.0f, 0.1f);
         scene_data.proj[1][1] *= -1;
         scene_data.view_proj          = scene_data.proj * scene_data.view;
         scene_data.view_position      = pass_data->view_position;
-        scene_data.sunlight_direction = glm::vec4(pass_data->direction_light.direction, pass_data->direction_light.intensity);
-        scene_data.sunlight_color     = glm::vec4(pass_data->direction_light.color, 1.0f);
+        scene_data.sunlight_direction = glm::vec4(pass_data->directional_light.direction, pass_data->directional_light.intensity);
+        scene_data.sunlight_color     = glm::vec4(pass_data->directional_light.color, 1.0f);
 
-        *reinterpret_cast<GPUSceneData*>(m_asset_manager->GetGlobalRenderData()->scene_data_buffer.info.pMappedData) = scene_data;
+        *reinterpret_cast<SceneUniformData*>(m_asset_manager->GetGlobalRenderData()->scene_buffer.info.pMappedData) = scene_data;
+
+        // 平行光MVP矩阵
+        glm::mat4 directional_light_view     = glm::lookAt(pass_data->directional_light.direction, glm::vec3(0.0f), glm::vec3(0, 1, 0));
+        glm::mat4 directional_light_proj     = glm::perspective(glm::radians(45.0f), 1.0f, 10000.0f, 0.1f);
+        m_render_data->directional_light_MVP = directional_light_proj * directional_light_view * glm::mat4(1.0f);
 
         // 物体
         for (auto object : pass_data->objects)

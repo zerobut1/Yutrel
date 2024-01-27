@@ -14,10 +14,10 @@ namespace Yutrel
         float intensity{100.0f};
     };
 
-    struct DirectionLight : public Light
+    struct DirectionalLight : public Light
     {
     public:
-        DirectionLight() = default;
+        DirectionalLight() = default;
 
     public:
         glm::vec3 direction;

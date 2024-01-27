@@ -25,7 +25,7 @@ namespace Yutrel
         glm::mat4 view_matrix;
         glm::vec4 view_position;
 
-        DirectionLight direction_light;
+        DirectionalLight directional_light;
 
         struct Object
         {
@@ -58,7 +58,7 @@ namespace Yutrel
                          gecs::resource<WindowResource> window);
 
         static void Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
-                           gecs::querier<DirectionLight> direction_lights,
+                           gecs::querier<DirectionalLight> directional_lights,
                            gecs::resource<RendererResource> render,
                            gecs::resource<class UIResource> ui,
                            gecs::resource<class Camera> camera,

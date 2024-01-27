@@ -45,7 +45,7 @@ namespace Yutrel
     }
 
     void RendererResource::Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
-                                  gecs::querier<DirectionLight> direction_lights,
+                                  gecs::querier<DirectionalLight> directional_lights,
                                   gecs::resource<RendererResource> render,
                                   gecs::resource<UIResource> ui,
                                   gecs::resource<Camera> camera,
@@ -58,9 +58,9 @@ namespace Yutrel
         swap_data->view_position = camera->GetPosition();
 
         // todo 多光源的时候怎么处理
-        for (const auto& [_, light] : direction_lights)
+        for (const auto& [_, light] : directional_lights)
         {
-            swap_data->direction_light = light;
+            swap_data->directional_light = light;
         }
 
         for (const auto& [_, mesh, material, transform] : objects)

@@ -12,24 +12,9 @@ namespace Yutrel
     class VulkanPipeline;
     class VulkanAssetManager;
 
-    struct GPUSceneData
-    {
-        glm::mat4 view;
-        glm::mat4 proj;
-        glm::mat4 view_proj;
-        glm::vec4 view_position;
-        glm::vec4 ambient_color;
-        glm::vec4 sunlight_direction; // w for sun power
-        glm::vec4 sunlight_color;
-    };
-
-    struct GlobalRenderData
-    {
-        AllocatedBuffer scene_data_buffer;
-    };
-
     struct RenderData
     {
+        glm::mat4 directional_light_MVP;
         std::unordered_map<Ref<struct VulkanPBRMaterial>, std::unordered_map<Ref<struct VulkanMesh>, std::vector<glm::mat4>>> objects;
     };
 

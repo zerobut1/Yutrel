@@ -5,6 +5,7 @@ layout(location = 0)out vec2 out_uv;
 layout(location = 1)out vec3 out_normal;
 layout(location = 2)out vec4 out_tangent;
 layout(location = 3)out vec3 out_view_vec;
+layout(location = 4)out vec4 out_directional_light_shadow_coord;
 
 struct Vertex {
     vec3 position;
@@ -20,6 +21,7 @@ layout(buffer_reference, std430)readonly buffer VertexBuffer {
 layout(push_constant)uniform constants
 {
     mat4 model_matrix;
+    mat4 directional_light_VP;
     VertexBuffer vertex_buffer;
 } push_constants;
 
@@ -45,4 +47,5 @@ void main()
     out_normal = mat3(push_constants.model_matrix) * v.normal;
     out_tangent = v.tangent;
     out_view_vec = u_scene_data.view_position.xyz - pos.xyz;
+    out_directional_light_shadow_coord = push_constants.directional_light_VP * pos;
 }

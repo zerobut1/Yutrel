@@ -1,5 +1,6 @@
 #pragma once
 
+#include "platform/Vulkan/asset/render_common.hpp"
 #include "platform/Vulkan/asset/vulkan_material.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
