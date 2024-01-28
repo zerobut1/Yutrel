@@ -1,18 +1,16 @@
 #pragma once
 
 #include "platform/Vulkan/passes/render_pass.hpp"
-
-#include <glm/glm.hpp>
-
-#include <stdint.h>
 #include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
-    struct DirectionalLightPassInitInfo : RenderPassInitInfo
-    {};
+    struct DebugDrawPassInitInfo : RenderPassInitInfo
+    {
+        AllocatedImage image_to_draw;
+    };
 
-    class DirectionalLightPass final : public RenderPass
+    class DebugDrawPass final : public RenderPass
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;
@@ -21,14 +19,11 @@ namespace Yutrel
 
         void DrawForward();
 
-    public:
-        // 深度图像
-        AllocatedImage depth_image;
-        VkSampler depth_sampler;
-
     private:
         //--------初始化---------
-        void InitDepthImage();
+        void InitDrawImage();
+
+        void InitDescriptors();
 
         void InitPipelines();
 
@@ -43,15 +38,22 @@ namespace Yutrel
             pipeline_count,
         };
 
-        struct
+        enum descriptors : uint8_t
         {
-            glm::mat4 light_VP;
-            glm::mat4 model_matrix;
-            VkDeviceAddress vertex_buffer;
-        } m_push_constants;
+            image_descriptor = 0,
+
+            descriptor_count,
+        };
 
         // 绘制范围
         VkExtent2D m_draw_extent;
+
+        // 绘制图像
+        AllocatedImage m_draw_image;
+
+        // 要绘制的图像
+        AllocatedImage m_image_to_draw;
+        VkSampler m_sampler;
 
         Ref<RenderData> m_render_data;
     };

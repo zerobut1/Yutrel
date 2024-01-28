@@ -86,6 +86,8 @@ namespace Yutrel
 
         VkCommandBuffer GetCurrentCommandBuffer() const { return m_cur_command_buffer; }
 
+        VkPhysicalDeviceProperties GetGPUProperties() const { return m_physical_device_properties; }
+
         DefaultData& GetDefaultData() { return m_default_data; }
 
         bool RequestResize() { return m_resize_requested; }

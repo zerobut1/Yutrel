@@ -22,7 +22,7 @@ void SetUp(gecs::commands cmds,
 
     auto sun = cmds.create();
     Yutrel::DirectionalLight directional_light{};
-    directional_light.direction = glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f));
+    directional_light.direction = glm::normalize(glm::vec3(1.0f, -1.0f, 0.0f));
     cmds.emplace<Yutrel::DirectionalLight>(sun, std::move(directional_light));
 }
 

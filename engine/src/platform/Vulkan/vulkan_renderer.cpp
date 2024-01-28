@@ -115,9 +115,15 @@ namespace Yutrel
         *reinterpret_cast<SceneUniformData*>(m_asset_manager->GetGlobalRenderData()->scene_buffer.info.pMappedData) = scene_data;
 
         // 平行光MVP矩阵
-        glm::mat4 directional_light_view     = glm::lookAt(pass_data->directional_light.direction, glm::vec3(0.0f), glm::vec3(0, 1, 0));
-        glm::mat4 directional_light_proj     = glm::perspective(glm::radians(45.0f), 1.0f, 10000.0f, 0.1f);
-        m_render_data->directional_light_MVP = directional_light_proj * directional_light_view * glm::mat4(1.0f);
+        glm::vec3 directional_light_pos = glm::vec3();
+        directional_light_pos.x         = -pass_data->directional_light.direction.x * 40.0f;
+        directional_light_pos.y         = -pass_data->directional_light.direction.y * 40.0f;
+        directional_light_pos.z         = -pass_data->directional_light.direction.z * 40.0f;
+
+        glm::mat4 directional_light_view = glm::lookAt(directional_light_pos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 directional_light_proj = glm::perspective(glm::radians(45.0f), 1.0f, 100.0f, 1.0f);
+        directional_light_proj[1][1] *= -1;
+        m_render_data->directional_light_VP = directional_light_proj * directional_light_view;
 
         // 物体
         for (auto object : pass_data->objects)

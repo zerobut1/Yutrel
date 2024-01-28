@@ -61,8 +61,8 @@ namespace Yutrel
 
         struct
         {
-            glm::mat4 model_matrix;
             glm::mat4 directional_light_VP;
+            glm::mat4 model_matrix;
             VkDeviceAddress vertex_buffer;
         } m_push_constants;
 

@@ -20,8 +20,8 @@ layout(buffer_reference, std430)readonly buffer VertexBuffer {
 
 layout(push_constant)uniform constants
 {
-    mat4 model_matrix;
     mat4 directional_light_VP;
+    mat4 model_matrix;
     VertexBuffer vertex_buffer;
 } push_constants;
 
@@ -35,6 +35,12 @@ layout(set = 1, binding = 0)uniform SceneData {
     vec4 sunlight_color;
 } u_scene_data;
 
+const mat4 bias_mat = mat4(
+    0.5, 0.0, 0.0, 0.0,
+    0.0, 0.5, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+0.5, 0.5, 0.0, 1.0);
+
 void main()
 {
     
@@ -47,5 +53,5 @@ void main()
     out_normal = mat3(push_constants.model_matrix) * v.normal;
     out_tangent = v.tangent;
     out_view_vec = u_scene_data.view_position.xyz - pos.xyz;
-    out_directional_light_shadow_coord = push_constants.directional_light_VP * pos;
+    out_directional_light_shadow_coord = bias_mat * push_constants.directional_light_VP * pos;
 }

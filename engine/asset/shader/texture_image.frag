@@ -29,10 +29,10 @@ layout(set = 1, binding = 1)uniform sampler2D u_directional_light_shadowmap;
 float TextureProj(vec4 shadow_coord, vec2 off)
 {
     float shadow = 1.0;
-    if (shadow_coord.z > -1.0 && shadow_coord.z < 1.0)
+    if (shadow_coord.z > 0.0 && shadow_coord.z < 1.0)
     {
-        float dist = texture(u_directional_light_shadowmap, shadow_coord.st + off).r;
-        if (shadow_coord.w > 0.0 && dist < shadow_coord.z)
+        float dist = texture(u_directional_light_shadowmap, shadow_coord.xy + off).r;
+        if (shadow_coord.w > 0.0 && dist > shadow_coord.z)
         {
             shadow = 0.1;
         }
@@ -53,11 +53,12 @@ void main()
     N = TBN * normalize(texture(u_normal_texture, in_uv).xyz * 2.0 - vec3(1.0));
     
     const float ambient = 0.1;
-    vec3 L = normalize(u_scene_data.sunlight_direction.xyz);
+    vec3 L = -normalize(u_scene_data.sunlight_direction.xyz);
     vec3 V = normalize(in_view_vec);
     vec3 R = reflect(-L, N);
     vec3 diffuse = max(dot(N, L), ambient).rrr;
     float specular = pow(max(dot(R, V), 0.0), 32.0);
     out_frag_color = vec4((diffuse * color.rgb + specular) * shadow, color.a);
-    
+    // out_frag_color = vec4(shadow, shadow, shadow, color.a);
+    // out_frag_color = vec4(out_directional_light_shadow_coord.xyz / out_directional_light_shadow_coord.w, color.a);
 }

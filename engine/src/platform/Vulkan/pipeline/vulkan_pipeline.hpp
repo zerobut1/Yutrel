@@ -38,5 +38,6 @@ namespace Yutrel
         Ref<RenderPass> m_imgui_pass;
 
         Ref<RenderPass> m_test_pass;
+        Ref<RenderPass> m_debug_draw_pass;
     };
 } // namespace Yutrel

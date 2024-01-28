@@ -14,7 +14,7 @@ namespace Yutrel
 
     struct RenderData
     {
-        glm::mat4 directional_light_MVP;
+        glm::mat4 directional_light_VP;
         std::unordered_map<Ref<struct VulkanPBRMaterial>, std::unordered_map<Ref<struct VulkanMesh>, std::vector<glm::mat4>>> objects;
     };
 

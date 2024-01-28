@@ -299,7 +299,7 @@ namespace Yutrel
                 // 推送常量
                 // 将模型矩阵和顶点的设备地址传入
                 m_push_constants.model_matrix         = transform[0];
-                m_push_constants.directional_light_VP = m_render_data->directional_light_MVP;
+                m_push_constants.directional_light_VP = m_render_data->directional_light_VP;
                 m_push_constants.vertex_buffer        = mesh->vertex_buffer_address;
                 vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::main_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_push_constants), &m_push_constants);
 
