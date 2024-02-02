@@ -17,16 +17,11 @@ namespace Yutrel
 {
     void DirectionalLightPass::Init(RenderPassInitInfo* info)
     {
-        m_global_render_data = info->global_render_data;
+        RenderPass::Init(info);
 
         InitDepthImage();
 
         InitPipelines();
-    }
-
-    void DirectionalLightPass::PreparePassData(Ref<RenderData> render_data)
-    {
-        m_render_data = render_data;
     }
 
     void DirectionalLightPass::DrawForward()

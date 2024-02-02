@@ -3,10 +3,6 @@
 namespace Yutrel
 {
     // clang-format off
-    static const std::vector<unsigned char> COMPUTE_CODE{
-        #include "gradient.comp.spv.h"
-    };
-
     static const std::vector<unsigned char> TRIANGLE_VERT_CODE{
         #include "triangle.vert.spv.h"
     };

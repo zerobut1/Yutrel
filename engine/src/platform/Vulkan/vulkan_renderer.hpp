@@ -11,12 +11,7 @@ namespace Yutrel
     class VulkanRHI;
     class VulkanPipeline;
     class VulkanAssetManager;
-
-    struct RenderData
-    {
-        glm::mat4 directional_light_VP;
-        std::unordered_map<Ref<struct VulkanPBRMaterial>, std::unordered_map<Ref<struct VulkanMesh>, std::vector<glm::mat4>>> objects;
-    };
+    class RenderScene;
 
     class VulkanRenderer final : public Renderer
     {
@@ -38,7 +33,6 @@ namespace Yutrel
         Ref<VulkanRHI> m_rhi;
         Ref<VulkanPipeline> m_render_pipeline;
         Ref<VulkanAssetManager> m_asset_manager;
-
-        Ref<RenderData> m_render_data;
+        Ref<RenderScene> m_render_scene;
     };
 } // namespace Yutrel

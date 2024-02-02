@@ -1,6 +1,6 @@
 #pragma once
 
-#include "platform/Vulkan/passes/render_pass.hpp"
+#include "platform/Vulkan/pipeline/passes/render_pass.hpp"
 #include <vulkan/vulkan_core.h>
 
 namespace Yutrel
@@ -14,8 +14,6 @@ namespace Yutrel
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;
-
-        virtual void PreparePassData(Ref<struct RenderData> render_data) override;
 
         void DrawForward();
 
@@ -54,7 +52,5 @@ namespace Yutrel
         // 要绘制的图像
         AllocatedImage m_image_to_draw;
         VkSampler m_sampler;
-
-        Ref<RenderData> m_render_data;
     };
 } // namespace Yutrel

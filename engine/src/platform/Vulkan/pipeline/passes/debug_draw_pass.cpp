@@ -15,19 +15,14 @@ namespace Yutrel
 {
     void DebugDrawPass::Init(RenderPassInitInfo* info)
     {
-        m_global_render_data = info->global_render_data;
-        m_image_to_draw      = static_cast<DebugDrawPassInitInfo*>(info)->image_to_draw;
+        RenderPass::Init(info);
+        m_image_to_draw = static_cast<DebugDrawPassInitInfo*>(info)->image_to_draw;
 
         InitDrawImage();
 
         InitDescriptors();
 
         InitPipelines();
-    }
-
-    void DebugDrawPass::PreparePassData(Ref<RenderData> render_data)
-    {
-        m_render_data = render_data;
     }
 
     void DebugDrawPass::DrawForward()

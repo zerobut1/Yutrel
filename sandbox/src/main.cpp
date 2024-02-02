@@ -17,7 +17,6 @@ void SetUp(gecs::commands cmds,
         sponza,
         Yutrel::SceneBundle{
             scene,
-            {glm::mat4(1.0f)},
         });
 
     auto sun = cmds.create();

@@ -18,6 +18,13 @@ namespace Yutrel
         uint32_t height;
     };
 
+    struct RenderObject
+    {
+        Ref<Mesh> mesh;
+        Ref<Material> material;
+        Transform transform;
+    };
+
     struct SwapData
     {
         Ref<class WindowUI> ui;
@@ -27,13 +34,7 @@ namespace Yutrel
 
         DirectionalLight directional_light;
 
-        struct Object
-        {
-            Ref<Mesh> mesh;
-            Ref<Material> material;
-            Transform transform;
-        };
-        std::vector<Object> objects;
+        std::vector<RenderObject> objects;
     };
 
     class Renderer

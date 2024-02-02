@@ -22,7 +22,8 @@ namespace Yutrel
 
     struct Transform
     {
-        glm::mat4 model_matrix;
+        glm::mat4 model_matrix{
+            1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
     };
 
     struct PbrBundle

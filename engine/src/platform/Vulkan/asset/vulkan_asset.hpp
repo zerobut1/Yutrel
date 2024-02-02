@@ -13,14 +13,14 @@
 namespace Yutrel
 {
     struct AssetManagerInitInfo
-    {};
+    {
+        Ref<VulkanRHI> rhi;
+    };
 
     class VulkanAssetManager
     {
     public:
         void Init(AssetManagerInitInfo info);
-
-        void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
 
         Ref<VulkanMesh> SetVulkanMesh(Ref<Mesh> mesh);
 

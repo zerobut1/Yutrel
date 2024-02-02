@@ -65,7 +65,7 @@ namespace Yutrel
 
         for (const auto& [_, mesh, material, transform] : objects)
         {
-            swap_data->objects.push_back(SwapData::Object{mesh, material, transform});
+            swap_data->objects.push_back(RenderObject{mesh, material, transform});
         }
 
         // 渲染器渲染一帧

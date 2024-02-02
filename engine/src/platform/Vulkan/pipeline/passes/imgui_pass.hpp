@@ -1,6 +1,6 @@
 #pragma once
 
-#include "platform/Vulkan/passes/render_pass.hpp"
+#include "platform/Vulkan/pipeline/passes/render_pass.hpp"
 
 namespace Yutrel
 {
@@ -12,11 +12,7 @@ namespace Yutrel
     public:
         virtual void Init(RenderPassInitInfo* info) override;
 
-        virtual void PreparePassData(Ref<struct RenderData> render_data) override;
 
         void DrawImgui();
-
-    private:
-        Ref<RenderData> m_render_data;
     };
 } // namespace Yutrel

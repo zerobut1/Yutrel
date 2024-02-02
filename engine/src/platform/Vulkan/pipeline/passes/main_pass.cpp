@@ -4,6 +4,7 @@
 
 #include "function/render/renderer.hpp"
 #include "platform/Vulkan/asset/shaders.hpp"
+#include "platform/Vulkan/asset/vulkan_asset.hpp"
 #include "platform/Vulkan/asset/vulkan_material.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/initializers/initializers.hpp"
@@ -17,8 +18,9 @@ namespace Yutrel
 {
     void MainPass::Init(RenderPassInitInfo* info)
     {
-        auto _info           = static_cast<MainPassInitInfo*>(info);
-        m_global_render_data = info->global_render_data;
+        RenderPass::Init(info);
+
+        auto _info = static_cast<MainPassInitInfo*>(info);
 
         m_directional_light_shadowmap = _info->directional_light_shadowmap;
         m_shadowmap_sampler           = _info->shadowmap_sampler;
@@ -30,11 +32,6 @@ namespace Yutrel
         InitDescriptors();
 
         InitPipelines();
-    }
-
-    void MainPass::PreparePassData(Ref<RenderData> render_data)
-    {
-        m_render_data = render_data;
     }
 
     void MainPass::DrawForward()
@@ -139,7 +136,7 @@ namespace Yutrel
 
             // 写描述符集
             DescriptorWriter writer;
-            writer.WriteBuffer(0, m_global_render_data->scene_buffer.buffer, sizeof(SceneUniformData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            writer.WriteBuffer(0, m_asset_manager->GetGlobalRenderData()->scene_buffer.buffer, sizeof(SceneUniformData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
             writer.WriteImage(1, m_directional_light_shadowmap.image_view, m_shadowmap_sampler, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
             m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[scene_descriptor].set);
         }

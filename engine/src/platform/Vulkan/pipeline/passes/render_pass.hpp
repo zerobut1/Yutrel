@@ -14,20 +14,20 @@ namespace Yutrel
 
     struct RenderPassInitInfo
     {
-        Ref<GlobalRenderData> global_render_data;
+        Ref<VulkanRHI> rhi;
+        Ref<VulkanAssetManager> asset_manager;
+        Ref<RenderScene> render_scene;
     };
 
     class RenderPass
     {
     public:
-        virtual void Init(RenderPassInitInfo* info) = 0;
-
-        virtual void PreparePassData(Ref<struct RenderData> render_data) = 0;
-
-        void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
+        virtual void Init(RenderPassInitInfo* info);
 
     protected:
         Ref<VulkanRHI> m_rhi;
+        Ref<VulkanAssetManager> m_asset_manager;
+        Ref<RenderScene> m_render_scene;
 
         struct PipelineBase
         {
@@ -42,7 +42,5 @@ namespace Yutrel
             VkDescriptorSet set;
         };
         std::vector<Descriptor> m_descriptor_infos;
-
-        Ref<GlobalRenderData> m_global_render_data;
     };
 } // namespace Yutrel

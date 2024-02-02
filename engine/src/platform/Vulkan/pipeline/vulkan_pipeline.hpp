@@ -9,10 +9,13 @@ namespace Yutrel
 {
     class VulkanRHI;
     class RenderPass;
+    class RenderScene;
 
     struct RenderPipelineInitInfo
     {
-        Ref<GlobalRenderData> global_render_data;
+        Ref<VulkanRHI> rhi;
+        Ref<VulkanAssetManager> asset_manager;
+        Ref<RenderScene> render_scene;
     };
 
     class VulkanPipeline
@@ -22,22 +25,19 @@ namespace Yutrel
 
         void Clear() {}
 
-        void SetRHI(Ref<VulkanRHI> rhi) { m_rhi = rhi; }
-
         void ForwardRender();
-
-        void PreparePassData(Ref<struct RenderData> render_data);
 
         VkDescriptorSetLayout GetMaterialDescriptorSetLayout();
 
     private:
         Ref<VulkanRHI> m_rhi;
+        Ref<VulkanAssetManager> m_asset_manager;
+        Ref<RenderScene> m_render_scene;
 
         Ref<RenderPass> m_directional_light_pass;
         Ref<RenderPass> m_main_pass;
         Ref<RenderPass> m_imgui_pass;
 
-        Ref<RenderPass> m_test_pass;
         Ref<RenderPass> m_debug_draw_pass;
     };
 } // namespace Yutrel

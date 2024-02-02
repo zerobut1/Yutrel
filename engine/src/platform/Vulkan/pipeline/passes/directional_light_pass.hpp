@@ -1,6 +1,6 @@
 #pragma once
 
-#include "platform/Vulkan/passes/render_pass.hpp"
+#include "platform/Vulkan/pipeline/passes/render_pass.hpp"
 
 #include <glm/glm.hpp>
 
@@ -16,8 +16,6 @@ namespace Yutrel
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;
-
-        virtual void PreparePassData(Ref<struct RenderData> render_data) override;
 
         void DrawForward();
 
@@ -52,7 +50,5 @@ namespace Yutrel
 
         // 绘制范围
         VkExtent2D m_draw_extent;
-
-        Ref<RenderData> m_render_data;
     };
 } // namespace Yutrel

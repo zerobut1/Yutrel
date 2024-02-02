@@ -19,11 +19,13 @@ namespace Yutrel
 
     struct DirectionalLightUniformData
     {
-        glm::mat4 MVP;
+        glm::mat4 VP;
     };
 
     struct GlobalRenderData
     {
+        
+
         AllocatedBuffer scene_buffer;
         AllocatedBuffer directional_light_buffer;
     };

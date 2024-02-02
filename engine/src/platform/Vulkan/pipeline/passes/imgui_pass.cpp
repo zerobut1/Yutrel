@@ -13,11 +13,7 @@ namespace Yutrel
 {
     void ImguiPass::Init(RenderPassInitInfo* info)
     {
-    }
-
-    void ImguiPass::PreparePassData(Ref<struct RenderData> render_data)
-    {
-        m_render_data = render_data;
+        RenderPass::Init(info);
     }
 
     void ImguiPass::DrawImgui()

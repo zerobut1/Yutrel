@@ -8,6 +8,7 @@ namespace Yutrel
 {
     void VulkanAssetManager::Init(AssetManagerInitInfo info)
     {
+        m_rhi                                          = info.rhi;
         m_global_render_data                           = CreateRef<GlobalRenderData>();
         m_global_render_data->scene_buffer             = m_rhi->CreateBuffer(sizeof(SceneUniformData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, true);
         m_global_render_data->directional_light_buffer = m_rhi->CreateBuffer(sizeof(DirectionalLightUniformData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, true);

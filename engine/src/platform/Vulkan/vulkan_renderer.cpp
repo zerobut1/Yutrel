@@ -5,7 +5,7 @@
 #include "core/application/application.hpp"
 #include "platform/Vulkan/asset/vulkan_asset.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
-#include "platform/Vulkan/passes/render_pass.hpp"
+#include "platform/Vulkan/pipeline/passes/render_pass.hpp"
 #include "platform/Vulkan/pipeline/vulkan_pipeline.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "resource/component/component.hpp"
@@ -32,21 +32,20 @@ namespace Yutrel
 
         // 初始化资产管理
         AssetManagerInitInfo asset_init_info{};
-
-        m_asset_manager = CreateRef<VulkanAssetManager>();
-        m_asset_manager->SetRHI(m_rhi);
+        asset_init_info.rhi = m_rhi;
+        m_asset_manager     = CreateRef<VulkanAssetManager>();
         m_asset_manager->Init(asset_init_info);
+
+        // 初始化渲染场景
+        m_render_scene = CreateRef<RenderScene>();
 
         // 初始化pipeline
         RenderPipelineInitInfo pipeline_init_info{};
-        pipeline_init_info.global_render_data = m_asset_manager->GetGlobalRenderData();
-
-        m_render_pipeline = CreateRef<VulkanPipeline>();
-        m_render_pipeline->SetRHI(m_rhi);
+        pipeline_init_info.rhi           = m_rhi;
+        pipeline_init_info.asset_manager = m_asset_manager;
+        pipeline_init_info.render_scene  = m_render_scene;
+        m_render_pipeline                = CreateRef<VulkanPipeline>();
         m_render_pipeline->Init(pipeline_init_info);
-
-        // 初始化渲染数据
-        m_render_data = CreateRef<RenderData>();
 
         // 设定材质的描述符集布局
         m_asset_manager->SetMaterialDescriptorSetLayout(m_render_pipeline->GetMaterialDescriptorSetLayout());
@@ -68,9 +67,6 @@ namespace Yutrel
 
         // 渲染context
         m_rhi->PrepareContext();
-
-        // 将渲染数据传递给管线
-        m_render_pipeline->PreparePassData(m_render_data);
 
         // 前向渲染
         m_render_pipeline->ForwardRender();

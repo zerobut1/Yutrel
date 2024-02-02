@@ -1,6 +1,6 @@
 #pragma once
 
-#include "platform/Vulkan/passes/render_pass.hpp"
+#include "platform/Vulkan/pipeline/passes/render_pass.hpp"
 
 #include <glm/glm.hpp>
 
@@ -19,8 +19,6 @@ namespace Yutrel
     {
     public:
         virtual void Init(RenderPassInitInfo* info) override;
-
-        virtual void PreparePassData(Ref<struct RenderData> render_data) override;
 
         void DrawForward();
 
@@ -76,7 +74,5 @@ namespace Yutrel
         // 平行光shadowmap
         AllocatedImage m_directional_light_shadowmap;
         VkSampler m_shadowmap_sampler;
-
-        Ref<RenderData> m_render_data;
     };
 } // namespace Yutrel
