@@ -20,19 +20,18 @@ layout(buffer_reference, std430)readonly buffer VertexBuffer {
 
 layout(push_constant)uniform constants
 {
-    mat4 directional_light_VP;
     mat4 model_matrix;
     VertexBuffer vertex_buffer;
 } push_constants;
 
-layout(set = 1, binding = 0)uniform SceneData {
+layout(set = 0, binding = 0)uniform SceneData {
     mat4 view;
-    mat4 proj;
-    mat4 view_proj;
-    vec4 view_position;
+    mat4 projection;
+    vec3 camera_position;
     vec4 ambient_color;
-    vec4 sunlight_direction;
-    vec4 sunlight_color;
+    vec4 directional_light_color;
+    vec3 directional_light_direction;
+    mat4 directional_light_VP;
 } u_scene_data;
 
 const mat4 bias_mat = mat4(
@@ -43,15 +42,14 @@ const mat4 bias_mat = mat4(
 
 void main()
 {
-    
     Vertex v = push_constants.vertex_buffer.vertices[gl_VertexIndex];
     vec4 pos = push_constants.model_matrix * vec4(v.position, 1.0f);
     
-    gl_Position = u_scene_data.proj * u_scene_data.view * pos;
+    gl_Position = u_scene_data.projection * u_scene_data.view * pos;
     
     out_uv = v.uv;
     out_normal = mat3(push_constants.model_matrix) * v.normal;
     out_tangent = v.tangent;
-    out_view_vec = u_scene_data.view_position.xyz - pos.xyz;
-    out_directional_light_shadow_coord = bias_mat * push_constants.directional_light_VP * pos;
+    out_view_vec = u_scene_data.camera_position.xyz - pos.xyz;
+    out_directional_light_shadow_coord = bias_mat * u_scene_data.directional_light_VP * pos;
 }

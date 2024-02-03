@@ -21,12 +21,19 @@ namespace Yutrel
 
         InitDepthImage();
 
+        InitUnifromBuffers();
+
+        InitDescriptors();
+
         InitPipelines();
     }
 
     void DirectionalLightPass::DrawForward()
     {
-        m_draw_extent   = {depth_image.image_extent.width, depth_image.image_extent.height};
+        m_draw_extent = {depth_image.image_extent.width, depth_image.image_extent.height};
+
+        UpdateUniformBuffer();
+
         auto cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
         m_rhi->TransitionImage(cmd_buffer,
@@ -92,6 +99,34 @@ namespace Yutrel
         m_rhi->CreateSampler(&sampler_info, &depth_sampler);
     }
 
+    void DirectionalLightPass::InitUnifromBuffers()
+    {
+        m_scene_uniform_buffer = m_rhi->CreateBuffer(sizeof(m_scene_uniform_data), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, true);
+    }
+
+    void DirectionalLightPass::InitDescriptors()
+    {
+        m_descriptor_infos.resize(descriptor_count);
+
+        // 场景信息
+        {
+            // 创建描述符布局
+            DescriptorSetLayoutCreateInfo layout_info{};
+            layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            layout_info.shader_stages = VK_SHADER_STAGE_VERTEX_BIT;
+
+            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[scene_descriptor].layout);
+
+            // 分配描述符集
+            m_rhi->AllocateDescriptorSets(m_descriptor_infos[scene_descriptor].layout, &m_descriptor_infos[scene_descriptor].set);
+
+            // 写描述符集
+            DescriptorWriter writer;
+            writer.WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[scene_descriptor].set);
+        }
+    }
+
     void DirectionalLightPass::InitPipelines()
     {
         m_pipelines.resize(pipeline_count);
@@ -115,9 +150,8 @@ namespace Yutrel
             buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
             //-----------管线布局-------------
-            std::array<VkDescriptorSetLayout, 0> descriptor_set_layouts{
-                // m_descriptor_infos[material_descriptor].layout,
-                // m_descriptor_infos[scene_descriptor].layout,
+            std::array<VkDescriptorSetLayout, 1> descriptor_set_layouts{
+                m_descriptor_infos[scene_descriptor].layout,
             };
 
             VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
@@ -148,6 +182,13 @@ namespace Yutrel
         }
     }
 
+    void DirectionalLightPass::UpdateUniformBuffer()
+    {
+        m_scene_uniform_data.light_VP = m_render_scene->directional_light_VP;
+
+        memcpy(m_scene_uniform_buffer.info.pMappedData, &m_scene_uniform_data, sizeof(m_scene_uniform_data));
+    }
+
     void DirectionalLightPass::Draw()
     {
         // 渲染数据
@@ -159,8 +200,6 @@ namespace Yutrel
             auto& mesh_nodes     = mesh_instanced[object.mesh];
 
             mesh_nodes.push_back(object.model_matrix);
-
-            // directional_light_mesh_drawcall_batch[object.material][object.mesh].push_back(object.model_matrix);
         }
 
         VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
@@ -200,6 +239,8 @@ namespace Yutrel
         scissor.extent.height = m_draw_extent.height;
         vkCmdSetScissor(cmd_buffer, 0, 1, &scissor);
 
+        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 0, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
+
         for (auto& pair1 : directional_light_mesh_drawcall_batch)
         {
             for (auto& pair2 : pair1.second)
@@ -209,8 +250,8 @@ namespace Yutrel
 
                 // 推送常量
                 // 将MVP矩阵和顶点的设备地址传入
-                m_push_constants.model_matrix  = transform[0];
-                m_push_constants.light_VP      = m_render_scene->directional_light_VP;
+                m_push_constants.model_matrix = transform[0];
+                // m_push_constants.light_VP      = m_render_scene->directional_light_VP;
                 m_push_constants.vertex_buffer = mesh->vertex_buffer_address;
                 vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::main_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_push_constants), &m_push_constants);
 

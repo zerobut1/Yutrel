@@ -52,9 +52,9 @@ namespace Yutrel
                                   gecs::resource<gecs::mut<AssetManager>> asset_manager)
     {
         // 处理要交换给renderer的数据
-        auto swap_data           = CreateRef<SwapData>();
-        swap_data->ui            = ui->ui;
-        swap_data->view_matrix   = camera->GetViewMatrix();
+        auto swap_data             = CreateRef<SwapData>();
+        swap_data->ui              = ui->ui;
+        swap_data->view_matrix     = camera->GetViewMatrix();
         swap_data->camera_position = camera->GetPosition();
 
         // todo 多光源的时候怎么处理

@@ -28,9 +28,15 @@ namespace Yutrel
         //--------初始化---------
         void InitDepthImage();
 
+        void InitUnifromBuffers();
+
+        void InitDescriptors();
+
         void InitPipelines();
 
-        //---------绘制------------
+        //---------绘制-----------
+        void UpdateUniformBuffer();
+
         void Draw();
 
     private:
@@ -41,9 +47,21 @@ namespace Yutrel
             pipeline_count,
         };
 
+        enum descriptors : uint8_t
+        {
+            scene_descriptor = 0,
+
+            descriptor_count,
+        };
+
         struct
         {
             glm::mat4 light_VP;
+        } m_scene_uniform_data;
+        AllocatedBuffer m_scene_uniform_buffer;
+
+        struct
+        {
             glm::mat4 model_matrix;
             VkDeviceAddress vertex_buffer;
         } m_push_constants;

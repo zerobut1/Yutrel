@@ -29,6 +29,8 @@ namespace Yutrel
 
         InitDepthImage();
 
+        InitUnifromBuffers();
+
         InitDescriptors();
 
         InitPipelines();
@@ -63,21 +65,6 @@ namespace Yutrel
 
         //-----------------------
         CopyToSwapchain();
-    }
-
-    void MainPass::UpdateUniformBuffer()
-    {
-        SceneUniformData unifotm_data{};
-        unifotm_data.view = m_render_scene->view_matrix;
-        unifotm_data.proj = glm::perspective(glm::radians(90.0f), (float)m_draw_extent.width / (float)m_draw_extent.height, m_render_scene->far_plane, m_render_scene->near_plane);
-        unifotm_data.proj[1][1] *= -1;
-        unifotm_data.view_proj          = unifotm_data.proj * unifotm_data.view;
-        unifotm_data.view_position      = m_render_scene->camera_position;
-        unifotm_data.ambient_color      = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
-        unifotm_data.sunlight_direction = glm::vec4(m_render_scene->directional_light.direction, m_render_scene->directional_light.intensity);
-        unifotm_data.sunlight_color     = glm::vec4(m_render_scene->directional_light.color, 1.0f);
-
-        *(reinterpret_cast<SceneUniformData*>(m_asset_manager->GetGlobalRenderData()->scene_buffer.info.pMappedData)) = unifotm_data;
     }
 
     void MainPass::InitDrawImage()
@@ -134,6 +121,11 @@ namespace Yutrel
         m_rhi->CreateDrawImageView(&depth_view_info, &m_depth_image);
     }
 
+    void MainPass::InitUnifromBuffers()
+    {
+        m_scene_uniform_buffer = m_rhi->CreateBuffer(sizeof(m_scene_uniform_data), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, true);
+    }
+
     void MainPass::InitDescriptors()
     {
         m_descriptor_infos.resize(descriptor_count);
@@ -153,7 +145,7 @@ namespace Yutrel
 
             // 写描述符集
             DescriptorWriter writer;
-            writer.WriteBuffer(0, m_asset_manager->GetGlobalRenderData()->scene_buffer.buffer, sizeof(SceneUniformData), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+            writer.WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
             writer.WriteImage(1, m_directional_light_shadowmap.image_view, m_shadowmap_sampler, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
             m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[scene_descriptor].set);
         }
@@ -196,8 +188,8 @@ namespace Yutrel
 
             //-----------管线布局-------------
             std::array<VkDescriptorSetLayout, 2> descriptor_set_layouts{
-                m_descriptor_infos[material_descriptor].layout,
                 m_descriptor_infos[scene_descriptor].layout,
+                m_descriptor_infos[material_descriptor].layout,
             };
 
             VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
@@ -251,6 +243,20 @@ namespace Yutrel
                                 m_rhi->GetCurrentSwapchainImage(),
                                 m_draw_extent,
                                 m_rhi->GetSwapChainInfo().extent);
+    }
+
+    void MainPass::UpdateUniformBuffer()
+    {
+        m_scene_uniform_data.view       = m_render_scene->view_matrix;
+        m_scene_uniform_data.projection = glm::perspective(glm::radians(90.0f), (float)m_draw_extent.width / (float)m_draw_extent.height, m_render_scene->far_plane, m_render_scene->near_plane);
+        m_scene_uniform_data.projection[1][1] *= -1;
+        m_scene_uniform_data.camera_position             = m_render_scene->camera_position;
+        m_scene_uniform_data.ambient_color               = glm::vec4(0.1f, 0.1f, 0.1f, 0.1f);
+        m_scene_uniform_data.directional_light_color     = glm::vec4(m_render_scene->directional_light.color, m_render_scene->directional_light.intensity);
+        m_scene_uniform_data.directional_light_direction = glm::vec4(m_render_scene->directional_light.direction, 1.0f);
+        m_scene_uniform_data.directional_light_VP        = m_render_scene->directional_light_VP;
+
+        memcpy(m_scene_uniform_buffer.info.pMappedData, &m_scene_uniform_data, sizeof(m_scene_uniform_data));
     }
 
     void MainPass::DrawGeometry()
@@ -307,7 +313,7 @@ namespace Yutrel
         vkCmdSetScissor(cmd_buffer, 0, 1, &scissor);
 
         // 绑定全局变量描述符
-        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 1, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
+        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 0, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
 
         for (auto& pair1 : main_camera_mesh_drawcall_batch)
         {
@@ -315,7 +321,7 @@ namespace Yutrel
             auto& mesh_instance             = pair1.second;
 
             // 绑定材质描述符
-            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 0, 1, &material->descriptor_set, 0, nullptr);
+            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 1, 1, &material->descriptor_set, 0, nullptr);
 
             for (auto& pair2 : mesh_instance)
             {
@@ -324,9 +330,8 @@ namespace Yutrel
 
                 // 推送常量
                 // 将模型矩阵和顶点的设备地址传入
-                m_push_constants.model_matrix         = transform[0];
-                m_push_constants.directional_light_VP = m_render_scene->directional_light_VP;
-                m_push_constants.vertex_buffer        = mesh->vertex_buffer_address;
+                m_push_constants.model_matrix  = transform[0];
+                m_push_constants.vertex_buffer = mesh->vertex_buffer_address;
                 vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::main_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_push_constants), &m_push_constants);
 
                 // 绑定IBO

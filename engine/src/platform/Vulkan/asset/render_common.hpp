@@ -22,9 +22,9 @@ namespace Yutrel
         glm::mat4 VP;
     };
 
-    struct GlobalRenderData
-    {
-        AllocatedBuffer scene_buffer;
-        AllocatedBuffer directional_light_buffer;
-    };
+    // struct GlobalRenderData
+    // {
+    //     AllocatedBuffer scene_buffer;
+    //     AllocatedBuffer directional_light_buffer;
+    // };
 } // namespace Yutrel

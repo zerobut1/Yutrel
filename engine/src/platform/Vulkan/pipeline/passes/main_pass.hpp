@@ -30,6 +30,8 @@ namespace Yutrel
 
         void InitDepthImage();
 
+        void InitUnifromBuffers();
+
         void InitDescriptors();
 
         void InitPipelines();
@@ -39,10 +41,9 @@ namespace Yutrel
 
         void CopyToSwapchain();
 
-        void DrawGeometry();
-
-        //------------
         void UpdateUniformBuffer();
+
+        void DrawGeometry();
 
     private:
         enum pipelines : uint8_t
@@ -60,13 +61,6 @@ namespace Yutrel
             descriptor_count,
         };
 
-        struct
-        {
-            glm::mat4 directional_light_VP;
-            glm::mat4 model_matrix;
-            VkDeviceAddress vertex_buffer;
-        } m_push_constants;
-
         // 绘制范围
         VkExtent2D m_draw_extent;
         // 绘制到的图像
@@ -77,5 +71,24 @@ namespace Yutrel
         // 平行光shadowmap
         AllocatedImage m_directional_light_shadowmap;
         VkSampler m_shadowmap_sampler;
+
+        struct
+        {
+            alignas(64) glm::mat4 view;
+            alignas(64) glm::mat4 projection;
+            alignas(16) glm::vec3 camera_position;
+            // 光源颜色的第四位为intensity
+            alignas(16) glm::vec4 ambient_color;
+            alignas(16) glm::vec4 directional_light_color;
+            alignas(16) glm::vec3 directional_light_direction;
+            alignas(64) glm::mat4 directional_light_VP;
+        } m_scene_uniform_data;
+        AllocatedBuffer m_scene_uniform_buffer;
+
+        struct
+        {
+            glm::mat4 model_matrix;
+            VkDeviceAddress vertex_buffer;
+        } m_push_constants;
     };
 } // namespace Yutrel

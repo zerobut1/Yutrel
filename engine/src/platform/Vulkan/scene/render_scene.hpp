@@ -33,7 +33,7 @@ namespace Yutrel
         glm::mat4 directional_light_VP;
 
         // 摄像机
-        glm::vec4 camera_position;
+        glm::vec3 camera_position;
         glm::mat4 view_matrix;
         float fov{70.0f};
         float near_plane{0.1f};
