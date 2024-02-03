@@ -25,8 +25,6 @@ namespace Yutrel
         virtual void UpdateWindowSize(uint32_t width, uint32_t height) override;
 
     private:
-        void ProcessRenderData(Ref<SwapData> swap_data);
-
         void NewImguiFrame(Ref<WindowUI> ui);
 
     private:

@@ -24,8 +24,6 @@ namespace Yutrel
 
     struct GlobalRenderData
     {
-        
-
         AllocatedBuffer scene_buffer;
         AllocatedBuffer directional_light_buffer;
     };

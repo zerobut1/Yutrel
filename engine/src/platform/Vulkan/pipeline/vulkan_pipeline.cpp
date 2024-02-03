@@ -17,6 +17,7 @@ namespace Yutrel
     {
         m_rhi           = info.rhi;
         m_asset_manager = info.asset_manager;
+        m_render_scene  = info.render_scene;
 
         m_directional_light_pass = CreateRef<DirectionalLightPass>();
         m_main_pass              = CreateRef<MainPass>();

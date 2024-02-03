@@ -55,7 +55,7 @@ namespace Yutrel
         auto swap_data           = CreateRef<SwapData>();
         swap_data->ui            = ui->ui;
         swap_data->view_matrix   = camera->GetViewMatrix();
-        swap_data->view_position = camera->GetPosition();
+        swap_data->camera_position = camera->GetPosition();
 
         // todo 多光源的时候怎么处理
         for (const auto& [_, light] : directional_lights)

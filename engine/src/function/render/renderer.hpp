@@ -30,7 +30,7 @@ namespace Yutrel
         Ref<class WindowUI> ui;
 
         glm::mat4 view_matrix;
-        glm::vec4 view_position;
+        glm::vec4 camera_position;
 
         DirectionalLight directional_light;
 

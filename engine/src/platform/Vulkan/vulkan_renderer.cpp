@@ -8,12 +8,12 @@
 #include "platform/Vulkan/pipeline/passes/render_pass.hpp"
 #include "platform/Vulkan/pipeline/vulkan_pipeline.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
+#include "platform/Vulkan/scene/render_scene.hpp"
 #include "resource/component/component.hpp"
 #include "resource/component/window_ui.hpp"
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
-#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -37,7 +37,10 @@ namespace Yutrel
         m_asset_manager->Init(asset_init_info);
 
         // 初始化渲染场景
-        m_render_scene = CreateRef<RenderScene>();
+        RenderSceneInitInfo scene_init_info{};
+        scene_init_info.asset_manager = m_asset_manager;
+        m_render_scene                = CreateRef<RenderScene>();
+        m_render_scene->Init(scene_init_info);
 
         // 初始化pipeline
         RenderPipelineInitInfo pipeline_init_info{};
@@ -54,7 +57,7 @@ namespace Yutrel
     void VulkanRenderer::Tick(Ref<SwapData> swap_data)
     {
         // 处理渲染数据
-        ProcessRenderData(swap_data);
+        m_render_scene->ProcessRenderData(swap_data);
 
         // 重建交换链
         if (m_rhi->RequestResize())
@@ -92,49 +95,6 @@ namespace Yutrel
     void VulkanRenderer::UpdateWindowSize(uint32_t width, uint32_t height)
     {
         m_rhi->UpdateSwapchainSize(width, height);
-    }
-
-    void VulkanRenderer::ProcessRenderData(Ref<SwapData> pass_data)
-    {
-        // 场景信息加载到uniform buffer
-        VkExtent2D swapchain_extent = m_rhi->GetSwapChainInfo().extent;
-        SceneUniformData scene_data{};
-        scene_data      = SceneUniformData{};
-        scene_data.view = pass_data->view_matrix;
-        scene_data.proj = glm::perspective(glm::radians(70.f), (float)swapchain_extent.width / (float)swapchain_extent.height, 10000.0f, 0.1f);
-        scene_data.proj[1][1] *= -1;
-        scene_data.view_proj          = scene_data.proj * scene_data.view;
-        scene_data.view_position      = pass_data->view_position;
-        scene_data.sunlight_direction = glm::vec4(pass_data->directional_light.direction, pass_data->directional_light.intensity);
-        scene_data.sunlight_color     = glm::vec4(pass_data->directional_light.color, 1.0f);
-
-        *reinterpret_cast<SceneUniformData*>(m_asset_manager->GetGlobalRenderData()->scene_buffer.info.pMappedData) = scene_data;
-
-        // 平行光MVP矩阵
-        glm::vec3 directional_light_pos = glm::vec3();
-        directional_light_pos.x         = -pass_data->directional_light.direction.x * 40.0f;
-        directional_light_pos.y         = -pass_data->directional_light.direction.y * 40.0f;
-        directional_light_pos.z         = -pass_data->directional_light.direction.z * 40.0f;
-
-        glm::mat4 directional_light_view = glm::lookAt(directional_light_pos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 directional_light_proj = glm::perspective(glm::radians(45.0f), 1.0f, 100.0f, 1.0f);
-        directional_light_proj[1][1] *= -1;
-        m_render_data->directional_light_VP = directional_light_proj * directional_light_view;
-
-        // 物体
-        for (auto object : pass_data->objects)
-        {
-            // mesh加载到GPU，并释放内存
-            Ref<VulkanMesh> vulkan_mesh = m_asset_manager->SetVulkanMesh(object.mesh);
-
-            // 材质的数据加载到GPU
-            Ref<VulkanPBRMaterial> vulkan_material = m_asset_manager->SetVulkanMaterial(object.material);
-
-            // 存储到render_data
-            auto& objects = m_render_data->objects[vulkan_material][vulkan_mesh];
-
-            objects.push_back(object.transform.model_matrix);
-        }
     }
 
     void VulkanRenderer::NewImguiFrame(Ref<WindowUI> ui)

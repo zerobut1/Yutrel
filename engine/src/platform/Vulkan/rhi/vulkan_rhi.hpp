@@ -9,7 +9,6 @@
 #include <functional>
 #include <stdint.h>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 struct GLFWwindow;
 

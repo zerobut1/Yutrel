@@ -150,6 +150,19 @@ namespace Yutrel
 
     void DirectionalLightPass::Draw()
     {
+        // 渲染数据
+        std::unordered_map<Ref<VulkanPBRMaterial>, std::unordered_map<Ref<VulkanMesh>, std::vector<glm::mat4>>> directional_light_mesh_drawcall_batch;
+
+        for (auto& object : m_render_scene->m_render_entities)
+        {
+            auto& mesh_instanced = directional_light_mesh_drawcall_batch[object.material];
+            auto& mesh_nodes     = mesh_instanced[object.mesh];
+
+            mesh_nodes.push_back(object.model_matrix);
+
+            // directional_light_mesh_drawcall_batch[object.material][object.mesh].push_back(object.model_matrix);
+        }
+
         VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
         //---------渲染信息----------------
@@ -187,7 +200,7 @@ namespace Yutrel
         scissor.extent.height = m_draw_extent.height;
         vkCmdSetScissor(cmd_buffer, 0, 1, &scissor);
 
-        for (auto& pair1 : m_render_data->objects)
+        for (auto& pair1 : directional_light_mesh_drawcall_batch)
         {
             for (auto& pair2 : pair1.second)
             {
@@ -197,7 +210,7 @@ namespace Yutrel
                 // 推送常量
                 // 将MVP矩阵和顶点的设备地址传入
                 m_push_constants.model_matrix  = transform[0];
-                m_push_constants.light_VP      = m_render_data->directional_light_VP;
+                m_push_constants.light_VP      = m_render_scene->directional_light_VP;
                 m_push_constants.vertex_buffer = mesh->vertex_buffer_address;
                 vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::main_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_push_constants), &m_push_constants);
 

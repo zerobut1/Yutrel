@@ -41,6 +41,9 @@ namespace Yutrel
 
         void DrawGeometry();
 
+        //------------
+        void UpdateUniformBuffer();
+
     private:
         enum pipelines : uint8_t
         {

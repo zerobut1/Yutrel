@@ -38,6 +38,8 @@ namespace Yutrel
     {
         PrepareDrawImage();
 
+        UpdateUniformBuffer();
+
         //--------绘制------------
         // 图像格式转换为颜色缓冲
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
@@ -61,6 +63,21 @@ namespace Yutrel
 
         //-----------------------
         CopyToSwapchain();
+    }
+
+    void MainPass::UpdateUniformBuffer()
+    {
+        SceneUniformData unifotm_data{};
+        unifotm_data.view = m_render_scene->view_matrix;
+        unifotm_data.proj = glm::perspective(glm::radians(90.0f), (float)m_draw_extent.width / (float)m_draw_extent.height, m_render_scene->far_plane, m_render_scene->near_plane);
+        unifotm_data.proj[1][1] *= -1;
+        unifotm_data.view_proj          = unifotm_data.proj * unifotm_data.view;
+        unifotm_data.view_position      = m_render_scene->camera_position;
+        unifotm_data.ambient_color      = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+        unifotm_data.sunlight_direction = glm::vec4(m_render_scene->directional_light.direction, m_render_scene->directional_light.intensity);
+        unifotm_data.sunlight_color     = glm::vec4(m_render_scene->directional_light.color, 1.0f);
+
+        *(reinterpret_cast<SceneUniformData*>(m_asset_manager->GetGlobalRenderData()->scene_buffer.info.pMappedData)) = unifotm_data;
     }
 
     void MainPass::InitDrawImage()
@@ -238,6 +255,18 @@ namespace Yutrel
 
     void MainPass::DrawGeometry()
     {
+        // 渲染数据
+        std::unordered_map<Ref<VulkanPBRMaterial>, std::unordered_map<Ref<VulkanMesh>, std::vector<glm::mat4>>> main_camera_mesh_drawcall_batch;
+
+        for (auto& object : m_render_scene->m_render_entities)
+        {
+            auto& mesh_instanced = main_camera_mesh_drawcall_batch[object.material];
+            auto& mesh_nodes     = mesh_instanced[object.mesh];
+
+            mesh_nodes.push_back(object.model_matrix);
+
+            // main_camera_mesh_drawcall_batch[object.material][object.mesh].push_back(object.model_matrix);
+        }
 
         VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
@@ -280,7 +309,7 @@ namespace Yutrel
         // 绑定全局变量描述符
         vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 1, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
 
-        for (auto& pair1 : m_render_data->objects)
+        for (auto& pair1 : main_camera_mesh_drawcall_batch)
         {
             Ref<VulkanPBRMaterial> material = pair1.first;
             auto& mesh_instance             = pair1.second;
@@ -296,7 +325,7 @@ namespace Yutrel
                 // 推送常量
                 // 将模型矩阵和顶点的设备地址传入
                 m_push_constants.model_matrix         = transform[0];
-                m_push_constants.directional_light_VP = m_render_data->directional_light_VP;
+                m_push_constants.directional_light_VP = m_render_scene->directional_light_VP;
                 m_push_constants.vertex_buffer        = mesh->vertex_buffer_address;
                 vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::main_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_push_constants), &m_push_constants);
 
