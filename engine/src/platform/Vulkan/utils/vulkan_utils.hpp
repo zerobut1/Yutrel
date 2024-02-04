@@ -1,130 +1,91 @@
 #pragma once
 
 #include "platform/Vulkan/vulkan_types.hpp"
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_handles.hpp>
 
 namespace Yutrel
 {
-    // 图形管线创建信息
-    struct RHIGraphicsPipelineCreateInfo
+    // 渲染管线创建信息
+    struct RenderPipelineCreateInfo
     {
         // 着色器阶段
-        std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+        std::vector<vk::PipelineShaderStageCreateInfo> shader_stages;
 
         // 渲染管线布局
-        VkPipelineLayout pipeline_layout;
+        vk::PipelineLayout pipeline_layout{};
 
         // 图元装配
-        VkPipelineInputAssemblyStateCreateInfo input_assembly;
+        vk::PipelineInputAssemblyStateCreateInfo input_assembly{};
 
         // 光栅化阶段
-        VkPipelineRasterizationStateCreateInfo rasterizer;
+        vk::PipelineRasterizationStateCreateInfo rasterizer{};
 
         // MSAA
-        VkPipelineMultisampleStateCreateInfo multisampling;
+        vk::PipelineMultisampleStateCreateInfo multisampling{};
 
         // 颜色混合
-        VkPipelineColorBlendStateCreateInfo color_blend;
-
-        // 顶点输入阶段
-        VkPipelineVertexInputStateCreateInfo vertex_input;
-
-        // 视口阶段
-        VkPipelineViewportStateCreateInfo viewport_state;
-
-        // 渲染pass
-        VkRenderPass render_pass;
-
-        // subpass
-        uint32_t subpass;
-    };
-
-    // 动态渲染管线创建信息
-    struct DynamicPipelineCreateInfo
-    {
-        // 着色器阶段
-        std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
-
-        // 渲染管线布局
-        VkPipelineLayout pipeline_layout;
-
-        // 图元装配
-        VkPipelineInputAssemblyStateCreateInfo input_assembly;
-
-        // 光栅化阶段
-        VkPipelineRasterizationStateCreateInfo rasterizer;
-
-        // MSAA
-        VkPipelineMultisampleStateCreateInfo multisampling;
-
-        // 颜色混合
-        VkPipelineColorBlendAttachmentState color_blend_attachment;
+        vk::PipelineColorBlendAttachmentState color_blend_attachment{};
 
         // 深度模板阶段
-        VkPipelineDepthStencilStateCreateInfo depth_stencil;
+        vk::PipelineDepthStencilStateCreateInfo depth_stencil{};
 
         // 渲染创建信息
-        VkPipelineRenderingCreateInfo render_info;
+        vk::PipelineRenderingCreateInfo render_info{};
 
         // 颜色缓冲格式
-        VkFormat color_attachment_format;
+        vk::Format color_attachment_format{};
 
-        void Clear();
+        RenderPipelineCreateInfo();
 
-        void SetShaders(VkShaderModule vertex_shader, VkShaderModule fragment_shader);
+        RenderPipelineCreateInfo& SetPipelineLayout(vk::PipelineLayout layout);
 
-        void SetInputTopolygy(VkPrimitiveTopology topology);
+        RenderPipelineCreateInfo& SetShaders(vk::ShaderModule vertex_shader, vk::ShaderModule fragment_shader);
 
-        void SetPolygonMode(VkPolygonMode mode);
+        RenderPipelineCreateInfo& SetInputTopolygy(vk::PrimitiveTopology topology);
 
-        void SetCullMode(VkCullModeFlags cull_mode, VkFrontFace front_face);
+        RenderPipelineCreateInfo& SetPolygonMode(vk::PolygonMode mode);
 
-        void SetMultisamplingNone();
+        RenderPipelineCreateInfo& SetCullMode(vk::CullModeFlags cull_mode, vk::FrontFace front_face);
 
-        void DisableBlending();
+        RenderPipelineCreateInfo& SetMultisamplingNone();
 
-        void EnableBlendingAdditive();
+        RenderPipelineCreateInfo& DisableBlending();
 
-        void EnableBlendingAlphablend();
+        RenderPipelineCreateInfo& EnableBlendingAdditive();
 
-        void SetColorAttachmentFormat(VkFormat format);
+        RenderPipelineCreateInfo& EnableBlendingAlphablend();
 
-        void SetDepthFormat(VkFormat format);
+        RenderPipelineCreateInfo& SetColorAttachmentFormat(vk::Format format);
 
-        void DisableDepthTest();
+        RenderPipelineCreateInfo& SetDepthFormat(vk::Format format);
 
-        void EnableDepthTest(bool depth_write_enable, VkCompareOp op);
+        RenderPipelineCreateInfo& DisableDepthTest();
+
+        RenderPipelineCreateInfo& EnableDepthTest(bool depth_write_enable, vk::CompareOp op);
     };
 
     struct DescriptorSetLayoutCreateInfo
     {
-        std::vector<VkDescriptorSetLayoutBinding> bindings;
+        std::vector<vk::DescriptorSetLayoutBinding> bindings;
 
-        VkShaderStageFlags shader_stages;
+        vk::ShaderStageFlags shader_stages;
 
-        void AddBinding(uint32_t binding, VkDescriptorType type)
-        {
-            VkDescriptorSetLayoutBinding newbind{};
-            newbind.binding         = binding;
-            newbind.descriptorCount = 1;
-            newbind.descriptorType  = type;
+        DescriptorSetLayoutCreateInfo& AddBinding(uint32_t binding, vk::DescriptorType type);
 
-            bindings.push_back(newbind);
-        }
+        DescriptorSetLayoutCreateInfo& SetShaderStage(vk::ShaderStageFlags shader_stage);
 
-        void Clear()
-        {
-            bindings.clear();
-        }
+        void Clear();
     };
 
     struct DescriptorWriter
     {
-        std::deque<VkDescriptorImageInfo> image_infos;
-        std::deque<VkDescriptorBufferInfo> buffer_infos;
-        std::vector<VkWriteDescriptorSet> writes;
+        std::deque<vk::DescriptorImageInfo> image_infos;
+        std::deque<vk::DescriptorBufferInfo> buffer_infos;
+        std::vector<vk::WriteDescriptorSet> writes;
 
-        void WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type);
-        void WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type);
+        DescriptorWriter& WriteImage(int binding, vk::ImageView image, vk::Sampler sampler, vk::ImageLayout layout, vk::DescriptorType type);
+        DescriptorWriter& WriteBuffer(int binding, vk::Buffer buffer, size_t size, size_t offset, vk::DescriptorType type);
 
         void Clear();
     };

@@ -25,7 +25,27 @@ namespace Yutrel
 
     RendererResource::~RendererResource()
     {
-        renderer->Clear();
+
+        try
+        {
+            renderer->Clear();
+        }
+        catch (vk::SystemError& err)
+        {
+            LOG_ERROR("vk::SystemError: {}", err.what());
+            exit(-1);
+        }
+        catch (std::exception& err)
+        {
+            LOG_ERROR("std::exception: {}", err.what());
+            exit(-1);
+        }
+        catch (...)
+        {
+            LOG_ERROR("unknown error");
+            exit(-1);
+        }
+
         renderer.reset();
         LOG_INFO("Renderer Destroyed");
     }
@@ -41,7 +61,25 @@ namespace Yutrel
         info.width      = window->GetWidth();
         info.height     = window->GetHeight();
 
-        render->renderer->Init(info);
+        try
+        {
+            render->renderer->Init(info);
+        }
+        catch (vk::SystemError& err)
+        {
+            LOG_ERROR("vk::SystemError: {}", err.what());
+            exit(-1);
+        }
+        catch (std::exception& err)
+        {
+            LOG_ERROR("std::exception: {}", err.what());
+            exit(-1);
+        }
+        catch (...)
+        {
+            LOG_ERROR("unknown error");
+            exit(-1);
+        }
     }
 
     void RendererResource::Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
@@ -69,7 +107,25 @@ namespace Yutrel
         }
 
         // 渲染器渲染一帧
-        render->renderer->Tick(swap_data);
+        try
+        {
+            render->renderer->Tick(swap_data);
+        }
+        catch (vk::SystemError& err)
+        {
+            LOG_ERROR("vk::SystemError: {}", err.what());
+            exit(-1);
+        }
+        catch (std::exception& err)
+        {
+            LOG_ERROR("std::exception: {}", err.what());
+            exit(-1);
+        }
+        catch (...)
+        {
+            LOG_ERROR("unknown error");
+            exit(-1);
+        }
     }
 
 } // namespace Yutrel

@@ -1,8 +1,10 @@
 #pragma once
 
-#include <vk_mem_alloc.h>
+#include <vk_mem_alloc.hpp>
+#include <vk_mem_alloc_handles.hpp>
+#include <vk_mem_alloc_structs.hpp>
 #include <vulkan/vk_enum_string_helper.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -39,27 +41,20 @@ namespace Yutrel
     // 分配缓冲区
     struct AllocatedBuffer
     {
-        VkBuffer buffer;
-        VmaAllocation allocation;
-        VmaAllocationInfo info;
+        vk::Buffer buffer;
+        vma::Allocation allocation;
+        vma::AllocationInfo info;
     };
 
     // 分配图像
     struct AllocatedImage
     {
-        VkImage image;
-        VkImageView image_view;
-        VmaAllocation allocation;
-        VkExtent3D image_extent;
-        VkFormat image_format;
-    };
-
-    // 交换链信息
-    struct RHISwapChainDesc
-    {
-        VkExtent2D extent;
-        VkFormat image_format;
-        std::vector<VkImageView>* image_views;
+        vk::Image image;
+        vk::ImageView image_view;
+        vk::Extent3D extent;
+        vk::Format format;
+        vma::Allocation allocation;
+        bool mipmapped{false};
     };
 
 } // namespace Yutrel

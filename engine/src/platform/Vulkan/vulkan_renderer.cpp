@@ -2,10 +2,8 @@
 
 #include "vulkan_renderer.hpp"
 
-#include "core/application/application.hpp"
 #include "platform/Vulkan/asset/vulkan_asset.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
-#include "platform/Vulkan/pipeline/passes/render_pass.hpp"
 #include "platform/Vulkan/pipeline/vulkan_pipeline.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "platform/Vulkan/scene/render_scene.hpp"
@@ -56,6 +54,7 @@ namespace Yutrel
 
     void VulkanRenderer::Tick(Ref<SwapData> swap_data)
     {
+
         // 处理渲染数据
         m_render_scene->ProcessRenderData(swap_data);
 
@@ -67,9 +66,6 @@ namespace Yutrel
 
         // Imgui
         NewImguiFrame(swap_data->ui);
-
-        // 渲染context
-        m_rhi->PrepareContext();
 
         // 前向渲染
         m_render_pipeline->ForwardRender();

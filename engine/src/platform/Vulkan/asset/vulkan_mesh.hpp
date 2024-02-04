@@ -10,7 +10,7 @@ namespace Yutrel
     {
         AllocatedBuffer index_buffer;
         AllocatedBuffer vertex_buffer;
-        VkDeviceAddress vertex_buffer_address;
+        vk::DeviceAddress vertex_buffer_address;
         uint32_t index_count;
     };
 } // namespace Yutrel

@@ -5,14 +5,13 @@
 #include <glm/glm.hpp>
 
 #include <stdint.h>
-#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
     struct MainPassInitInfo : RenderPassInitInfo
     {
         AllocatedImage directional_light_shadowmap;
-        VkSampler shadowmap_sampler;
+        vk::Sampler shadowmap_sampler;
     };
 
     class MainPass final : public RenderPass
@@ -22,7 +21,7 @@ namespace Yutrel
 
         void DrawForward();
 
-        VkDescriptorSetLayout GetMaterialDescriptorSetLayout() const { return m_descriptor_infos[material_descriptor].layout; }
+        vk::DescriptorSetLayout GetMaterialDescriptorSetLayout() const { return m_descriptors[material_descriptor].layout; }
 
     private:
         //--------初始化---------
@@ -37,8 +36,6 @@ namespace Yutrel
         void InitPipelines();
 
         //---------绘制------------
-        void PrepareDrawImage();
-
         void CopyToSwapchain();
 
         void UpdateUniformBuffer();
@@ -62,7 +59,7 @@ namespace Yutrel
         };
 
         // 绘制范围
-        VkExtent2D m_draw_extent;
+        vk::Extent2D m_draw_extent;
         // 绘制到的图像
         AllocatedImage m_draw_image;
         // 深度图像
@@ -70,7 +67,7 @@ namespace Yutrel
 
         // 平行光shadowmap
         AllocatedImage m_directional_light_shadowmap;
-        VkSampler m_shadowmap_sampler;
+        vk::Sampler m_shadowmap_sampler;
 
         struct
         {
@@ -88,7 +85,7 @@ namespace Yutrel
         struct
         {
             glm::mat4 model_matrix;
-            VkDeviceAddress vertex_buffer;
+            vk::DeviceAddress vertex_buffer;
         } m_push_constants;
     };
 } // namespace Yutrel

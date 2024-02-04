@@ -7,12 +7,14 @@
 #include "platform/Vulkan/asset/vulkan_asset.hpp"
 #include "platform/Vulkan/asset/vulkan_material.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
-#include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
 
 #include <array>
-#include <vulkan/vulkan_core.h>
+#include <stdint.h>
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace Yutrel
 {
@@ -38,30 +40,32 @@ namespace Yutrel
 
     void MainPass::DrawForward()
     {
-        PrepareDrawImage();
+        m_draw_extent = m_rhi->GetSwapChainExtent();
 
         UpdateUniformBuffer();
 
         //--------绘制------------
+        vk::CommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
+
         // 图像格式转换为颜色缓冲
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
+        m_rhi->TransitionImage(cmd_buffer,
                                m_draw_image.image,
-                               VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                               vk::ImageLayout::eUndefined,
+                               vk::ImageLayout::eColorAttachmentOptimal);
         // 深度图像格式转换为深度附件
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
                                m_depth_image.image,
-                               VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+                               vk::ImageLayout::eUndefined,
+                               vk::ImageLayout::eDepthAttachmentOptimal);
 
-        // 绘制几何图形
+        // 绘制
         DrawGeometry();
 
         // 将渲染图像布局转换为传输源布局
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
                                m_draw_image.image,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+                               vk::ImageLayout::eColorAttachmentOptimal,
+                               vk::ImageLayout::eTransferSrcOptimal);
 
         //-----------------------
         CopyToSwapchain();
@@ -69,97 +73,77 @@ namespace Yutrel
 
     void MainPass::InitDrawImage()
     {
-        VkExtent3D draw_image_extent{
+        vk::Extent3D draw_image_extent{
             3840,
             2160,
             1,
         };
 
         // 设为16位浮点格式以获得更高的精度
-        m_draw_image.image_format = VK_FORMAT_R16G16B16A16_SFLOAT;
-        m_draw_image.image_extent = draw_image_extent;
+        m_draw_image.format = vk::Format::eR16G16B16A16Sfloat;
+        m_draw_image.extent = draw_image_extent;
 
-        VkImageUsageFlags draw_image_usages{};
-        draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_STORAGE_BIT;
-        draw_image_usages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        vk::ImageUsageFlags draw_image_usages{};
+        draw_image_usages |= vk::ImageUsageFlagBits::eTransferSrc;
+        draw_image_usages |= vk::ImageUsageFlagBits::eTransferDst;
+        draw_image_usages |= vk::ImageUsageFlagBits::eStorage;
+        draw_image_usages |= vk::ImageUsageFlagBits::eColorAttachment;
 
-        VkImageCreateInfo draw_image_create_info = vkinit::ImageCreateInfo(m_draw_image.image_format, draw_image_usages, m_draw_image.image_extent);
-
-        // 将图像放至GPU only内存
-        VmaAllocationCreateInfo draw_image_alloc_info{};
-        draw_image_alloc_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
-        draw_image_alloc_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        m_rhi->CreateDrawImage(&draw_image_create_info, &draw_image_alloc_info, &m_draw_image);
-
-        // 创建图像视图
-        VkImageViewCreateInfo draw_image_view_info = vkinit::ImageViewCreateInfo(m_draw_image.image_format, m_draw_image.image, VK_IMAGE_ASPECT_COLOR_BIT);
-
-        m_rhi->CreateDrawImageView(&draw_image_view_info, &m_draw_image);
+        m_draw_image = m_rhi->CreateImage(draw_image_extent, m_draw_image.format, draw_image_usages);
     }
 
     void MainPass::InitDepthImage()
     {
-        m_depth_image.image_format = VK_FORMAT_D32_SFLOAT;
-        m_depth_image.image_extent = m_draw_image.image_extent;
+        m_depth_image.format = vk::Format::eD32Sfloat;
+        m_depth_image.extent = m_draw_image.extent;
 
-        VkImageUsageFlags depth_image_usages{};
-        depth_image_usages |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-
-        VkImageCreateInfo depth_image_info = vkinit::ImageCreateInfo(m_depth_image.image_format, depth_image_usages, m_depth_image.image_extent);
-
-        VmaAllocationCreateInfo depth_image_alloc_info{};
-        depth_image_alloc_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
-        depth_image_alloc_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        m_rhi->CreateDrawImage(&depth_image_info, &depth_image_alloc_info, &m_depth_image);
-
-        VkImageViewCreateInfo depth_view_info = vkinit::ImageViewCreateInfo(m_depth_image.image_format, m_depth_image.image, VK_IMAGE_ASPECT_DEPTH_BIT);
-
-        m_rhi->CreateDrawImageView(&depth_view_info, &m_depth_image);
+        m_depth_image = m_rhi->CreateImage(m_depth_image.extent, m_depth_image.format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
     }
 
     void MainPass::InitUnifromBuffers()
     {
-        m_scene_uniform_buffer = m_rhi->CreateBuffer(sizeof(m_scene_uniform_data), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, true);
+        m_scene_uniform_buffer = m_rhi->CreateBuffer(sizeof(m_scene_uniform_data), vk::BufferUsageFlagBits::eUniformBuffer, vma::MemoryUsage::eCpuToGpu);
     }
 
     void MainPass::InitDescriptors()
     {
-        m_descriptor_infos.resize(descriptor_count);
+        m_descriptors.resize(descriptor_count);
 
         // 场景信息
         {
             // 创建描述符布局
-            DescriptorSetLayoutCreateInfo layout_info{};
-            layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            layout_info.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            layout_info.shader_stages = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+            auto layout_ci =
+                DescriptorSetLayoutCreateInfo()
+                    .AddBinding(0, vk::DescriptorType::eUniformBuffer)
+                    .AddBinding(1, vk::DescriptorType::eCombinedImageSampler)
+                    .SetShaderStage(vk::ShaderStageFlagBits::eAllGraphics);
 
-            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[scene_descriptor].layout);
+            m_descriptors[scene_descriptor].layout = m_rhi->CreateDescriptorSetLayout(layout_ci);
 
             // 分配描述符集
-            m_rhi->AllocateDescriptorSets(m_descriptor_infos[scene_descriptor].layout, &m_descriptor_infos[scene_descriptor].set);
+            m_descriptors[scene_descriptor].set = m_rhi->AllocateDescriptorSets(m_descriptors[scene_descriptor].layout);
 
             // 写描述符集
-            DescriptorWriter writer;
-            writer.WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            writer.WriteImage(1, m_directional_light_shadowmap.image_view, m_shadowmap_sampler, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            m_rhi->UpdateDescriptorSets(writer, m_descriptor_infos[scene_descriptor].set);
+            auto writer =
+                DescriptorWriter()
+                    .WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, vk::DescriptorType::eUniformBuffer)
+                    .WriteImage(1, m_directional_light_shadowmap.image_view, m_shadowmap_sampler, vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler);
+            m_rhi->UpdateDescriptorSets(writer, m_descriptors[scene_descriptor].set);
         }
 
         // 材质
         {
             DescriptorSetLayoutCreateInfo layout_info;
-            layout_info.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-            layout_info.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            layout_info.AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            layout_info.AddBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-            layout_info.shader_stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-            m_rhi->CreateDescriptorLayout(layout_info, &m_descriptor_infos[material_descriptor].layout);
+            auto layout_ci =
+                DescriptorSetLayoutCreateInfo()
+                    .AddBinding(0, vk::DescriptorType::eUniformBuffer)
+                    .AddBinding(1, vk::DescriptorType::eCombinedImageSampler)
+                    .AddBinding(2, vk::DescriptorType::eCombinedImageSampler)
+                    .AddBinding(3, vk::DescriptorType::eCombinedImageSampler)
+                    .SetShaderStage(vk::ShaderStageFlagBits::eFragment);
+
+            m_descriptors[material_descriptor].layout = m_rhi->CreateDescriptorSetLayout(layout_ci);
         }
     }
 
@@ -169,53 +153,43 @@ namespace Yutrel
 
         {
             //----------shader--------------
-            VkShaderModule triangle_vert_shader;
-            if (!m_rhi->CreateShaderModule(TRIANGLE_VERT_CODE, &triangle_vert_shader))
-            {
-                LOG_ERROR("Failed to create vertex shader");
-            }
-            VkShaderModule texture_frag_shader;
-            if (!m_rhi->CreateShaderModule(TEXTURE_FRAG_CODE, &texture_frag_shader))
-            {
-                LOG_ERROR("Failed to create fragment shader");
-            }
+            vk::ShaderModule triangle_vert_shader = m_rhi->CreateShaderModule(TRIANGLE_VERT_CODE);
+            vk::ShaderModule texture_frag_shader  = m_rhi->CreateShaderModule(TEXTURE_FRAG_CODE);
 
             //------------推送常量------------
-            VkPushConstantRange buffer_range{};
-            buffer_range.offset     = 0;
-            buffer_range.size       = sizeof(m_push_constants);
-            buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            auto push_constant_range =
+                vk::PushConstantRange()
+                    .setOffset(0)
+                    .setSize(sizeof(m_push_constants))
+                    .setStageFlags(vk::ShaderStageFlagBits::eVertex);
 
             //-----------管线布局-------------
-            std::array<VkDescriptorSetLayout, 2> descriptor_set_layouts{
-                m_descriptor_infos[scene_descriptor].layout,
-                m_descriptor_infos[material_descriptor].layout,
+            std::vector<vk::DescriptorSetLayout> descriptor_set_layouts{
+                m_descriptors[scene_descriptor].layout,
+                m_descriptors[material_descriptor].layout,
             };
 
-            VkPipelineLayoutCreateInfo pipeline_layout_info = vkinit::PipelineLayoutCreateInfo();
-            pipeline_layout_info.pushConstantRangeCount     = 1;
-            pipeline_layout_info.pPushConstantRanges        = &buffer_range;
-            pipeline_layout_info.setLayoutCount             = descriptor_set_layouts.size();
-            pipeline_layout_info.pSetLayouts                = descriptor_set_layouts.data();
-            m_rhi->CreatePipelineLayout(&pipeline_layout_info, &m_pipelines[main_pipeline].layout);
+            auto pipeline_ci =
+                vk::PipelineLayoutCreateInfo()
+                    .setPushConstantRanges(push_constant_range)
+                    .setSetLayouts(descriptor_set_layouts);
+            m_pipelines[main_pipeline].layout = m_rhi->CreatePipelineLayout(pipeline_ci);
 
             //-----------创建管线----------
-            DynamicPipelineCreateInfo pipeline_create_info;
-            pipeline_create_info.Clear();
-            pipeline_create_info.pipeline_layout = m_pipelines[main_pipeline].layout;
-            pipeline_create_info.SetShaders(triangle_vert_shader, texture_frag_shader);
-            pipeline_create_info.SetInputTopolygy(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-            pipeline_create_info.SetPolygonMode(VK_POLYGON_MODE_FILL);
-            pipeline_create_info.SetCullMode(VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE);
-            pipeline_create_info.SetMultisamplingNone();
-            pipeline_create_info.DisableBlending();
-            // pipeline_create_info.EnableBlendingAdditive();
-            // pipeline_create_info.EnableBlendingAlphablend();
-            pipeline_create_info.EnableDepthTest(true, VK_COMPARE_OP_GREATER_OR_EQUAL);
-            pipeline_create_info.SetColorAttachmentFormat(m_draw_image.image_format);
-            pipeline_create_info.SetDepthFormat(m_depth_image.image_format);
+            auto render_pipeline_ci =
+                RenderPipelineCreateInfo()
+                    .SetPipelineLayout(m_pipelines[main_pipeline].layout)
+                    .SetShaders(triangle_vert_shader, texture_frag_shader)
+                    .SetInputTopolygy(vk::PrimitiveTopology::eTriangleList)
+                    .SetPolygonMode(vk::PolygonMode::eFill)
+                    .SetCullMode(vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise)
+                    .SetMultisamplingNone()
+                    .DisableBlending()
+                    .EnableDepthTest(vk::True, vk::CompareOp::eGreaterOrEqual)
+                    .SetColorAttachmentFormat(m_draw_image.format)
+                    .SetDepthFormat(m_depth_image.format);
 
-            m_rhi->CreateDynamicPipelines(pipeline_create_info, &m_pipelines[main_pipeline].pipeline);
+            m_pipelines[main_pipeline].pipeline = m_rhi->CreateRenderPipeline(render_pipeline_ci);
 
             //--------清除---------
             m_rhi->DestroyShaderModule(triangle_vert_shader);
@@ -223,26 +197,20 @@ namespace Yutrel
         }
     }
 
-    void MainPass::PrepareDrawImage()
-    {
-        // 设置渲染图像范围
-        m_draw_extent = m_rhi->GetSwapChainInfo().extent;
-    }
-
     void MainPass::CopyToSwapchain()
     {
         // 将交换链布局转换为传输目标布局
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
                                m_rhi->GetCurrentSwapchainImage(),
-                               VK_IMAGE_LAYOUT_UNDEFINED,
-                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+                               vk::ImageLayout::eUndefined,
+                               vk::ImageLayout::eTransferDstOptimal);
 
         // 将渲染图像拷贝至交换链
         m_rhi->CopyImageToImage(m_rhi->GetCurrentCommandBuffer(),
                                 m_draw_image.image,
                                 m_rhi->GetCurrentSwapchainImage(),
                                 m_draw_extent,
-                                m_rhi->GetSwapChainInfo().extent);
+                                m_rhi->GetSwapChainExtent());
     }
 
     void MainPass::UpdateUniformBuffer()
@@ -270,50 +238,68 @@ namespace Yutrel
             auto& mesh_nodes     = mesh_instanced[object.mesh];
 
             mesh_nodes.push_back(object.model_matrix);
-
-            // main_camera_mesh_drawcall_batch[object.material][object.mesh].push_back(object.model_matrix);
         }
 
-        VkCommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
+        vk::CommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
         //---------渲染信息----------------
         // 清除信息
-        VkClearValue clear_value{};
-        clear_value.color = {{0.4f, 0.8f, 1.0f, 1.0f}};
+        auto color_clear_value =
+            vk::ClearValue()
+                .setColor(vk::ClearColorValue(0.4f, 0.8f, 1.0f, 1.0f));
+
+        auto depth_clear_value =
+            vk::ClearValue()
+                .setDepthStencil(vk::ClearDepthStencilValue(0.0f));
 
         // 颜色附件
-        VkRenderingAttachmentInfo color_attachment = vkinit::AttachmentInfo(m_draw_image.image_view, &clear_value, VK_IMAGE_LAYOUT_GENERAL);
+        auto color_attachment =
+            vk::RenderingAttachmentInfo()
+                .setImageView(m_draw_image.image_view)
+                .setImageLayout(vk::ImageLayout::eGeneral)
+                .setLoadOp(vk::AttachmentLoadOp::eClear)
+                .setStoreOp(vk::AttachmentStoreOp::eStore)
+                .setClearValue(color_clear_value);
 
         // 深度附件
-        VkRenderingAttachmentInfo depth_attachment = vkinit::DepthAttachmentInfo(m_depth_image.image_view, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
+        auto depth_attachment =
+            vk::RenderingAttachmentInfo()
+                .setImageView(m_depth_image.image_view)
+                .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
+                .setLoadOp(vk::AttachmentLoadOp::eClear)
+                .setStoreOp(vk::AttachmentStoreOp::eStore)
+                .setClearValue(depth_clear_value);
 
         // 开始渲染
-        VkRenderingInfo render_info = vkinit::RenderingInfo(m_draw_extent, &color_attachment, &depth_attachment);
-        vkCmdBeginRendering(cmd_buffer, &render_info);
+        auto render_info =
+            vk::RenderingInfo()
+                .setRenderArea(vk::Rect2D({0, 0}, m_draw_extent))
+                .setLayerCount(1)
+                .setColorAttachments(color_attachment)
+                .setPDepthAttachment(&depth_attachment);
+
+        cmd_buffer.beginRendering(render_info);
 
         // 绑定管线
-        vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[pipelines::main_pipeline].pipeline);
+        cmd_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].pipeline);
 
         // 设定viewport
-        VkViewport viewport{};
-        viewport.x        = 0;
-        viewport.y        = 0;
-        viewport.width    = m_draw_extent.width;
-        viewport.height   = m_draw_extent.height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-        vkCmdSetViewport(cmd_buffer, 0, 1, &viewport);
+        auto viewport =
+            vk::Viewport()
+                .setX(0)
+                .setY(0)
+                .setWidth(m_draw_extent.width)
+                .setHeight(m_draw_extent.height)
+                .setMinDepth(0.0f)
+                .setMaxDepth(1.0f);
+
+        cmd_buffer.setViewport(0, viewport);
 
         // 设定scissor
-        VkRect2D scissor{};
-        scissor.offset.x      = 0;
-        scissor.offset.y      = 0;
-        scissor.extent.width  = m_draw_extent.width;
-        scissor.extent.height = m_draw_extent.height;
-        vkCmdSetScissor(cmd_buffer, 0, 1, &scissor);
+        cmd_buffer.setScissor(0, vk::Rect2D({0, 0}, m_draw_extent));
 
         // 绑定全局变量描述符
-        vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 0, 1, &m_descriptor_infos[scene_descriptor].set, 0, nullptr);
+        cmd_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].layout, 0, m_descriptors[scene_descriptor].set, {});
 
         for (auto& pair1 : main_camera_mesh_drawcall_batch)
         {
@@ -321,7 +307,7 @@ namespace Yutrel
             auto& mesh_instance             = pair1.second;
 
             // 绑定材质描述符
-            vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelines[main_pipeline].layout, 1, 1, &material->descriptor_set, 0, nullptr);
+            cmd_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].layout, 1, material->descriptor_set, {});
 
             for (auto& pair2 : mesh_instance)
             {
@@ -332,15 +318,16 @@ namespace Yutrel
                 // 将模型矩阵和顶点的设备地址传入
                 m_push_constants.model_matrix  = transform[0];
                 m_push_constants.vertex_buffer = mesh->vertex_buffer_address;
-                vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::main_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_push_constants), &m_push_constants);
+
+                cmd_buffer.pushConstants(m_pipelines[main_pipeline].layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(m_push_constants), &m_push_constants);
 
                 // 绑定IBO
-                vkCmdBindIndexBuffer(cmd_buffer, mesh->index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+                cmd_buffer.bindIndexBuffer(mesh->index_buffer.buffer, 0, vk::IndexType::eUint32);
 
-                vkCmdDrawIndexed(cmd_buffer, static_cast<uint32_t>(mesh->index_count), 1, 0, 0, 0);
+                cmd_buffer.drawIndexed(mesh->index_count, 1, 0, 0, 0);
             }
         }
-        vkCmdEndRendering(cmd_buffer);
+        cmd_buffer.endRendering();
     }
 
 } // namespace Yutrel

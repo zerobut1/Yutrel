@@ -17,7 +17,7 @@ add_requires("glfw","glm","spdlog","stb","assimp","tinyobjloader","tinygltf")
 add_requires("glad")
 
 -- Vulkan
-add_requires("vulkansdk","vk-bootstrap","vulkan-memory-allocator")
+add_requires("vulkansdk","vk-bootstrap","vulkan-memory-allocator-hpp")
 add_requires("glslang", {configs = {binaryonly = true}})
 
 -- imgui

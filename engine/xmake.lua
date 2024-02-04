@@ -12,7 +12,7 @@ target("engine")
     -- OpenGL
     add_packages("glad")
     -- Vulkan
-    add_packages("vulkansdk","vk-bootstrap","vulkan-memory-allocator")
+    add_packages("vulkansdk","vk-bootstrap","vulkan-memory-allocator-hpp")
     -- imgui
     add_packages("imgui")
 

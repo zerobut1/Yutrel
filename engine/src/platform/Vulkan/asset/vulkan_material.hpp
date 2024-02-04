@@ -22,6 +22,6 @@ namespace Yutrel
 
         AllocatedBuffer uniform_buffer;
 
-        VkDescriptorSet descriptor_set;
+        vk::DescriptorSet descriptor_set;
     };
 } // namespace Yutrel

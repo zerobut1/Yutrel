@@ -2,10 +2,12 @@
 
 #include "core/macro.hpp"
 #include "platform/Vulkan/scene/render_scene.hpp"
+#include "platform/Vulkan/utils/vulkan_utils.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
 
 #include <vector>
+#include <vulkan/vulkan_handles.hpp>
 
 namespace Yutrel
 {
@@ -31,16 +33,16 @@ namespace Yutrel
 
         struct PipelineBase
         {
-            VkPipelineLayout layout;
-            VkPipeline pipeline;
+            vk::PipelineLayout layout;
+            vk::Pipeline pipeline;
         };
         std::vector<PipelineBase> m_pipelines;
 
         struct Descriptor
         {
-            VkDescriptorSetLayout layout;
-            VkDescriptorSet set;
+            vk::DescriptorSetLayout layout;
+            vk::DescriptorSet set;
         };
-        std::vector<Descriptor> m_descriptor_infos;
+        std::vector<Descriptor> m_descriptors;
     };
 } // namespace Yutrel

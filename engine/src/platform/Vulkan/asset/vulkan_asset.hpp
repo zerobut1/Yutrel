@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <unordered_map>
+#include <vulkan/vulkan_handles.hpp>
 
 namespace Yutrel
 {
@@ -25,14 +26,33 @@ namespace Yutrel
 
         Ref<VulkanPBRMaterial> SetVulkanMaterial(Ref<Material> material);
 
-        void SetMaterialDescriptorSetLayout(VkDescriptorSetLayout layout) { m_material_descriptor_set_layout = layout; }
+        void SetMaterialDescriptorSetLayout(vk::DescriptorSetLayout layout) { m_material_descriptor_set_layout = layout; }
+
+    private:
+        void InitDefaultData();
+
+        Ref<VulkanMesh> UploadMesh(Ref<Mesh> mesh);
+
+        AllocatedBuffer UploadMaterialData(Ref<Material> material);
+
+        AllocatedImage UploadTexture(Ref<Texture> texture);
 
     private:
         Ref<VulkanRHI> m_rhi;
 
-        VkDescriptorSetLayout m_material_descriptor_set_layout;
+        vk::DescriptorSetLayout m_material_descriptor_set_layout;
 
-        std::unordered_map<Ref<Mesh>, Ref<VulkanMesh>> m_meshes;
+        struct
+        {
+            AllocatedImage white_texture;
+            AllocatedImage error_texture;
+
+            vk::Sampler linear_sampler;
+            vk::Sampler nearset_sampler;
+        } m_default_data;
+
+        std::unordered_map<Ref<Mesh>, Ref<VulkanMesh>>
+            m_meshes;
         std::unordered_map<Ref<Texture>, AllocatedImage> m_textures;
         std::unordered_map<Ref<Material>, Ref<VulkanPBRMaterial>> m_materials;
     };

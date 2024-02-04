@@ -3,187 +3,257 @@
 #include "vulkan_utils.hpp"
 
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
+#include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace Yutrel
 {
-    void DynamicPipelineCreateInfo::Clear()
+    RenderPipelineCreateInfo::RenderPipelineCreateInfo()
     {
-        input_assembly       = {};
-        input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-
-        rasterizer       = {};
-        rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-
-        color_blend_attachment = {};
-
-        multisampling       = {};
-        multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-
-        pipeline_layout = {};
-
-        depth_stencil       = {};
-        depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-
-        render_info       = {};
-        render_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-
         shader_stages.clear();
     }
 
-    void DynamicPipelineCreateInfo::SetShaders(VkShaderModule vertex_shader, VkShaderModule fragment_shader)
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetPipelineLayout(vk::PipelineLayout layout)
+    {
+        pipeline_layout = layout;
+
+        return *this;
+    }
+
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetShaders(vk::ShaderModule vertex_shader, vk::ShaderModule fragment_shader)
     {
         shader_stages.clear();
 
         // 顶点着色器
-        VkPipelineShaderStageCreateInfo info{};
-        info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        info.pNext  = nullptr;
-        info.stage  = VK_SHADER_STAGE_VERTEX_BIT;
-        info.module = vertex_shader;
-        info.pName  = "main";
-        shader_stages.push_back(info);
+        auto shader_stage_ci =
+            vk::PipelineShaderStageCreateInfo()
+                .setStage(vk::ShaderStageFlagBits::eVertex)
+                .setModule(vertex_shader)
+                .setPName("main");
+
+        shader_stages.push_back(shader_stage_ci);
 
         // 片段着色器
-        info.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-        info.module = fragment_shader;
-        shader_stages.push_back(info);
+        shader_stage_ci
+            .setStage(vk::ShaderStageFlagBits::eFragment)
+            .setModule(fragment_shader);
+        shader_stages.push_back(shader_stage_ci);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::SetInputTopolygy(VkPrimitiveTopology topology)
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetInputTopolygy(vk::PrimitiveTopology topology)
     {
-        input_assembly.topology               = topology;
-        input_assembly.primitiveRestartEnable = VK_FALSE;
+        input_assembly
+            .setTopology(topology)
+            .setPrimitiveRestartEnable(vk::False);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::SetPolygonMode(VkPolygonMode mode)
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetPolygonMode(vk::PolygonMode mode)
     {
-        rasterizer.polygonMode = mode;
-        rasterizer.lineWidth   = 1.0f;
+        rasterizer
+            .setPolygonMode(mode)
+            .setLineWidth(1.0f);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::SetCullMode(VkCullModeFlags cull_mode, VkFrontFace front_face)
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetCullMode(vk::CullModeFlags cull_mode, vk::FrontFace front_face)
     {
-        rasterizer.cullMode  = cull_mode;
-        rasterizer.frontFace = front_face;
+        rasterizer
+            .setCullMode(cull_mode)
+            .setFrontFace(front_face);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::SetMultisamplingNone()
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetMultisamplingNone()
     {
-        multisampling.sampleShadingEnable   = VK_FALSE;
-        multisampling.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
-        multisampling.minSampleShading      = 1.0f;
-        multisampling.pSampleMask           = nullptr;
-        multisampling.alphaToCoverageEnable = VK_FALSE;
-        multisampling.alphaToOneEnable      = VK_FALSE;
+        multisampling
+            .setSampleShadingEnable(vk::False)
+            .setRasterizationSamples(vk::SampleCountFlagBits::e1)
+            .setMinSampleShading(1.0f)
+            .setPSampleMask(nullptr)
+            .setAlphaToCoverageEnable(vk::False)
+            .setAlphaToOneEnable(vk::False);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::DisableBlending()
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::DisableBlending()
     {
-        color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        color_blend_attachment.blendEnable    = VK_FALSE;
+        color_blend_attachment
+            .setColorWriteMask(vk::ColorComponentFlagBits::eR |
+                               vk::ColorComponentFlagBits::eG |
+                               vk::ColorComponentFlagBits::eB |
+                               vk::ColorComponentFlagBits::eA)
+            .setBlendEnable(vk::False);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::EnableBlendingAdditive()
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::EnableBlendingAdditive()
     {
-        color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-                                                VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        color_blend_attachment.blendEnable         = VK_TRUE;
-        color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-        color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
-        color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
-        color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-        color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
+        color_blend_attachment
+            .setColorWriteMask(vk::ColorComponentFlagBits::eR |
+                               vk::ColorComponentFlagBits::eG |
+                               vk::ColorComponentFlagBits::eB |
+                               vk::ColorComponentFlagBits::eA)
+            .setBlendEnable(vk::True)
+            .setSrcColorBlendFactor(vk::BlendFactor::eOne)
+            .setDstColorBlendFactor(vk::BlendFactor::eDstAlpha)
+            .setColorBlendOp(vk::BlendOp::eAdd)
+            .setSrcAlphaBlendFactor(vk::BlendFactor::eOne)
+            .setDstAlphaBlendFactor(vk::BlendFactor::eZero)
+            .setAlphaBlendOp(vk::BlendOp::eAdd);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::EnableBlendingAlphablend()
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::EnableBlendingAlphablend()
     {
-        color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-                                                VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-        color_blend_attachment.blendEnable         = VK_TRUE;
-        color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
-        color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
-        color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
-        color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-        color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-        color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
+        color_blend_attachment
+            .setColorWriteMask(vk::ColorComponentFlagBits::eR |
+                               vk::ColorComponentFlagBits::eG |
+                               vk::ColorComponentFlagBits::eB |
+                               vk::ColorComponentFlagBits::eA)
+            .setBlendEnable(vk::True)
+            .setSrcColorBlendFactor(vk::BlendFactor::eOneMinusDstAlpha)
+            .setDstColorBlendFactor(vk::BlendFactor::eDstAlpha)
+            .setColorBlendOp(vk::BlendOp::eAdd)
+            .setSrcAlphaBlendFactor(vk::BlendFactor::eOne)
+            .setDstAlphaBlendFactor(vk::BlendFactor::eZero)
+            .setAlphaBlendOp(vk::BlendOp::eAdd);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::SetColorAttachmentFormat(VkFormat format)
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetColorAttachmentFormat(vk::Format format)
     {
         color_attachment_format = format;
 
-        render_info.colorAttachmentCount    = 1;
-        render_info.pColorAttachmentFormats = &color_attachment_format;
+        render_info.setColorAttachmentFormats(color_attachment_format);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::SetDepthFormat(VkFormat format)
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetDepthFormat(vk::Format format)
     {
-        render_info.depthAttachmentFormat = format;
+        render_info.setDepthAttachmentFormat(format);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::DisableDepthTest()
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::DisableDepthTest()
     {
-        depth_stencil.depthTestEnable       = VK_FALSE;
-        depth_stencil.depthWriteEnable      = VK_FALSE;
-        depth_stencil.depthCompareOp        = VK_COMPARE_OP_NEVER;
-        depth_stencil.depthBoundsTestEnable = VK_FALSE;
-        depth_stencil.stencilTestEnable     = VK_FALSE;
-        depth_stencil.front                 = {};
-        depth_stencil.back                  = {};
-        depth_stencil.minDepthBounds        = 0.f;
-        depth_stencil.maxDepthBounds        = 1.f;
+        depth_stencil
+            .setDepthTestEnable(vk::False)
+            .setDepthWriteEnable(vk::False)
+            .setDepthCompareOp(vk::CompareOp::eNever)
+            .setDepthBoundsTestEnable(vk::False)
+            .setStencilTestEnable(vk::False)
+            .setFront({})
+            .setBack({})
+            .setMinDepthBounds(0.0f)
+            .setMaxDepthBounds(1.0f);
+
+        return *this;
     }
 
-    void DynamicPipelineCreateInfo::EnableDepthTest(bool depth_write_enable, VkCompareOp op)
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::EnableDepthTest(bool depth_write_enable, vk::CompareOp op)
     {
-        depth_stencil.depthTestEnable       = VK_TRUE;
-        depth_stencil.depthWriteEnable      = depth_write_enable;
-        depth_stencil.depthCompareOp        = op;
-        depth_stencil.depthBoundsTestEnable = VK_FALSE;
-        depth_stencil.stencilTestEnable     = VK_FALSE;
-        depth_stencil.front                 = {};
-        depth_stencil.back                  = {};
-        depth_stencil.minDepthBounds        = 0.0f;
-        depth_stencil.maxDepthBounds        = 1.0f;
+        depth_stencil
+            .setDepthTestEnable(vk::True)
+            .setDepthWriteEnable(depth_write_enable)
+            .setDepthCompareOp(op)
+            .setDepthBoundsTestEnable(vk::False)
+            .setStencilTestEnable(vk::False)
+            .setFront({})
+            .setBack({})
+            .setMinDepthBounds(0.0f)
+            .setMaxDepthBounds(1.0f);
+
+        return *this;
     }
 
-    void DescriptorWriter::WriteImage(int binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type)
+    DescriptorSetLayoutCreateInfo& DescriptorSetLayoutCreateInfo::AddBinding(uint32_t binding, vk::DescriptorType type)
     {
-        VkDescriptorImageInfo& info = image_infos.emplace_back(VkDescriptorImageInfo{sampler, image, layout});
+        auto new_bind =
+            vk::DescriptorSetLayoutBinding()
+                .setBinding(binding)
+                .setDescriptorCount(1)
+                .setDescriptorType(type);
 
-        VkWriteDescriptorSet write{};
-        write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstBinding      = binding;
-        write.dstSet          = VK_NULL_HANDLE;
-        write.descriptorCount = 1;
-        write.descriptorType  = type;
-        write.pImageInfo      = &info;
+        bindings.push_back(new_bind);
+
+        return *this;
+    }
+
+    DescriptorSetLayoutCreateInfo& DescriptorSetLayoutCreateInfo::SetShaderStage(vk::ShaderStageFlags shader_stage)
+    {
+        shader_stages = shader_stage;
+
+        return *this;
+    }
+
+    void DescriptorSetLayoutCreateInfo::Clear()
+    {
+        bindings.clear();
+    }
+
+    DescriptorWriter& DescriptorWriter::WriteImage(int binding, vk::ImageView image, vk::Sampler sampler, vk::ImageLayout layout, vk::DescriptorType type)
+    {
+        auto& info =
+            image_infos.emplace_back(
+                vk::DescriptorImageInfo()
+                    .setSampler(sampler)
+                    .setImageView(image)
+                    .setImageLayout(layout));
+
+        auto write =
+            vk::WriteDescriptorSet()
+                .setDstSet({})
+                .setDstBinding(binding)
+                .setDescriptorCount(1)
+                .setDescriptorType(type)
+                .setImageInfo(info);
 
         writes.push_back(write);
+
+        return *this;
     }
 
-    void DescriptorWriter::WriteBuffer(int binding, VkBuffer buffer, size_t size, size_t offset, VkDescriptorType type)
+    DescriptorWriter& DescriptorWriter::WriteBuffer(int binding, vk::Buffer buffer, size_t size, size_t offset, vk::DescriptorType type)
     {
-        VkDescriptorBufferInfo& info = buffer_infos.emplace_back(VkDescriptorBufferInfo{buffer, offset, size});
+        auto& info =
+            buffer_infos.emplace_back(
+                vk::DescriptorBufferInfo()
+                    .setBuffer(buffer)
+                    .setOffset(offset)
+                    .setRange(size));
 
-        VkWriteDescriptorSet write{};
-        write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstBinding      = binding;
-        write.dstSet          = VK_NULL_HANDLE;
-        write.descriptorCount = 1;
-        write.descriptorType  = type;
-        write.pBufferInfo     = &info;
+        auto write =
+            vk::WriteDescriptorSet()
+                .setDstSet({})
+                .setDstBinding(binding)
+                .setDescriptorCount(1)
+                .setDescriptorType(type)
+                .setBufferInfo(info);
 
         writes.push_back(write);
+
+        return *this;
     }
 
     void DescriptorWriter::Clear()
     {
         image_infos.clear();
-        writes.clear();
         buffer_infos.clear();
+        writes.clear();
     }
 
 } // namespace Yutrel
