@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vk_mem_alloc.h>
+#include <vk_mem_alloc.hpp>
 #include <vulkan/vk_enum_string_helper.h>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -11,6 +11,7 @@
 #include <deque>
 #include <string>
 #include <vector>
+#include <vulkan/vulkan_handles.hpp>
 
 namespace Yutrel
 {

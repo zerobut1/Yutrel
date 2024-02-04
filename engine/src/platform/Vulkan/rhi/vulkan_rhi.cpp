@@ -14,9 +14,6 @@
 #include <imgui_impl_vulkan.h>
 
 #include <stdint.h>
-#include <vcruntime.h>
-#include <vcruntime_string.h>
-#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -54,6 +51,7 @@ namespace Yutrel
         DestroySwapchain();
 
         // 销毁窗口表面
+        // m_instance.destroySurfaceKHR(m_surface);
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 
         // 销毁逻辑设备

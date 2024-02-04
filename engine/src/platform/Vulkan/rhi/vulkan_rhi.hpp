@@ -9,6 +9,7 @@
 #include <functional>
 #include <stdint.h>
 #include <vector>
+#include <vulkan/vulkan_handles.hpp>
 
 struct GLFWwindow;
 
@@ -194,6 +195,7 @@ namespace Yutrel
 
         // vulkan实例
         VkInstance m_instance;
+        // vk::Instance m_instance;
         // vulkan DebugMessenger
         VkDebugUtilsMessengerEXT m_debug_messenger;
         // 物理设备
