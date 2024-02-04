@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <vector>
 #include <vk_mem_alloc_handles.hpp>
+#include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
@@ -49,17 +50,18 @@ namespace Yutrel
     private:
         //--------初始化----------
         void InitVulkan(GLFWwindow* raw_window);
+        // 交换链
+        void InitSwapchain(uint32_t width, uint32_t height);
         // 指令池与指令缓冲
         void InitCommands();
         // 描述符
         void InitDescriptorPool();
         // 同步设施
         void InitSyncStructures();
-        // 交换链
-        void InitSwapchain(uint32_t width, uint32_t height);
         // Imgui
         void InitImgui(GLFWwindow* raw_window);
         //------------------------
+        void DestroySwapchain();
 
     private:
         // 同时渲染的帧数
@@ -87,5 +89,14 @@ namespace Yutrel
 
         // 帧数据
         std::array<FrameData, MAX_FRAMES_IN_FLIGHT> m_frames;
+
+        vk::SwapchainKHR m_swapchain;
+        vk::Format m_swapchain_format;
+        vk::Extent2D m_swapchain_extent;
+        std::vector<vk::Image> m_swapchain_images;
+        std::vector<vk::ImageView> m_swapchain_image_views;
+
+        // std::vector<VkImage> m_swapchain_images;
+        // std::vector<VkImageView> m_swapchain_image_views;
     };
 } // namespace Yutrel

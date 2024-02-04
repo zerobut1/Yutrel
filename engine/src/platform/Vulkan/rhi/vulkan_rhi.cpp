@@ -13,9 +13,12 @@
 #include <imgui_impl_vulkan.h>
 
 #include <stdint.h>
+#include <vcruntime.h>
 #include <vk_mem_alloc_enums.hpp>
 #include <vk_mem_alloc_handles.hpp>
 #include <vk_mem_alloc_structs.hpp>
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
 namespace Yutrel
@@ -24,7 +27,7 @@ namespace Yutrel
     {
         InitVulkan(info.raw_window);
 
-        // InitSwapchain(info.width, info.height);
+        InitSwapchain(info.width, info.height);
 
         // InitCommands();
 
@@ -48,7 +51,7 @@ namespace Yutrel
         m_main_deletion_queue.flush();
 
         // 销毁交换链
-        // DestroySwapchain();
+        DestroySwapchain();
 
         // 销毁内存分配器
         m_allocator.destroy();
@@ -92,17 +95,17 @@ namespace Yutrel
 
         // 设备特性
         VkPhysicalDeviceFeatures device_features{};
-        device_features.samplerAnisotropy = VK_TRUE;
+        device_features.samplerAnisotropy = vk::True;
 
         // vulkan 1.2 特性
         VkPhysicalDeviceVulkan12Features features_12{};
-        features_12.bufferDeviceAddress = true;
-        features_12.descriptorIndexing  = true;
+        features_12.bufferDeviceAddress = vk::True;
+        features_12.descriptorIndexing  = vk::True;
 
         // vulkan 1.3 特性
         VkPhysicalDeviceVulkan13Features features_13{};
-        features_13.dynamicRendering = true;
-        features_13.synchronization2 = true;
+        features_13.dynamicRendering = vk::True;
+        features_13.synchronization2 = vk::True;
 
         // 选择物理设备
         vkb::PhysicalDeviceSelector selector{vkb_instance};
@@ -141,6 +144,47 @@ namespace Yutrel
                 .setFlags(vma::AllocatorCreateFlagBits::eBufferDeviceAddress);
 
         m_allocator = vma::createAllocator(allocator_ci);
+    }
+
+    void VulkanRHI::InitSwapchain(uint32_t width, uint32_t height)
+    {
+        //---------vkb创建交换链-----------
+        vkb::SwapchainBuilder swapchain_builder{m_GPU, m_device, m_surface};
+
+        vkb::Swapchain vkb_swapchain =
+            swapchain_builder
+                .use_default_format_selection()
+                .set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
+                .set_desired_extent(width, height)
+                .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+                .build()
+                .value();
+
+        // 获取交换链和图像
+        m_swapchain        = vkb_swapchain.swapchain;
+        m_swapchain_extent = vkb_swapchain.extent;
+        m_swapchain_format = static_cast<vk::Format>(vkb_swapchain.image_format);
+
+        // 这里不拷贝一遍就会报验证层错误，原因不明
+        auto swapchain_image_views = vkb_swapchain.get_image_views().value();
+        for (auto image : vkb_swapchain.get_images().value())
+        {
+            m_swapchain_images.push_back(static_cast<vk::Image>(image));
+        }
+        for (auto view : swapchain_image_views)
+        {
+            m_swapchain_image_views.push_back(static_cast<vk::ImageView>(view));
+        }
+    }
+
+    void VulkanRHI::DestroySwapchain()
+    {
+        m_device.destroySwapchainKHR(m_swapchain);
+
+        for (auto view : m_swapchain_image_views)
+        {
+            m_device.destroyImageView(view);
+        }
     }
 
 } // namespace Yutrel
