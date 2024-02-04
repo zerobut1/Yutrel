@@ -26,12 +26,14 @@ layout(set = 1, binding = 1)uniform sampler2D u_base_color_texture;
 layout(set = 1, binding = 2)uniform sampler2D u_metallic_roughness_texture;
 layout(set = 1, binding = 3)uniform sampler2D u_normal_texture;
 
+const float bias = -0.0001;
+
 float TextureProj(vec4 shadow_coord, vec2 off)
 {
     float shadow = 1.0;
     if (shadow_coord.z > 0.0 && shadow_coord.z < 1.0)
     {
-        float dist = texture(u_directional_light_shadowmap, shadow_coord.xy + off).r;
+        float dist = texture(u_directional_light_shadowmap, shadow_coord.xy + off).r + bias;
         if (shadow_coord.w > 0.0 && dist > shadow_coord.z)
         {
             shadow = 0.1;
@@ -42,7 +44,7 @@ float TextureProj(vec4 shadow_coord, vec2 off)
 
 void main()
 {
-    float shadow = TextureProj(in_directional_light_shadow_coord / in_directional_light_shadow_coord.w, vec2(0.0));
+    float shadow = TextureProj(in_directional_light_shadow_coord / in_directional_light_shadow_coord.w, vec2(0.0f));
     
     vec4 color = texture(u_base_color_texture, in_uv);
     

@@ -21,12 +21,16 @@ namespace Yutrel
         directional_light = pass_data->directional_light;
         // 平行光VP矩阵
         glm::vec3 directional_light_pos = glm::vec3();
-        directional_light_pos.x         = -directional_light.direction.x * 40.0f;
-        directional_light_pos.y         = -directional_light.direction.y * 40.0f;
-        directional_light_pos.z         = -directional_light.direction.z * 40.0f;
+        // directional_light_pos.x         = -directional_light.direction.x * 40.0f;
+        // directional_light_pos.y         = -directional_light.direction.y * 40.0f;
+        // directional_light_pos.z         = -directional_light.direction.z * 40.0f;
+        directional_light_pos.x = -directional_light.direction.x * 30.0f;
+        directional_light_pos.y = -directional_light.direction.y * 30.0f;
+        directional_light_pos.z = -directional_light.direction.z * 30.0f;
 
         glm::mat4 directional_light_view = glm::lookAt(directional_light_pos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 directional_light_proj = glm::perspective(glm::radians(45.0f), 1.0f, 100.0f, 1.0f);
+        // glm::mat4 directional_light_proj = glm::perspective(glm::radians(45.0f), 1.0f, 100.0f, 1.0f);
+        glm::mat4 directional_light_proj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 100.0f, 0.1f);
         directional_light_proj[1][1] *= -1;
         directional_light_VP = directional_light_proj * directional_light_view;
 

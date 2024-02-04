@@ -59,7 +59,7 @@ namespace Yutrel
 
         //----------深度图像----------------
         // 设为32位浮点格式以获得更高的精度
-        depth_image.image_format = VK_FORMAT_D32_SFLOAT;
+        depth_image.image_format = VK_FORMAT_D16_UNORM;
         depth_image.image_extent = depth_image_extent;
 
         VkImageUsageFlags depth_image_usages{};
@@ -86,13 +86,13 @@ namespace Yutrel
         sampler_info.magFilter        = VK_FILTER_LINEAR;
         sampler_info.minFilter        = VK_FILTER_LINEAR;
         sampler_info.mipmapMode       = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        sampler_info.addressModeU     = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler_info.addressModeU     = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         sampler_info.addressModeV     = sampler_info.addressModeU;
         sampler_info.addressModeW     = sampler_info.addressModeU;
         sampler_info.mipLodBias       = 0.0f;
         sampler_info.minLod           = 0.0f;
         sampler_info.maxLod           = 1.0f;
-        sampler_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+        sampler_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
         sampler_info.anisotropyEnable = VK_TRUE;
         sampler_info.maxAnisotropy    = m_rhi->GetGPUProperties().limits.maxSamplerAnisotropy;
 
@@ -250,8 +250,7 @@ namespace Yutrel
 
                 // 推送常量
                 // 将MVP矩阵和顶点的设备地址传入
-                m_push_constants.model_matrix = transform[0];
-                // m_push_constants.light_VP      = m_render_scene->directional_light_VP;
+                m_push_constants.model_matrix  = transform[0];
                 m_push_constants.vertex_buffer = mesh->vertex_buffer_address;
                 vkCmdPushConstants(cmd_buffer, m_pipelines[pipelines::main_pipeline].layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(m_push_constants), &m_push_constants);
 
