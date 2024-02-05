@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <vcruntime.h>
+#include <vector>
 #include <vk_mem_alloc_enums.hpp>
 #include <vk_mem_alloc_handles.hpp>
 #include <vk_mem_alloc_structs.hpp>
@@ -34,7 +35,7 @@ namespace Yutrel
 
         InitSyncStructures();
 
-        // InitDescriptorPool();
+        InitDescriptorPool();
 
         // InitImgui(info.raw_window);
     }
@@ -259,6 +260,33 @@ namespace Yutrel
                     m_device.destroySemaphore(m_frames[i].available_for_render_semaphore);
                 });
         }
+    }
+
+    void VulkanRHI::InitDescriptorPool()
+    {
+        //--------创建描述符池-----------
+        // todo 控制描述符池大小
+        std::vector<vk::DescriptorPoolSize> sizes{
+            {vk::DescriptorType::eUniformBuffer, 100},
+            {vk::DescriptorType::eStorageImage, 100},
+            {vk::DescriptorType::eCombinedImageSampler, 100},
+        };
+
+        auto pool_ci =
+            vk::DescriptorPoolCreateInfo()
+                .setFlags({})
+                .setMaxSets(100)
+                .setPoolSizeCount(static_cast<uint32_t>(sizes.size()))
+                .setPoolSizes(sizes);
+
+        m_descriptor_pool = m_device.createDescriptorPool(pool_ci);
+
+        // 加入删除队列
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroyDescriptorPool(m_descriptor_pool);
+            });
     }
 
 } // namespace Yutrel

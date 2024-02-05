@@ -87,6 +87,7 @@ namespace Yutrel
 
         vma::Allocator m_allocator;
 
+        // 交换链
         vk::SwapchainKHR m_swapchain;
         vk::Format m_swapchain_format;
         vk::Extent2D m_swapchain_extent;
@@ -98,5 +99,8 @@ namespace Yutrel
 
         // 单次指令指令池
         vk::CommandPool m_rhi_cmd_pool;
+
+        // 描述符池
+        vk::DescriptorPool m_descriptor_pool;
     };
 } // namespace Yutrel
