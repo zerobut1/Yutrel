@@ -51,7 +51,6 @@ namespace Yutrel
         DestroySwapchain();
 
         // 销毁窗口表面
-        // m_instance.destroySurfaceKHR(m_surface);
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 
         // 销毁逻辑设备

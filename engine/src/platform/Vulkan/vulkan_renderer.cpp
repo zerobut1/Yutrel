@@ -2,12 +2,11 @@
 
 #include "vulkan_renderer.hpp"
 
-// #include "platform/vulkan/asset/vulkan_asset.hpp"
-// #include "platform/vulkan/asset/vulkan_mesh.hpp"
-// #include "platform/vulkan/pipeline/passes/render_pass.hpp"
-// #include "platform/vulkan/pipeline/vulkan_pipeline.hpp"
-// #include "platform/vulkan/scene/render_scene.hpp"
+#include "platform/Vulkan/asset/vulkan_asset.hpp"
+#include "platform/Vulkan/asset/vulkan_mesh.hpp"
+#include "platform/Vulkan/pipeline/vulkan_pipeline.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
+#include "platform/Vulkan/scene/render_scene.hpp"
 #include "resource/component/component.hpp"
 #include "resource/component/window_ui.hpp"
 
@@ -28,7 +27,6 @@ namespace Yutrel
 
         m_rhi = CreateRef<VulkanRHI>();
         m_rhi->Init(rhi_init_info);
-        /*
 
         // 初始化资产管理
         AssetManagerInitInfo asset_init_info{};
@@ -52,13 +50,11 @@ namespace Yutrel
 
         // 设定材质的描述符集布局
         m_asset_manager->SetMaterialDescriptorSetLayout(m_render_pipeline->GetMaterialDescriptorSetLayout());
-
-        */
     }
 
     void VulkanRenderer::Tick(Ref<SwapData> swap_data)
     {
-        /*
+
         // 处理渲染数据
         m_render_scene->ProcessRenderData(swap_data);
 
@@ -76,7 +72,6 @@ namespace Yutrel
 
         // 前向渲染
         m_render_pipeline->ForwardRender();
-        */
     }
 
     void VulkanRenderer::Clear()
@@ -88,19 +83,17 @@ namespace Yutrel
         }
         m_rhi.reset();
 
-        /*
         // 清除Pipeline
         if (m_render_pipeline)
         {
             m_render_pipeline->Clear();
         }
         m_render_pipeline.reset();
-        */
     }
 
     void VulkanRenderer::UpdateWindowSize(uint32_t width, uint32_t height)
     {
-        // m_rhi->UpdateSwapchainSize(width, height);
+        m_rhi->UpdateSwapchainSize(width, height);
     }
 
     void VulkanRenderer::NewImguiFrame(Ref<WindowUI> ui)

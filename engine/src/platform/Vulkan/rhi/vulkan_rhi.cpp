@@ -13,6 +13,7 @@
 #include <imgui_impl_vulkan.h>
 
 #include <stdint.h>
+#include <tuple>
 #include <vcruntime.h>
 #include <vector>
 #include <vk_mem_alloc_enums.hpp>
@@ -43,7 +44,7 @@ namespace Yutrel
     void VulkanRHI::Clear()
     {
         // 确保GPU已经工作完
-        vkDeviceWaitIdle(m_device);
+        m_device.waitIdle();
 
         // 删除队列清空
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -287,6 +288,486 @@ namespace Yutrel
             {
                 m_device.destroyDescriptorPool(m_descriptor_pool);
             });
+    }
+
+    void VulkanRHI::PrepareBeforePass()
+    {
+        // 等待 fence
+        YUTREL_ASSERT(m_device.waitForFences(GetCurrentFrame().render_fence, vk::True, UINT64_MAX) == vk::Result::eSuccess, "Failed to synchronize");
+
+        // 清除为单独帧创建的对象
+        GetCurrentFrame().deletion_queue.flush();
+
+        // 请求图像索引
+        auto result = m_device.acquireNextImageKHR(m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, {});
+        // 若窗口大小发生改变
+        if (result.result == vk::Result::eErrorOutOfDateKHR)
+        {
+            m_resize_requested = true;
+            return;
+        }
+        m_cur_swapchain_image_index = result.value;
+
+        // 重置命令缓冲
+        vk::CommandBuffer cmd_buffer = GetCurrentCommandBuffer();
+
+        cmd_buffer.reset();
+
+        // 开始指令缓冲
+        // m_cur_cmd_buffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlags()));
+        cmd_buffer.begin(vk::CommandBufferBeginInfo());
+    }
+
+    void VulkanRHI::SubmitRendering()
+    {
+        //-------------终止指令缓冲-------------
+        vk::CommandBuffer cmd_buffer = GetCurrentCommandBuffer();
+        cmd_buffer.end();
+
+        // 重设fence
+        m_device.resetFences(GetCurrentFrame().render_fence);
+
+        // --------------提交指令---------------
+        auto cmd_buffer_si =
+            vk::CommandBufferSubmitInfo()
+                .setCommandBuffer(cmd_buffer);
+
+        auto semaphore_wait_si =
+            vk::SemaphoreSubmitInfo()
+                .setSemaphore(GetCurrentFrame().available_for_render_semaphore)
+                .setStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput)
+                .setDeviceIndex(0)
+                .setValue(1);
+
+        auto semaphore_signal_si =
+            vk::SemaphoreSubmitInfo()
+                .setSemaphore(GetCurrentFrame().finished_for_presentation_semaphore)
+                .setStageMask(vk::PipelineStageFlagBits2::eAllGraphics)
+                .setDeviceIndex(0)
+                .setValue(1);
+
+        auto submit_info =
+            vk::SubmitInfo2()
+                // .setWaitSemaphoreInfoCount(1)
+                .setWaitSemaphoreInfos(semaphore_wait_si)
+                // .setSignalSemaphoreInfoCount(1)
+                .setSignalSemaphoreInfos(semaphore_signal_si)
+                // .setCommandBufferInfoCount(1)
+                .setCommandBufferInfos(cmd_buffer_si);
+
+        // 提交到队列
+        m_graphics_queue.submit2(submit_info, GetCurrentFrame().render_fence);
+
+        //--------------显示图像------------
+        auto present_info =
+            vk::PresentInfoKHR()
+                .setSwapchains(m_swapchain)
+                .setWaitSemaphores(GetCurrentFrame().finished_for_presentation_semaphore)
+                .setImageIndices(m_cur_swapchain_image_index);
+
+        auto result = m_graphics_queue.presentKHR(present_info);
+        if (result == vk::Result::eErrorOutOfDateKHR)
+        {
+            m_resize_requested = true;
+        }
+
+        m_cur_frame++;
+    }
+
+    void VulkanRHI::UpdateSwapchainSize(uint32_t width, uint32_t height)
+    {
+        m_new_swapchain_extent.width  = width;
+        m_new_swapchain_extent.height = height;
+    }
+
+    void VulkanRHI::ResizeSwapchain()
+    {
+        m_device.waitIdle();
+
+        DestroySwapchain();
+
+        InitSwapchain(m_new_swapchain_extent.width, m_new_swapchain_extent.height);
+
+        m_resize_requested = false;
+    }
+
+    vk::CommandBuffer VulkanRHI::BeginSingleTimeCommands()
+    {
+        auto cmd_buffer_ai =
+            vk::CommandBufferAllocateInfo()
+                .setCommandPool(m_rhi_cmd_pool)
+                .setCommandBufferCount(1)
+                .setLevel(vk::CommandBufferLevel::ePrimary);
+
+        vk::CommandBuffer cmd_buffer = m_device.allocateCommandBuffers(cmd_buffer_ai).front();
+
+        auto cmd_buffer_bi =
+            vk::CommandBufferBeginInfo()
+                .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+        cmd_buffer.begin(cmd_buffer_bi);
+
+        return cmd_buffer;
+    }
+
+    void VulkanRHI::EndSingleTimeCommands(vk::CommandBuffer cmd_buffer)
+    {
+        cmd_buffer.end();
+
+        auto cmd_buffer_si =
+            vk::CommandBufferSubmitInfo()
+                .setCommandBuffer(cmd_buffer);
+        auto submit_info =
+            vk::SubmitInfo2()
+                .setCommandBufferInfos(cmd_buffer_si);
+
+        m_graphics_queue.submit2(submit_info);
+        m_graphics_queue.waitIdle();
+
+        m_device.freeCommandBuffers(m_rhi_cmd_pool, cmd_buffer);
+    }
+
+    void TransitionImage(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout)
+    {
+
+        vk::ImageAspectFlags aspect_mask;
+        switch (new_layout)
+        {
+        case vk::ImageLayout::eDepthAttachmentOptimal:
+        case vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimal:
+            aspect_mask = vk::ImageAspectFlagBits::eDepth;
+            break;
+        default:
+            aspect_mask = vk::ImageAspectFlagBits::eColor;
+            break;
+        }
+
+        auto image_barrier =
+            vk::ImageMemoryBarrier2()
+                .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+                .setSrcAccessMask(vk::AccessFlagBits2::eMemoryWrite)
+                .setDstStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+                .setDstAccessMask(vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead)
+                .setOldLayout(cur_layout)
+                .setNewLayout(new_layout)
+                .setSubresourceRange(vk::ImageSubresourceRange(aspect_mask, 0, vk::RemainingMipLevels, 0, 1))
+                .setImage(image);
+
+        auto dependency_info =
+            vk::DependencyInfo()
+                .setImageMemoryBarriers(image_barrier);
+
+        cmd_buffer.pipelineBarrier2(dependency_info);
+    }
+
+    void CopyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size)
+    {
+        auto blit_region =
+            vk::ImageBlit2()
+                .setSrcOffsets({vk::Offset3D(),
+                                vk::Offset3D(src_size.width, src_size.height, 1)})
+                .setDstOffsets({vk::Offset3D(),
+                                vk::Offset3D(dst_size.width, dst_size.height, 1)})
+                .setSrcSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1))
+                .setDstSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1));
+
+        auto blit_image_info =
+            vk::BlitImageInfo2()
+                .setSrcImage(source)
+                .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+                .setDstImage(destination)
+                .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setFilter(vk::Filter::eLinear)
+                .setRegions(blit_region);
+
+        cmd_buffer.blitImage2(blit_image_info);
+    }
+
+    void GenerateMipmaps(vk::CommandBuffer cmd_buffer, vk::Image image, vk::Extent2D image_size)
+    {
+        uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(image_size.width, image_size.height)))) + 1;
+
+        for (int mip = 0; mip < mip_levels; mip++)
+        {
+            vk::Extent2D half_size = image_size;
+            half_size.width /= 2;
+            half_size.height /= 2;
+
+            auto image_barrier =
+                vk::ImageMemoryBarrier2()
+                    .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+                    .setSrcAccessMask(vk::AccessFlagBits2::eMemoryWrite)
+                    .setDstStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+                    .setDstAccessMask(vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead)
+                    .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
+                    .setNewLayout(vk::ImageLayout::eTransferSrcOptimal)
+                    .setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, mip, 1, 0, 1))
+                    .setImage(image);
+
+            auto dependency_info =
+                vk::DependencyInfo()
+                    .setImageMemoryBarriers(image_barrier);
+
+            cmd_buffer.pipelineBarrier2(dependency_info);
+
+            if (mip < mip_levels - 1)
+            {
+                auto blit_region =
+                    vk::ImageBlit2()
+                        .setSrcOffsets({vk::Offset3D(),
+                                        vk::Offset3D(image_size.width, image_size.height, 1)})
+                        .setDstOffsets({vk::Offset3D(),
+                                        vk::Offset3D(half_size.width, half_size.height, 1)})
+                        .setSrcSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, mip, 0, 1))
+                        .setDstSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, mip + 1, 0, 1));
+
+                auto blit_image_info =
+                    vk::BlitImageInfo2()
+                        .setSrcImage(image)
+                        .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+                        .setDstImage(image)
+                        .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+                        .setFilter(vk::Filter::eLinear)
+                        .setRegions(blit_region);
+
+                cmd_buffer.blitImage2(blit_image_info);
+
+                image_size = half_size;
+            }
+        }
+
+        // 转换布局
+        TransitionImage(cmd_buffer,
+                        image,
+                        vk::ImageLayout::eTransferSrcOptimal,
+                        vk::ImageLayout::eShaderReadOnlyOptimal);
+    }
+
+    AllocatedImage VulkanRHI::CreateImage(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped)
+    {
+        AllocatedImage new_image;
+        new_image.format = format;
+        new_image.extent = extent;
+
+        auto image_ci =
+            vk::ImageCreateInfo()
+                .setImageType(vk::ImageType::e2D)
+                .setFormat(format)
+                .setExtent(extent)
+                .setMipLevels(1)
+                .setArrayLayers(1)
+                .setSamples(vk::SampleCountFlagBits::e1)
+                .setTiling(vk::ImageTiling::eOptimal)
+                .setUsage(usage);
+        if (mipmapped)
+        {
+            image_ci.setMipLevels(static_cast<uint32_t>(std::floor(std::log2(std::max(extent.width, extent.height)))) + 1);
+        }
+
+        // 将图片保存至GPU上
+        auto image_ai =
+            vma::AllocationCreateInfo()
+                .setUsage(vma::MemoryUsage::eGpuOnly)
+                .setRequiredFlags(vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+        m_allocator.createImage(image_ci, image_ai);
+
+        //---------创建图像视图-----------
+        auto subresource_range =
+            vk::ImageSubresourceRange()
+                .setBaseMipLevel(0)
+                .setLevelCount(1)
+                .setBaseArrayLayer(0)
+                .setLayerCount(1);
+        switch (format)
+        {
+        case vk::Format::eD16Unorm:
+        case vk::Format::eD24UnormS8Uint:
+        case vk::Format::eD32Sfloat:
+            subresource_range.setAspectMask(vk::ImageAspectFlagBits::eDepth);
+            break;
+        default:
+            subresource_range.setAspectMask(vk::ImageAspectFlagBits::eColor);
+            break;
+        }
+
+        auto view_ci =
+            vk::ImageViewCreateInfo()
+                .setViewType(vk::ImageViewType::e2D)
+                .setImage(new_image.image)
+                .setFormat(format)
+                .setSubresourceRange(subresource_range);
+
+        new_image.image_view = m_device.createImageView(view_ci);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroyImageView(new_image.image_view);
+                m_allocator.destroyImage(new_image.image, new_image.allocation);
+            });
+
+        return new_image;
+    }
+
+    AllocatedBuffer VulkanRHI::CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage)
+    {
+        auto buffer_ci =
+            vk::BufferCreateInfo()
+                .setSize(alloc_size)
+                .setUsage(buffer_usage);
+
+        auto allocation_ci =
+            vma::AllocationCreateInfo()
+                .setUsage(memory_usage)
+                .setFlags(vma::AllocationCreateFlagBits::eMapped);
+
+        AllocatedBuffer new_buffer;
+        std::tie(new_buffer.buffer, new_buffer.allocation) = m_allocator.createBuffer(buffer_ci, allocation_ci);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_allocator.destroyBuffer(new_buffer.buffer, new_buffer.allocation);
+            });
+
+        return new_buffer;
+    }
+
+    vk::ShaderModule VulkanRHI::CreateShaderModule(const std::vector<unsigned char>& shader_code)
+    {
+        VkShaderModuleCreateInfo create_info{};
+        create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        create_info.pNext    = nullptr;
+        create_info.codeSize = shader_code.size();
+        create_info.pCode    = reinterpret_cast<const uint32_t*>(shader_code.data());
+
+        auto shader_ci =
+            vk::ShaderModuleCreateInfo()
+                .setCodeSize(shader_code.size())
+                .setPCode(reinterpret_cast<const uint32_t*>(shader_code.data()));
+
+        VkShaderModule shader_module = m_device.createShaderModule(shader_ci);
+
+        return shader_module;
+    }
+
+    void VulkanRHI::DestroyShaderModule(vk::ShaderModule shader)
+    {
+        m_device.destroyShaderModule(shader);
+    }
+
+    vk::PipelineLayout VulkanRHI::CreatePipelineLayout(const vk::PipelineLayoutCreateInfo& info)
+    {
+        vk::PipelineLayout layout = m_device.createPipelineLayout(info);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroyPipelineLayout(layout);
+            });
+
+        return layout;
+    }
+
+    vk::Pipeline VulkanRHI::CreateRenderPipeline(const RenderPipelineCreateInfo& info)
+    {
+        // 视口和裁剪
+        auto viewport_state_ci =
+            vk::PipelineViewportStateCreateInfo()
+                .setViewportCount(1)
+                .setScissorCount(1);
+
+        // 颜色混合
+        auto color_blend_state_ci =
+            vk::PipelineColorBlendStateCreateInfo()
+                .setLogicOpEnable(vk::False)
+                .setLogicOp(vk::LogicOp::eCopy)
+                .setAttachments(info.color_blend_attachment);
+
+        // 顶点阶段
+        // 不需要
+        auto vertex_input_state_ci = vk::PipelineVertexInputStateCreateInfo();
+
+        // 动态状态
+        std::array<vk::DynamicState, 2> states =
+            {
+                vk::DynamicState::eViewport,
+                vk::DynamicState::eScissor,
+            };
+        auto dynamic_state_ci =
+            vk::PipelineDynamicStateCreateInfo()
+                .setDynamicStates(states);
+
+        //---------管线创建信息-------------
+        auto pipeline_ci =
+            vk::GraphicsPipelineCreateInfo()
+                .setStages(info.shader_stages)
+                .setPVertexInputState(&vertex_input_state_ci)
+                .setPInputAssemblyState(&info.input_assembly)
+                .setPViewportState(&viewport_state_ci)
+                .setPRasterizationState(&info.rasterizer)
+                .setPMultisampleState(&info.multisampling)
+                .setPColorBlendState(&color_blend_state_ci)
+                .setPDepthStencilState(&info.depth_stencil)
+                .setPDynamicState(&dynamic_state_ci)
+                .setLayout(info.pipeline_layout);
+
+        auto result = m_device.createGraphicsPipeline({}, pipeline_ci);
+        YUTREL_ASSERT(result.result == vk::Result::eSuccess, "Failed to create pipelines");
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroyPipeline(result.value);
+            });
+
+        return result.value;
+    }
+
+    vk::DescriptorSetLayout VulkanRHI::CreateDescriptorSetLayout(DescriptorSetLayoutCreateInfo& info)
+    {
+        for (auto& b : info.bindings)
+        {
+            b.stageFlags |= info.shader_stages;
+        }
+
+        auto layout_ci =
+            vk::DescriptorSetLayoutCreateInfo()
+                .setBindings(info.bindings)
+                .setFlags({});
+
+        vk::DescriptorSetLayout layout = m_device.createDescriptorSetLayout(layout_ci);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroyDescriptorSetLayout(layout);
+            });
+
+        return layout;
+    }
+
+    vk::DescriptorSet VulkanRHI::AllocateDescriptorSets(vk::DescriptorSetLayout layout)
+    {
+        auto set_ai =
+            vk::DescriptorSetAllocateInfo()
+                .setDescriptorPool(m_descriptor_pool)
+                .setDescriptorSetCount(1)
+                .setSetLayouts(layout);
+
+        vk::DescriptorSet set = m_device.allocateDescriptorSets(set_ai).front();
+
+        return set;
+    }
+
+    void VulkanRHI::UpdateDescriptorSets(DescriptorWriter& writer, vk::DescriptorSet set)
+    {
+        for (auto& write : writer.writes)
+        {
+            write.setDstSet(set);
+        }
+        m_device.updateDescriptorSets(writer.writes, {set});
     }
 
 } // namespace Yutrel

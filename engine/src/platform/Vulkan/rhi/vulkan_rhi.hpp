@@ -1,16 +1,14 @@
 #pragma once
 
 #include "core/macro.hpp"
+#include "platform/Vulkan/utils/vulkan_utils.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
-// #include "platform/Vulkan/utils/vulkan_utils.hpp"
 
 #include <array>
 #include <deque>
 #include <functional>
 #include <stdint.h>
 #include <vector>
-#include <vk_mem_alloc_handles.hpp>
-#include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
@@ -47,11 +45,65 @@ namespace Yutrel
 
         void Clear();
 
+        //----------Tick---------
+        void PrepareBeforePass();
+
+        void SubmitRendering();
+
+        //-----------Resize-----------
+        void UpdateSwapchainSize(uint32_t width, uint32_t height);
+
+        bool RequestResize() { return m_resize_requested; }
+
+        void ResizeSwapchain();
+
+        //----------单次指令----------
+        vk::CommandBuffer BeginSingleTimeCommands();
+
+        void EndSingleTimeCommands(vk::CommandBuffer cmd_buffer);
+
+        //-----------图像操作----------
+        // 转换图像布局
+        void TransitionImage(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
+
+        // 拷贝图像
+        void CopyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size);
+
+        // 生成mipmap
+        void GenerateMipmaps(vk::CommandBuffer cmd_buffer, vk::Image image, vk::Extent2D image_size);
+
+        //-----------获取----------
+        vk::CommandBuffer GetCurrentCommandBuffer() { return GetCurrentFrame().main_cmd_buffer; }
+
+        vk::Extent2D GetSwapChainExtent() { return m_swapchain_extent; }
+
+        vk::Image GetCurrentSwapchainImage() { return m_swapchain_images[m_cur_swapchain_image_index]; }
+
+        //-----------创建------------
+        AllocatedImage CreateImage(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
+
+        AllocatedBuffer CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage);
+
+        vk::ShaderModule CreateShaderModule(const std::vector<unsigned char>& shader_code);
+
+        void DestroyShaderModule(vk::ShaderModule shader);
+
+        vk::PipelineLayout CreatePipelineLayout(const vk::PipelineLayoutCreateInfo& info);
+
+        vk::Pipeline CreateRenderPipeline(const RenderPipelineCreateInfo& info);
+
+        vk::DescriptorSetLayout CreateDescriptorSetLayout(DescriptorSetLayoutCreateInfo& info);
+
+        vk::DescriptorSet AllocateDescriptorSets(vk::DescriptorSetLayout layout);
+
+        void UpdateDescriptorSets(DescriptorWriter& writer, vk::DescriptorSet set);
+
     private:
         //--------初始化----------
         void InitVulkan(GLFWwindow* raw_window);
         // 交换链
         void InitSwapchain(uint32_t width, uint32_t height);
+        void DestroySwapchain();
         // 指令池与指令缓冲
         void InitCommands();
         // 同步设施
@@ -61,7 +113,8 @@ namespace Yutrel
         // Imgui
         void InitImgui(GLFWwindow* raw_window);
         //------------------------
-        void DestroySwapchain();
+
+        FrameData& GetCurrentFrame() { return m_frames[m_cur_frame % MAX_FRAMES_IN_FLIGHT]; }
 
     private:
         // 同时渲染的帧数
@@ -102,5 +155,12 @@ namespace Yutrel
 
         // 描述符池
         vk::DescriptorPool m_descriptor_pool;
+
+        // 每一帧信息
+        uint32_t m_cur_swapchain_image_index;
+
+        // 窗口大小改变
+        bool m_resize_requested{false};
+        VkExtent2D m_new_swapchain_extent;
     };
 } // namespace Yutrel
