@@ -20,6 +20,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace Yutrel
 {
@@ -29,7 +30,7 @@ namespace Yutrel
 
         InitSwapchain(info.width, info.height);
 
-        // InitCommands();
+        InitCommands();
 
         // InitSyncStructures();
 
@@ -161,17 +162,16 @@ namespace Yutrel
                 .value();
 
         // 获取交换链和图像
-        m_swapchain        = vkb_swapchain.swapchain;
-        m_swapchain_extent = vkb_swapchain.extent;
-        m_swapchain_format = static_cast<vk::Format>(vkb_swapchain.image_format);
-
-        // 这里不拷贝一遍就会报验证层错误，原因不明
+        m_swapchain                = vkb_swapchain.swapchain;
+        m_swapchain_extent         = vkb_swapchain.extent;
+        m_swapchain_format         = static_cast<vk::Format>(vkb_swapchain.image_format);
+        auto swapchain_images      = vkb_swapchain.get_images().value();
         auto swapchain_image_views = vkb_swapchain.get_image_views().value();
-        for (auto image : vkb_swapchain.get_images().value())
+        for (auto image : swapchain_images)
         {
             m_swapchain_images.push_back(static_cast<vk::Image>(image));
         }
-        for (auto view : swapchain_image_views)
+        for (auto&& view : swapchain_image_views)
         {
             m_swapchain_image_views.push_back(static_cast<vk::ImageView>(view));
         }
@@ -185,6 +185,45 @@ namespace Yutrel
         {
             m_device.destroyImageView(view);
         }
+    }
+
+    void VulkanRHI::InitCommands()
+    {
+        // 为并行的每一帧分别创建指令池
+        auto cmd_pool_ci =
+            vk::CommandPoolCreateInfo()
+                .setQueueFamilyIndex(m_graphics_queue_family)
+                .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            m_frames[i].cmd_pool = m_device.createCommandPool(cmd_pool_ci);
+
+            // 分配指令缓冲
+            auto cmd_buffer_ai =
+                vk::CommandBufferAllocateInfo()
+                    .setCommandPool(m_frames[i].cmd_pool)
+                    .setCommandBufferCount(1)
+                    .setLevel(vk::CommandBufferLevel::ePrimary);
+
+            m_frames[i].main_cmd_buffer = m_device.allocateCommandBuffers(cmd_buffer_ai).front();
+
+            // 放入删除队列
+            m_main_deletion_queue.PushFunction(
+                [=]()
+                {
+                    m_device.destroyCommandPool(m_frames[i].cmd_pool);
+                });
+        }
+
+        // 创建单次指令指令池
+        cmd_pool_ci.setFlags({});
+        m_rhi_cmd_pool = m_device.createCommandPool(cmd_pool_ci);
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroyCommandPool(m_rhi_cmd_pool);
+            });
     }
 
 } // namespace Yutrel

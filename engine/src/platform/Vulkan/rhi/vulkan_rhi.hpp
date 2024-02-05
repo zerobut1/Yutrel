@@ -29,12 +29,12 @@ namespace Yutrel
     struct FrameData
     {
         // 指令
-        VkCommandPool command_pool;
-        VkCommandBuffer main_command_buffer;
+        vk::CommandPool cmd_pool;
+        vk::CommandBuffer main_cmd_buffer;
 
         // 同步
-        VkSemaphore finished_for_presentation_semaphore, available_for_render_semaphore;
-        VkFence render_fence;
+        vk::Semaphore finished_for_presentation_semaphore, available_for_render_semaphore;
+        vk::Fence render_fence;
 
         // 删除队列
         DeletionQueue deletion_queue;
@@ -87,16 +87,16 @@ namespace Yutrel
 
         vma::Allocator m_allocator;
 
-        // 帧数据
-        std::array<FrameData, MAX_FRAMES_IN_FLIGHT> m_frames;
-
         vk::SwapchainKHR m_swapchain;
         vk::Format m_swapchain_format;
         vk::Extent2D m_swapchain_extent;
         std::vector<vk::Image> m_swapchain_images;
         std::vector<vk::ImageView> m_swapchain_image_views;
 
-        // std::vector<VkImage> m_swapchain_images;
-        // std::vector<VkImageView> m_swapchain_image_views;
+        // 帧数据
+        std::array<FrameData, MAX_FRAMES_IN_FLIGHT> m_frames;
+
+        // 单次指令指令池
+        vk::CommandPool m_rhi_cmd_pool;
     };
 } // namespace Yutrel
