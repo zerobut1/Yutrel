@@ -54,10 +54,10 @@ namespace Yutrel
         void InitSwapchain(uint32_t width, uint32_t height);
         // 指令池与指令缓冲
         void InitCommands();
-        // 描述符
-        void InitDescriptorPool();
         // 同步设施
         void InitSyncStructures();
+        // 描述符
+        void InitDescriptorPool();
         // Imgui
         void InitImgui(GLFWwindow* raw_window);
         //------------------------

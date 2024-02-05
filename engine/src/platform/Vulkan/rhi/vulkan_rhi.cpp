@@ -32,7 +32,7 @@ namespace Yutrel
 
         InitCommands();
 
-        // InitSyncStructures();
+        InitSyncStructures();
 
         // InitDescriptorPool();
 
@@ -224,6 +224,41 @@ namespace Yutrel
             {
                 m_device.destroyCommandPool(m_rhi_cmd_pool);
             });
+    }
+
+    void VulkanRHI::InitSyncStructures()
+    {
+        // 同步设施创建信息
+        auto fence_ci =
+            vk::FenceCreateInfo()
+                .setFlags(vk::FenceCreateFlagBits::eSignaled);
+        auto semaphore_ci =
+            vk::SemaphoreCreateInfo()
+                .setFlags({});
+
+        // 为并行的每一帧创建
+        for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
+            m_frames[i].render_fence = m_device.createFence(fence_ci);
+
+            // 放入删除队列
+            m_main_deletion_queue.PushFunction(
+                [=]()
+                {
+                    m_device.destroyFence(m_frames[i].render_fence);
+                });
+
+            m_frames[i].finished_for_presentation_semaphore = m_device.createSemaphore(semaphore_ci);
+            m_frames[i].available_for_render_semaphore      = m_device.createSemaphore(semaphore_ci);
+
+            // 放入删除队列
+            m_main_deletion_queue.PushFunction(
+                [=]()
+                {
+                    m_device.destroySemaphore(m_frames[i].finished_for_presentation_semaphore);
+                    m_device.destroySemaphore(m_frames[i].available_for_render_semaphore);
+                });
+        }
     }
 
 } // namespace Yutrel
