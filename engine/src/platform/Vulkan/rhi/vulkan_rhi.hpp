@@ -174,6 +174,6 @@ namespace Yutrel
 
         // 窗口大小改变
         bool m_resize_requested{false};
-        VkExtent2D m_new_swapchain_extent;
+        vk::Extent2D m_new_swapchain_extent;
     };
 } // namespace Yutrel

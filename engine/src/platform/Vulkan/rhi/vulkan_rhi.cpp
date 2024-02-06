@@ -165,9 +165,11 @@ namespace Yutrel
                 .value();
 
         // 获取交换链和图像
-        m_swapchain                = vkb_swapchain.swapchain;
-        m_swapchain_extent         = vkb_swapchain.extent;
-        m_swapchain_format         = static_cast<vk::Format>(vkb_swapchain.image_format);
+        m_swapchain        = vkb_swapchain.swapchain;
+        m_swapchain_extent = vkb_swapchain.extent;
+        m_swapchain_format = static_cast<vk::Format>(vkb_swapchain.image_format);
+        m_swapchain_images.clear();
+        m_swapchain_image_views.clear();
         auto swapchain_images      = vkb_swapchain.get_images().value();
         auto swapchain_image_views = vkb_swapchain.get_image_views().value();
         for (auto image : swapchain_images)
@@ -356,14 +358,16 @@ namespace Yutrel
         GetCurrentFrame().deletion_queue.flush();
 
         // 请求图像索引
-        auto result = m_device.acquireNextImageKHR(m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, {});
+        // auto result = m_device.acquireNextImageKHR(m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, {});
+
+        auto result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, GetCurrentFrame().available_for_render_semaphore, VK_NULL_HANDLE, &m_cur_swapchain_image_index);
         // 若窗口大小发生改变
-        if (result.result == vk::Result::eErrorOutOfDateKHR)
+        // if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        if (result != VK_SUCCESS)
         {
             m_resize_requested = true;
             return;
         }
-        m_cur_swapchain_image_index = result.value;
 
         // 重置命令缓冲
         vk::CommandBuffer cmd_buffer = GetCurrentCommandBuffer();
@@ -371,7 +375,6 @@ namespace Yutrel
         cmd_buffer.reset();
 
         // 开始指令缓冲
-        // m_cur_cmd_buffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlags()));
         cmd_buffer.begin(vk::CommandBufferBeginInfo());
     }
 
@@ -422,8 +425,10 @@ namespace Yutrel
                 .setWaitSemaphores(GetCurrentFrame().finished_for_presentation_semaphore)
                 .setImageIndices(m_cur_swapchain_image_index);
 
-        auto result = m_graphics_queue.presentKHR(present_info);
-        if (result == vk::Result::eErrorOutOfDateKHR)
+        VkPresentInfoKHR _present_info = static_cast<VkPresentInfoKHR>(present_info);
+
+        auto result = vkQueuePresentKHR(m_graphics_queue, &_present_info);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
             m_resize_requested = true;
         }
