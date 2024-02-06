@@ -561,6 +561,7 @@ namespace Yutrel
                 .setUsage(usage);
         if (mipmapped)
         {
+            new_image.mipmapped = true;
             image_ci.setMipLevels(static_cast<uint32_t>(std::floor(std::log2(std::max(extent.width, extent.height)))) + 1);
         }
 
@@ -610,6 +611,64 @@ namespace Yutrel
         return new_image;
     }
 
+    void VulkanRHI::UploadImageData(void* data, AllocatedImage& image)
+    {
+        size_t DATA_SIZE = image.extent.width * image.extent.height * image.extent.depth * 4;
+
+        // CPU_TO_GPU内存有时可能会不够大
+        AllocatedBuffer staging_buffer =
+            CreateBuffer(DATA_SIZE,
+                         vk::BufferUsageFlagBits::eTransferSrc,
+                         vma::MemoryUsage::eCpuOnly);
+
+        // 将图像数据存入暂存缓冲区
+        memcpy(staging_buffer.info.pMappedData, data, DATA_SIZE);
+
+        // 转换格式
+        vk::CommandBuffer cmd_buffer = BeginSingleTimeCommands();
+        {
+            // 转换布局
+            TransitionImage(cmd_buffer,
+                            image.image,
+                            vk::ImageLayout::eUndefined,
+                            vk::ImageLayout::eTransferDstOptimal);
+
+            // 图像拷贝到GPU
+            auto image_subresource =
+                vk::ImageSubresourceLayers()
+                    .setAspectMask(vk::ImageAspectFlagBits::eColor)
+                    .setMipLevel(0)
+                    .setBaseArrayLayer(0)
+                    .setLayerCount(1);
+
+            auto copy_region =
+                vk::BufferImageCopy()
+                    .setBufferOffset(0)
+                    .setBufferRowLength(0)
+                    .setBufferImageHeight(0)
+                    .setImageExtent(image.extent)
+                    .setImageSubresource(image_subresource);
+
+            cmd_buffer.copyBufferToImage(staging_buffer.buffer, image.image, vk::ImageLayout::eTransferDstOptimal, copy_region);
+
+            // 生成mipmap
+            if (image.mipmapped)
+            {
+                GenerateMipmaps(cmd_buffer, image.image, {image.extent.width, image.extent.height});
+            }
+            else
+            {
+                TransitionImage(cmd_buffer,
+                                image.image,
+                                vk::ImageLayout::eTransferDstOptimal,
+                                vk::ImageLayout::eShaderReadOnlyOptimal);
+            }
+        }
+        EndSingleTimeCommands(cmd_buffer);
+
+        DestroyBuffer(staging_buffer);
+    }
+
     AllocatedBuffer VulkanRHI::CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage)
     {
         auto buffer_ci =
@@ -632,6 +691,11 @@ namespace Yutrel
             });
 
         return new_buffer;
+    }
+
+    void VulkanRHI::DestroyBuffer(const AllocatedBuffer& buffer)
+    {
+        m_allocator.destroyBuffer(buffer.buffer, buffer.allocation);
     }
 
     vk::ShaderModule VulkanRHI::CreateShaderModule(const std::vector<unsigned char>& shader_code)
@@ -768,6 +832,24 @@ namespace Yutrel
             write.setDstSet(set);
         }
         m_device.updateDescriptorSets(writer.writes, {set});
+    }
+
+    vk::DeviceAddress VulkanRHI::GetBufferDeviceAddress(const vk::BufferDeviceAddressInfo& info)
+    {
+        return m_device.getBufferAddress(info);
+    }
+
+    vk::Sampler VulkanRHI::CreateSampler(const vk::SamplerCreateInfo& info)
+    {
+        vk::Sampler sampler = m_device.createSampler(info);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroySampler(sampler);
+            });
+
+        return sampler;
     }
 
 } // namespace Yutrel

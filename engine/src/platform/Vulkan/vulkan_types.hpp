@@ -54,6 +54,7 @@ namespace Yutrel
         vk::Extent3D extent;
         vk::Format format;
         vma::Allocation allocation;
+        bool mipmapped{false};
     };
 
 } // namespace Yutrel

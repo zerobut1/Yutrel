@@ -9,6 +9,7 @@
 #include <functional>
 #include <stdint.h>
 #include <vector>
+#include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
@@ -70,19 +71,25 @@ namespace Yutrel
         void CopyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size);
 
         // 生成mipmap
-        void GenerateMipmaps(vk::CommandBuffer cmd_buffer, vk::Image image, vk::Extent2D image_size);
+        void GenerateMipmaps(vk::CommandBuffer cmd_buffer, vk::Image image, vk::Extent2D extent);
 
         //-----------获取----------
         vk::CommandBuffer GetCurrentCommandBuffer() { return GetCurrentFrame().main_cmd_buffer; }
 
-        vk::Extent2D GetSwapChainExtent() { return m_swapchain_extent; }
+        vk::Extent2D GetSwapChainExtent() const { return m_swapchain_extent; }
 
-        vk::Image GetCurrentSwapchainImage() { return m_swapchain_images[m_cur_swapchain_image_index]; }
+        vk::Image GetCurrentSwapchainImage() const { return m_swapchain_images[m_cur_swapchain_image_index]; }
+
+        vk::PhysicalDeviceProperties GetPhysicalDeviceProperties() const { return m_GPU_properties; }
 
         //-----------创建------------
         AllocatedImage CreateImage(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
 
+        void UploadImageData(void* data, AllocatedImage& image);
+
         AllocatedBuffer CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage);
+
+        void DestroyBuffer(const AllocatedBuffer& buffer);
 
         vk::ShaderModule CreateShaderModule(const std::vector<unsigned char>& shader_code);
 
@@ -97,6 +104,10 @@ namespace Yutrel
         vk::DescriptorSet AllocateDescriptorSets(vk::DescriptorSetLayout layout);
 
         void UpdateDescriptorSets(DescriptorWriter& writer, vk::DescriptorSet set);
+
+        vk::DeviceAddress GetBufferDeviceAddress(const vk::BufferDeviceAddressInfo& info);
+
+        vk::Sampler CreateSampler(const vk::SamplerCreateInfo& info);
 
     private:
         //--------初始化----------
