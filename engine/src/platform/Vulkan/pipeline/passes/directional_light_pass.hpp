@@ -5,7 +5,6 @@
 #include <glm/glm.hpp>
 
 #include <stdint.h>
-#include <vulkan/vulkan_core.h>
 
 namespace Yutrel
 {
@@ -22,7 +21,7 @@ namespace Yutrel
     public:
         // 深度图像
         AllocatedImage depth_image;
-        VkSampler depth_sampler;
+        vk::Sampler depth_sampler;
 
     private:
         //--------初始化---------
@@ -67,6 +66,6 @@ namespace Yutrel
         } m_push_constants;
 
         // 绘制范围
-        VkExtent2D m_draw_extent;
+        vk::Extent2D m_draw_extent;
     };
 } // namespace Yutrel

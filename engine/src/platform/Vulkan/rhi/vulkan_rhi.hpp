@@ -80,6 +80,8 @@ namespace Yutrel
 
         vk::Image GetCurrentSwapchainImage() const { return m_swapchain_images[m_cur_swapchain_image_index]; }
 
+        vk::ImageView GetCurrentSwapchainImageView() const { return m_swapchain_image_views[m_cur_swapchain_image_index]; }
+
         vk::PhysicalDeviceProperties GetPhysicalDeviceProperties() const { return m_GPU_properties; }
 
         //-----------创建------------
@@ -87,7 +89,7 @@ namespace Yutrel
 
         void UploadImageData(void* data, AllocatedImage& image);
 
-        AllocatedBuffer CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage);
+        AllocatedBuffer CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage, bool auto_destroy = true);
 
         void DestroyBuffer(const AllocatedBuffer& buffer);
 

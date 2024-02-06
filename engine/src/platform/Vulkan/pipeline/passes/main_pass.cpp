@@ -173,7 +173,7 @@ namespace Yutrel
                 vk::PipelineLayoutCreateInfo()
                     .setPushConstantRanges(push_constant_range)
                     .setSetLayouts(descriptor_set_layouts);
-            m_rhi->CreatePipelineLayout(pipeline_ci);
+            m_pipelines[main_pipeline].layout = m_rhi->CreatePipelineLayout(pipeline_ci);
 
             //-----------创建管线----------
             auto render_pipeline_ci =
@@ -244,9 +244,12 @@ namespace Yutrel
 
         //---------渲染信息----------------
         // 清除信息
-        auto clear_value =
+        auto color_clear_value =
             vk::ClearValue()
-                .setColor(vk::ClearColorValue(0.4f, 0.8f, 1.0f, 1.0f))
+                .setColor(vk::ClearColorValue(0.4f, 0.8f, 1.0f, 1.0f));
+
+        auto depth_clear_value =
+            vk::ClearValue()
                 .setDepthStencil(vk::ClearDepthStencilValue(0.0f));
 
         // 颜色附件
@@ -256,7 +259,7 @@ namespace Yutrel
                 .setImageLayout(vk::ImageLayout::eGeneral)
                 .setLoadOp(vk::AttachmentLoadOp::eClear)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)
-                .setClearValue(clear_value);
+                .setClearValue(color_clear_value);
 
         // 深度附件
         auto depth_attachment =
@@ -265,12 +268,12 @@ namespace Yutrel
                 .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
                 .setLoadOp(vk::AttachmentLoadOp::eClear)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)
-                .setClearValue(clear_value);
+                .setClearValue(depth_clear_value);
 
         // 开始渲染
         auto render_info =
             vk::RenderingInfo()
-                .setRenderArea(vk::Rect2D(vk::Offset2D(0, 0), m_draw_extent))
+                .setRenderArea(vk::Rect2D({0, 0}, m_draw_extent))
                 .setLayerCount(1)
                 .setColorAttachments(color_attachment)
                 .setPDepthAttachment(&depth_attachment);
@@ -315,6 +318,7 @@ namespace Yutrel
                 // 将模型矩阵和顶点的设备地址传入
                 m_push_constants.model_matrix  = transform[0];
                 m_push_constants.vertex_buffer = mesh->vertex_buffer_address;
+
                 cmd_buffer.pushConstants(m_pipelines[main_pipeline].layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(m_push_constants), &m_push_constants);
 
                 // 绑定IBO

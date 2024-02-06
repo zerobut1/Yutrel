@@ -20,6 +20,7 @@
 #include <vk_mem_alloc_handles.hpp>
 #include <vk_mem_alloc_structs.hpp>
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_structs.hpp>
@@ -38,7 +39,7 @@ namespace Yutrel
 
         InitDescriptorPool();
 
-        // InitImgui(info.raw_window);
+        InitImgui(info.raw_window);
     }
 
     void VulkanRHI::Clear()
@@ -290,6 +291,62 @@ namespace Yutrel
             });
     }
 
+    void VulkanRHI::InitImgui(GLFWwindow* raw_window)
+    {
+        std::vector<VkDescriptorPoolSize> pool_sizes = {
+            {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+            {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+            {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+            {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000},
+        };
+
+        VkDescriptorPoolCreateInfo pool_info{};
+        pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_info.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        pool_info.maxSets       = 1000;
+        pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
+        pool_info.pPoolSizes    = pool_sizes.data();
+
+        VkDescriptorPool imgui_pool;
+        YUTREL_ASSERT(vkCreateDescriptorPool(m_device, &pool_info, nullptr, &imgui_pool) == VK_SUCCESS, "Failed to create descriptor pool");
+
+        //---------初始化imgui-----------
+        ImGui::CreateContext();
+
+        ImGui_ImplGlfw_InitForVulkan(raw_window, true);
+
+        ImGui_ImplVulkan_InitInfo init_info{};
+        init_info.Instance              = m_instance;
+        init_info.PhysicalDevice        = m_GPU;
+        init_info.Device                = m_device;
+        init_info.Queue                 = m_graphics_queue;
+        init_info.DescriptorPool        = imgui_pool;
+        init_info.MinImageCount         = 3;
+        init_info.ImageCount            = 3;
+        init_info.UseDynamicRendering   = true;
+        init_info.ColorAttachmentFormat = static_cast<VkFormat>(m_swapchain_format);
+        init_info.MSAASamples           = VK_SAMPLE_COUNT_1_BIT;
+
+        ImGui_ImplVulkan_Init(&init_info, VK_NULL_HANDLE);
+
+        ImGui_ImplVulkan_CreateFontsTexture();
+        ImGui_ImplVulkan_DestroyFontsTexture();
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                ImGui_ImplVulkan_Shutdown();
+                vkDestroyDescriptorPool(m_device, imgui_pool, nullptr);
+            });
+    }
+
     void VulkanRHI::PrepareBeforePass()
     {
         // 等待 fence
@@ -427,15 +484,18 @@ namespace Yutrel
         m_device.freeCommandBuffers(m_rhi_cmd_pool, cmd_buffer);
     }
 
-    void TransitionImage(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout)
+    void VulkanRHI::TransitionImage(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout)
     {
-
         vk::ImageAspectFlags aspect_mask;
         switch (new_layout)
         {
         case vk::ImageLayout::eDepthAttachmentOptimal:
-        case vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimal:
             aspect_mask = vk::ImageAspectFlagBits::eDepth;
+            break;
+        case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+        case vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimal:
+        case vk::ImageLayout::eDepthStencilReadOnlyOptimal:
+            aspect_mask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
             break;
         default:
             aspect_mask = vk::ImageAspectFlagBits::eColor;
@@ -460,7 +520,7 @@ namespace Yutrel
         cmd_buffer.pipelineBarrier2(dependency_info);
     }
 
-    void CopyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size)
+    void VulkanRHI::CopyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size)
     {
         auto blit_region =
             vk::ImageBlit2()
@@ -483,7 +543,7 @@ namespace Yutrel
         cmd_buffer.blitImage2(blit_image_info);
     }
 
-    void GenerateMipmaps(vk::CommandBuffer cmd_buffer, vk::Image image, vk::Extent2D image_size)
+    void VulkanRHI::GenerateMipmaps(vk::CommandBuffer cmd_buffer, vk::Image image, vk::Extent2D image_size)
     {
         uint32_t mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(image_size.width, image_size.height)))) + 1;
 
@@ -571,7 +631,7 @@ namespace Yutrel
                 .setUsage(vma::MemoryUsage::eGpuOnly)
                 .setRequiredFlags(vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-        m_allocator.createImage(image_ci, image_ai);
+        std::tie(new_image.image, new_image.allocation) = m_allocator.createImage(image_ci, image_ai);
 
         //---------创建图像视图-----------
         auto subresource_range =
@@ -619,7 +679,8 @@ namespace Yutrel
         AllocatedBuffer staging_buffer =
             CreateBuffer(DATA_SIZE,
                          vk::BufferUsageFlagBits::eTransferSrc,
-                         vma::MemoryUsage::eCpuOnly);
+                         vma::MemoryUsage::eCpuOnly,
+                         false);
 
         // 将图像数据存入暂存缓冲区
         memcpy(staging_buffer.info.pMappedData, data, DATA_SIZE);
@@ -669,7 +730,7 @@ namespace Yutrel
         DestroyBuffer(staging_buffer);
     }
 
-    AllocatedBuffer VulkanRHI::CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage)
+    AllocatedBuffer VulkanRHI::CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage, bool auto_destroy)
     {
         auto buffer_ci =
             vk::BufferCreateInfo()
@@ -682,13 +743,16 @@ namespace Yutrel
                 .setFlags(vma::AllocationCreateFlagBits::eMapped);
 
         AllocatedBuffer new_buffer;
-        std::tie(new_buffer.buffer, new_buffer.allocation) = m_allocator.createBuffer(buffer_ci, allocation_ci);
+        YUTREL_ASSERT(m_allocator.createBuffer(&buffer_ci, &allocation_ci, &new_buffer.buffer, &new_buffer.allocation, &new_buffer.info) == vk::Result::eSuccess, "Failed to create buffer");
 
-        m_main_deletion_queue.PushFunction(
-            [=]()
-            {
-                m_allocator.destroyBuffer(new_buffer.buffer, new_buffer.allocation);
-            });
+        if (auto_destroy)
+        {
+            m_main_deletion_queue.PushFunction(
+                [=]()
+                {
+                    m_allocator.destroyBuffer(new_buffer.buffer, new_buffer.allocation);
+                });
+        }
 
         return new_buffer;
     }
@@ -766,6 +830,7 @@ namespace Yutrel
         //---------管线创建信息-------------
         auto pipeline_ci =
             vk::GraphicsPipelineCreateInfo()
+                .setPNext(&info.render_info)
                 .setStages(info.shader_stages)
                 .setPVertexInputState(&vertex_input_state_ci)
                 .setPInputAssemblyState(&info.input_assembly)
@@ -777,7 +842,7 @@ namespace Yutrel
                 .setPDynamicState(&dynamic_state_ci)
                 .setLayout(info.pipeline_layout);
 
-        auto result = m_device.createGraphicsPipeline({}, pipeline_ci);
+        auto result = m_device.createGraphicsPipeline(nullptr, pipeline_ci);
         YUTREL_ASSERT(result.result == vk::Result::eSuccess, "Failed to create pipelines");
 
         m_main_deletion_queue.PushFunction(
@@ -831,7 +896,7 @@ namespace Yutrel
         {
             write.setDstSet(set);
         }
-        m_device.updateDescriptorSets(writer.writes, {set});
+        m_device.updateDescriptorSets(writer.writes, {});
     }
 
     vk::DeviceAddress VulkanRHI::GetBufferDeviceAddress(const vk::BufferDeviceAddressInfo& info)

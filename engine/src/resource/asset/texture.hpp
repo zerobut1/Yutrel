@@ -8,9 +8,9 @@ namespace Yutrel
 {
     struct Image
     {
-        uint32_t width;
-        uint32_t height;
-        uint32_t channels;
+        int width;
+        int height;
+        int channels;
         void* pixels;
     };
 

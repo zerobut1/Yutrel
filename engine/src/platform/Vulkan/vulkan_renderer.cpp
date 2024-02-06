@@ -67,9 +67,6 @@ namespace Yutrel
         // Imgui
         NewImguiFrame(swap_data->ui);
 
-        // 渲染context
-        m_rhi->PrepareContext();
-
         // 前向渲染
         m_render_pipeline->ForwardRender();
     }

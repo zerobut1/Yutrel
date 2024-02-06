@@ -2,12 +2,13 @@
 
 #include "imgui_pass.hpp"
 
-#include "platform/Vulkan/initializers/initializers.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace Yutrel
 {
@@ -22,21 +23,31 @@ namespace Yutrel
 
         m_rhi->TransitionImage(cmd_buffer,
                                m_rhi->GetCurrentSwapchainImage(),
-                               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+                               vk::ImageLayout::eTransferDstOptimal,
+                               vk::ImageLayout::eColorAttachmentOptimal);
 
-        VkRenderingAttachmentInfo colorAttachment = vkinit::AttachmentInfo(m_rhi->GetCurrentSwapchainImageView(), nullptr, VK_IMAGE_LAYOUT_GENERAL);
-        VkRenderingInfo renderInfo                = vkinit::RenderingInfo(m_rhi->GetSwapChainInfo().extent, &colorAttachment, nullptr);
+        auto color_attachment =
+            vk::RenderingAttachmentInfo()
+                .setImageView(m_rhi->GetCurrentSwapchainImageView())
+                .setImageLayout(vk::ImageLayout::eGeneral)
+                .setLoadOp(vk::AttachmentLoadOp::eLoad)
+                .setStoreOp(vk::AttachmentStoreOp::eStore);
 
-        vkCmdBeginRendering(cmd_buffer, &renderInfo);
+        auto render_info =
+            vk::RenderingInfo()
+                .setRenderArea(vk::Rect2D({0, 0}, m_rhi->GetSwapChainExtent()))
+                .setLayerCount(1)
+                .setColorAttachments(color_attachment);
+
+        cmd_buffer.beginRendering(render_info);
 
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd_buffer);
 
-        vkCmdEndRendering(cmd_buffer);
+        cmd_buffer.endRendering();
 
         m_rhi->TransitionImage(cmd_buffer,
                                m_rhi->GetCurrentSwapchainImage(),
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                               VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+                               vk::ImageLayout::eColorAttachmentOptimal,
+                               vk::ImageLayout::ePresentSrcKHR);
     }
 } // namespace Yutrel

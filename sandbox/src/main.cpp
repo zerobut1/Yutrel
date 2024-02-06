@@ -81,7 +81,7 @@ int main()
         .Init("Sandbox", 1920, 1080)
         .AddResource<Yutrel::UIResource>(Yutrel::CreateRef<ImguiUI>())
         .AddResource<Yutrel::Camera>(glm::vec3{0.0f, 3.0f, 0.0f})
-        // .AddStartupSystem<SetUp>()
+        .AddStartupSystem<SetUp>()
         .AddSystem<ImguiUI::UpdateData>()
         .AddSystem<UpdateCamera>()
         .Run();

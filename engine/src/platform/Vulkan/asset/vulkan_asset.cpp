@@ -3,6 +3,7 @@
 #include "vulkan_asset.hpp"
 
 #include "platform/Vulkan/vulkan_renderer.hpp"
+#include <stdint.h>
 #include <vk_mem_alloc_enums.hpp>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
@@ -33,8 +34,8 @@ namespace Yutrel
             }
         }
 
-        m_default_data.white_texture = m_rhi->CreateImage(vk::Extent3D{1, 1, 1}, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled);
-        m_default_data.error_texture = m_rhi->CreateImage(vk::Extent3D{16, 16, 1}, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled);
+        m_default_data.white_texture = m_rhi->CreateImage(vk::Extent3D{1, 1, 1}, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
+        m_default_data.error_texture = m_rhi->CreateImage(vk::Extent3D{16, 16, 1}, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
 
         m_rhi->UploadImageData((void*)&white, m_default_data.white_texture);
         m_rhi->UploadImageData(pixels.data(), m_default_data.error_texture);
@@ -108,7 +109,8 @@ namespace Yutrel
         AllocatedBuffer staging_buffer =
             m_rhi->CreateBuffer(VERTEX_BUFFER_SIZE + INDEX_BUFFER_SIZE,
                                 vk::BufferUsageFlagBits::eTransferSrc,
-                                vma::MemoryUsage::eCpuOnly);
+                                vma::MemoryUsage::eCpuOnly,
+                                false);
 
         // 将数据拷贝到暂存缓冲区
         void* data = staging_buffer.info.pMappedData;
@@ -232,8 +234,8 @@ namespace Yutrel
         Ref<Image> image = texture->image;
 
         vk::Extent3D extent{
-            image->width,
-            image->height,
+            static_cast<uint32_t>(image->width),
+            static_cast<uint32_t>(image->height),
             1,
         };
 
