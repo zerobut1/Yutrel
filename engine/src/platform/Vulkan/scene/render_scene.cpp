@@ -35,11 +35,11 @@ namespace Yutrel
         view_matrix     = pass_data->view_matrix;
         // todo 摄像机控制fov和近远平面
 
-        m_render_entities = std::vector<VulkanRenderObject>();
+        render_entities = std::vector<VulkanRenderObject>();
 
         for (auto& object : pass_data->objects)
         {
-            auto& vulkan_object = m_render_entities.emplace_back(VulkanRenderObject{});
+            auto& vulkan_object = render_entities.emplace_back(VulkanRenderObject{});
 
             // mesh加载到GPU，并释放内存
             vulkan_object.mesh = m_asset_manager->SetVulkanMesh(object.mesh);

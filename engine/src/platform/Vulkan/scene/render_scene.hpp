@@ -40,7 +40,7 @@ namespace Yutrel
         float far_plane{10000.0f};
 
         // 所有的渲染对象
-        std::vector<VulkanRenderObject> m_render_entities;
+        std::vector<VulkanRenderObject> render_entities;
 
     private:
         Ref<VulkanAssetManager> m_asset_manager;

@@ -173,17 +173,6 @@ namespace Yutrel
 
     void DirectionalLightPass::Draw()
     {
-        // 渲染数据
-        std::unordered_map<Ref<VulkanPBRMaterial>, std::unordered_map<Ref<VulkanMesh>, std::vector<glm::mat4>>> directional_light_mesh_drawcall_batch;
-
-        for (auto& object : m_render_scene->m_render_entities)
-        {
-            auto& mesh_instanced = directional_light_mesh_drawcall_batch[object.material];
-            auto& mesh_nodes     = mesh_instanced[object.mesh];
-
-            mesh_nodes.push_back(object.model_matrix);
-        }
-
         vk::CommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
         //---------渲染信息----------------
@@ -207,7 +196,6 @@ namespace Yutrel
                 .setRenderArea(vk::Rect2D({0, 0}, m_draw_extent))
                 .setLayerCount(1)
                 .setPDepthAttachment(&depth_attachment);
-                
 
         cmd_buffer.beginRendering(render_info);
 
@@ -232,25 +220,17 @@ namespace Yutrel
         // 绑定全局变量描述符
         cmd_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].layout, 0, m_descriptors[scene_descriptor].set, {});
 
-        for (auto& pair1 : directional_light_mesh_drawcall_batch)
+        for (auto& entity : m_render_scene->render_entities)
         {
-            for (auto& pair2 : pair1.second)
-            {
-                Ref<VulkanMesh> mesh = pair2.first;
-                auto& transform      = pair2.second;
+            m_push_constants.model_matrix  = entity.model_matrix;
+            m_push_constants.vertex_buffer = entity.mesh->vertex_buffer_address;
 
-                // 推送常量
-                // 将MVP矩阵和顶点的设备地址传入
-                m_push_constants.model_matrix  = transform[0];
-                m_push_constants.vertex_buffer = mesh->vertex_buffer_address;
+            cmd_buffer.pushConstants(m_pipelines[main_pipeline].layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(m_push_constants), &m_push_constants);
 
-                cmd_buffer.pushConstants(m_pipelines[main_pipeline].layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(m_push_constants), &m_push_constants);
+            // 绑定IBO
+            cmd_buffer.bindIndexBuffer(entity.mesh->index_buffer.buffer, 0, vk::IndexType::eUint32);
 
-                // 绑定IBO
-                cmd_buffer.bindIndexBuffer(mesh->index_buffer.buffer, 0, vk::IndexType::eUint32);
-
-                cmd_buffer.drawIndexed(mesh->index_count, 1, 0, 0, 0);
-            }
+            cmd_buffer.drawIndexed(entity.mesh->index_count, 1, 0, 0, 0);
         }
         cmd_buffer.endRendering();
     }

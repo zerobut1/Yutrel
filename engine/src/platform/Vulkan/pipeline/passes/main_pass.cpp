@@ -232,7 +232,7 @@ namespace Yutrel
         // 渲染数据
         std::unordered_map<Ref<VulkanPBRMaterial>, std::unordered_map<Ref<VulkanMesh>, std::vector<glm::mat4>>> main_camera_mesh_drawcall_batch;
 
-        for (auto& object : m_render_scene->m_render_entities)
+        for (auto& object : m_render_scene->render_entities)
         {
             auto& mesh_instanced = main_camera_mesh_drawcall_batch[object.material];
             auto& mesh_nodes     = mesh_instanced[object.mesh];
