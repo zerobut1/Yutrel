@@ -54,7 +54,7 @@ namespace Yutrel
 
     void VulkanRenderer::Tick(Ref<SwapData> swap_data)
     {
-
+        swap_data->aspect_radio = (float)m_rhi->GetSwapChainExtent().width / (float)m_rhi->GetSwapChainExtent().height;
         // 处理渲染数据
         m_render_scene->ProcessRenderData(swap_data);
 

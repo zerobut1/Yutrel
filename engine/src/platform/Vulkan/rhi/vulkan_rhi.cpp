@@ -280,7 +280,6 @@ namespace Yutrel
             vk::DescriptorPoolCreateInfo()
                 .setFlags({})
                 .setMaxSets(100)
-                .setPoolSizeCount(static_cast<uint32_t>(sizes.size()))
                 .setPoolSizes(sizes);
 
         m_descriptor_pool = m_device.createDescriptorPool(pool_ci);
@@ -408,11 +407,8 @@ namespace Yutrel
 
         auto submit_info =
             vk::SubmitInfo2()
-                // .setWaitSemaphoreInfoCount(1)
                 .setWaitSemaphoreInfos(semaphore_wait_si)
-                // .setSignalSemaphoreInfoCount(1)
                 .setSignalSemaphoreInfos(semaphore_signal_si)
-                // .setCommandBufferInfoCount(1)
                 .setCommandBufferInfos(cmd_buffer_si);
 
         // 提交到队列
@@ -515,7 +511,7 @@ namespace Yutrel
                 .setDstAccessMask(vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead)
                 .setOldLayout(cur_layout)
                 .setNewLayout(new_layout)
-                .setSubresourceRange(vk::ImageSubresourceRange(aspect_mask, 0, vk::RemainingMipLevels, 0, 1))
+                .setSubresourceRange(vk::ImageSubresourceRange(aspect_mask, 0, vk::RemainingMipLevels, 0, vk::RemainingArrayLayers))
                 .setImage(image);
 
         auto dependency_info =
@@ -608,7 +604,7 @@ namespace Yutrel
                         vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
-    AllocatedImage VulkanRHI::CreateImage(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped)
+    AllocatedImage VulkanRHI::CreateImage(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped, uint32_t array_layers)
     {
         AllocatedImage new_image;
         new_image.format = format;
@@ -620,7 +616,7 @@ namespace Yutrel
                 .setFormat(format)
                 .setExtent(extent)
                 .setMipLevels(1)
-                .setArrayLayers(1)
+                .setArrayLayers(array_layers)
                 .setSamples(vk::SampleCountFlagBits::e1)
                 .setTiling(vk::ImageTiling::eOptimal)
                 .setUsage(usage);
@@ -644,12 +640,14 @@ namespace Yutrel
                 .setBaseMipLevel(0)
                 .setLevelCount(1)
                 .setBaseArrayLayer(0)
-                .setLayerCount(1);
+                .setLayerCount(array_layers);
+
         switch (format)
         {
         case vk::Format::eD16Unorm:
         case vk::Format::eD24UnormS8Uint:
         case vk::Format::eD32Sfloat:
+        case vk::Format::eD32SfloatS8Uint:
             subresource_range.setAspectMask(vk::ImageAspectFlagBits::eDepth);
             break;
         default:
@@ -659,10 +657,18 @@ namespace Yutrel
 
         auto view_ci =
             vk::ImageViewCreateInfo()
-                .setViewType(vk::ImageViewType::e2D)
                 .setImage(new_image.image)
                 .setFormat(format)
                 .setSubresourceRange(subresource_range);
+
+        if (array_layers == 1)
+        {
+            view_ci.setViewType(vk::ImageViewType::e2D);
+        }
+        else
+        {
+            view_ci.setViewType(vk::ImageViewType::e2DArray);
+        }
 
         new_image.image_view = m_device.createImageView(view_ci);
 
@@ -674,6 +680,19 @@ namespace Yutrel
             });
 
         return new_image;
+    }
+
+    vk::ImageView VulkanRHI::CreateImageView(const vk::ImageViewCreateInfo& info)
+    {
+        vk::ImageView new_view = m_device.createImageView(info);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroyImageView(new_view);
+            });
+
+        return new_view;
     }
 
     void VulkanRHI::UploadImageData(void* data, AllocatedImage& image)

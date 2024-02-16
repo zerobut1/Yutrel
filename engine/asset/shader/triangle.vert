@@ -5,7 +5,8 @@ layout(location = 0)out vec2 out_uv;
 layout(location = 1)out vec3 out_normal;
 layout(location = 2)out vec4 out_tangent;
 layout(location = 3)out vec3 out_view_vec;
-layout(location = 4)out vec4 out_directional_light_shadow_coord;
+layout(location = 4)out vec4 out_world_space_pos;
+layout(location = 5)out vec4 out_view_space_pos;
 
 struct Vertex {
     vec3 position;
@@ -24,6 +25,8 @@ layout(push_constant)uniform constants
     VertexBuffer vertex_buffer;
 } push_constants;
 
+#define SHADOWMAP_CASCADE_COUNT 4
+
 layout(set = 0, binding = 0)uniform SceneData {
     mat4 view;
     mat4 projection;
@@ -31,14 +34,9 @@ layout(set = 0, binding = 0)uniform SceneData {
     vec4 ambient_color;
     vec4 directional_light_color;
     vec3 directional_light_direction;
-    mat4 directional_light_VP;
+    float cascade_splits[SHADOWMAP_CASCADE_COUNT];
+    mat4 directional_light_VP[SHADOWMAP_CASCADE_COUNT];
 } u_scene_data;
-
-const mat4 bias_mat = mat4(
-    0.5, 0.0, 0.0, 0.0,
-    0.0, 0.5, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-0.5, 0.5, 0.0, 1.0);
 
 void main()
 {
@@ -51,5 +49,6 @@ void main()
     out_normal = mat3(push_constants.model_matrix) * v.normal;
     out_tangent = v.tangent;
     out_view_vec = u_scene_data.camera_position.xyz - pos.xyz;
-    out_directional_light_shadow_coord = bias_mat * u_scene_data.directional_light_VP * pos;
+    out_world_space_pos = pos;
+    out_view_space_pos = u_scene_data.view * pos;
 }

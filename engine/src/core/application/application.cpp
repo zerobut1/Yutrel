@@ -8,6 +8,7 @@
 #include "function/window/window.hpp"
 #include "resource/asset/asset.hpp"
 #include "resource/component/component.hpp"
+#include "resource/component/window_ui.hpp"
 
 namespace Yutrel
 {
@@ -54,6 +55,7 @@ namespace Yutrel
         // 默认系统
         reg.regist_startup_system<Input::Init>()
             .regist_startup_system<RendererResource::Init>()
+            .regist_startup_system<UIResource::Init>()
             .regist_update_system<Time::Update>()
             .regist_update_system<WindowResource::Update>()
             .regist_update_system<AssetManager::LoadGLTFScenes>()

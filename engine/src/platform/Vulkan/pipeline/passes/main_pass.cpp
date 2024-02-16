@@ -12,6 +12,7 @@
 
 #include <array>
 #include <stdint.h>
+#include <vcruntime.h>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
@@ -215,14 +216,18 @@ namespace Yutrel
 
     void MainPass::UpdateUniformBuffer()
     {
-        m_scene_uniform_data.view       = m_render_scene->view_matrix;
-        m_scene_uniform_data.projection = glm::perspective(glm::radians(90.0f), (float)m_draw_extent.width / (float)m_draw_extent.height, m_render_scene->far_plane, m_render_scene->near_plane);
-        m_scene_uniform_data.projection[1][1] *= -1;
+        m_scene_uniform_data.view                        = m_render_scene->view_matrix;
+        m_scene_uniform_data.projection                  = m_render_scene->projection_matrix;
         m_scene_uniform_data.camera_position             = m_render_scene->camera_position;
         m_scene_uniform_data.ambient_color               = glm::vec4(0.1f, 0.1f, 0.1f, 0.1f);
         m_scene_uniform_data.directional_light_color     = glm::vec4(m_render_scene->directional_light.color, m_render_scene->directional_light.intensity);
         m_scene_uniform_data.directional_light_direction = glm::vec4(m_render_scene->directional_light.direction, 1.0f);
-        m_scene_uniform_data.directional_light_VP        = m_render_scene->directional_light_VP;
+
+        for (size_t i = 0; i < 4; i++)
+        {
+            m_scene_uniform_data.directional_light_VP[i] = m_render_scene->directional_light_VP[i];
+            m_scene_uniform_data.cascade_splits[i]       = m_render_scene->cascade_splits[i] * -1.0f;
+        }
 
         memcpy(m_scene_uniform_buffer.info.pMappedData, &m_scene_uniform_data, sizeof(m_scene_uniform_data));
     }

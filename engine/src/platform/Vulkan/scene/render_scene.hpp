@@ -2,6 +2,7 @@
 
 #include "function/render/renderer.hpp"
 #include "resource/component/light.hpp"
+#include <vector>
 
 namespace Yutrel
 {
@@ -27,17 +28,27 @@ namespace Yutrel
 
         void ProcessRenderData(Ref<SwapData> pass_data);
 
+    private:
+        void GetDirectionalLightMatrices(Ref<SwapData> pass_data);
+        glm::mat4 GetDirectionalLightMatrix(float cur_near_plane, float cur_far_plane);
+
     public:
         // 光源
         DirectionalLight directional_light;
-        glm::mat4 directional_light_VP;
+
+        // CSM
+        const uint32_t SHADOWMAP_CASCADE_COUNT{4};
+        std::vector<glm::mat4> directional_light_VP;
+        std::vector<float> cascade_splits;
 
         // 摄像机
         glm::vec3 camera_position;
         glm::mat4 view_matrix;
+        glm::mat4 projection_matrix;
         float fov{70.0f};
+        float aspect_radio{1920.0f / 1080.0f};
         float near_plane{0.1f};
-        float far_plane{10000.0f};
+        float far_plane{2000.0f};
 
         // 所有的渲染对象
         std::vector<VulkanRenderObject> render_entities;

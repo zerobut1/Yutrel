@@ -10,8 +10,10 @@
 #include "platform/Vulkan/vulkan_renderer.hpp"
 
 #include <array>
+#include <vcruntime.h>
 #include <vector>
 #include <vk_mem_alloc_enums.hpp>
+#include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
@@ -58,7 +60,7 @@ namespace Yutrel
         depth_image_usages |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
         depth_image_usages |= vk::ImageUsageFlagBits::eSampled;
 
-        depth_image = m_rhi->CreateImage(vk::Extent3D{4096, 4096, 1}, vk::Format::eD24UnormS8Uint, depth_image_usages);
+        depth_image = m_rhi->CreateImage(vk::Extent3D{4096, 4096, 1}, vk::Format::eD32SfloatS8Uint, depth_image_usages, false, m_render_scene->SHADOWMAP_CASCADE_COUNT);
 
         //-----------------采样器--------------
         auto sampler_ci =
@@ -70,16 +72,34 @@ namespace Yutrel
                 .setAddressModeV(vk::SamplerAddressMode::eClampToBorder)
                 .setAddressModeW(vk::SamplerAddressMode::eClampToBorder)
                 .setMipLodBias(0.0f)
+                .setMaxAnisotropy(1.0f)
                 .setMinLod(0.0f)
                 .setMaxLod(1.0f)
-                .setBorderColor(vk::BorderColor::eIntOpaqueWhite)
-                .setAnisotropyEnable(vk::True)
-                .setMaxAnisotropy(m_rhi->GetPhysicalDeviceProperties().limits.maxSamplerAnisotropy)
-                .setUnnormalizedCoordinates(vk::False)
-                .setCompareEnable(vk::False)
-                .setCompareOp(vk::CompareOp::eAlways);
+                .setBorderColor(vk::BorderColor::eIntOpaqueWhite);
 
         depth_sampler = m_rhi->CreateSampler(sampler_ci);
+
+        //---------------深度图像每一层的图像视图--------------
+        m_depth_image_views.resize(m_render_scene->SHADOWMAP_CASCADE_COUNT);
+        for (size_t i = 0; i < m_render_scene->SHADOWMAP_CASCADE_COUNT; i++)
+        {
+            auto subresource_range =
+                vk::ImageSubresourceRange()
+                    .setAspectMask(vk::ImageAspectFlagBits::eDepth)
+                    .setBaseMipLevel(0)
+                    .setLevelCount(1)
+                    .setBaseArrayLayer(i)
+                    .setLayerCount(1);
+
+            auto view_ci =
+                vk::ImageViewCreateInfo()
+                    .setViewType(vk::ImageViewType::e2D)
+                    .setImage(depth_image.image)
+                    .setFormat(depth_image.format)
+                    .setSubresourceRange(subresource_range);
+
+            m_depth_image_views[i] = m_rhi->CreateImageView(view_ci);
+        }
     }
 
     void DirectionalLightPass::InitUnifromBuffers()
@@ -166,9 +186,9 @@ namespace Yutrel
 
     void DirectionalLightPass::UpdateUniformBuffer()
     {
-        m_scene_uniform_data.light_VP = m_render_scene->directional_light_VP;
+        // m_scene_uniform_data.light_VP = m_render_scene->directional_light_VP;
 
-        memcpy(m_scene_uniform_buffer.info.pMappedData, &m_scene_uniform_data, sizeof(m_scene_uniform_data));
+        memcpy(m_scene_uniform_buffer.info.pMappedData, m_render_scene->directional_light_VP.data(), sizeof(m_scene_uniform_data));
     }
 
     void DirectionalLightPass::Draw()
@@ -180,24 +200,6 @@ namespace Yutrel
         auto clear_value =
             vk::ClearValue()
                 .setDepthStencil(vk::ClearDepthStencilValue(0.0f));
-
-        // 深度附件
-        auto depth_attachment =
-            vk::RenderingAttachmentInfo()
-                .setImageView(depth_image.image_view)
-                .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
-                .setLoadOp(vk::AttachmentLoadOp::eClear)
-                .setStoreOp(vk::AttachmentStoreOp::eStore)
-                .setClearValue(clear_value);
-
-        // 开始渲染
-        auto render_info =
-            vk::RenderingInfo()
-                .setRenderArea(vk::Rect2D({0, 0}, m_draw_extent))
-                .setLayerCount(1)
-                .setPDepthAttachment(&depth_attachment);
-
-        cmd_buffer.beginRendering(render_info);
 
         // 绑定管线
         cmd_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].pipeline);
@@ -220,19 +222,43 @@ namespace Yutrel
         // 绑定全局变量描述符
         cmd_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].layout, 0, m_descriptors[scene_descriptor].set, {});
 
-        for (auto& entity : m_render_scene->render_entities)
+        // 每级联绘制一次
+        for (size_t i = 0; i < m_render_scene->SHADOWMAP_CASCADE_COUNT; i++)
         {
-            m_push_constants.model_matrix  = entity.model_matrix;
-            m_push_constants.vertex_buffer = entity.mesh->vertex_buffer_address;
+            // 深度附件
+            auto depth_attachment =
+                vk::RenderingAttachmentInfo()
+                    .setImageView(m_depth_image_views[i])
+                    .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
+                    .setLoadOp(vk::AttachmentLoadOp::eClear)
+                    .setStoreOp(vk::AttachmentStoreOp::eStore)
+                    .setClearValue(clear_value);
 
-            cmd_buffer.pushConstants(m_pipelines[main_pipeline].layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(m_push_constants), &m_push_constants);
+            // 开始渲染
+            auto render_info =
+                vk::RenderingInfo()
+                    .setRenderArea(vk::Rect2D({0, 0}, m_draw_extent))
+                    .setLayerCount(1)
+                    .setPDepthAttachment(&depth_attachment);
 
-            // 绑定IBO
-            cmd_buffer.bindIndexBuffer(entity.mesh->index_buffer.buffer, 0, vk::IndexType::eUint32);
+            cmd_buffer.beginRendering(render_info);
 
-            cmd_buffer.drawIndexed(entity.mesh->index_count, 1, 0, 0, 0);
+            m_push_constants.cascade_index = i;
+
+            for (auto& entity : m_render_scene->render_entities)
+            {
+                m_push_constants.model_matrix  = entity.model_matrix;
+                m_push_constants.vertex_buffer = entity.mesh->vertex_buffer_address;
+
+                cmd_buffer.pushConstants(m_pipelines[main_pipeline].layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(m_push_constants), &m_push_constants);
+
+                // 绑定IBO
+                cmd_buffer.bindIndexBuffer(entity.mesh->index_buffer.buffer, 0, vk::IndexType::eUint32);
+
+                cmd_buffer.drawIndexed(entity.mesh->index_count, 1, 0, 0, 0);
+            }
+            cmd_buffer.endRendering();
         }
-        cmd_buffer.endRendering();
     }
 
 } // namespace Yutrel

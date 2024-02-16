@@ -85,7 +85,9 @@ namespace Yutrel
         vk::PhysicalDeviceProperties GetPhysicalDeviceProperties() const { return m_GPU_properties; }
 
         //-----------创建------------
-        AllocatedImage CreateImage(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
+        AllocatedImage CreateImage(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false, uint32_t array_layers = 1);
+
+        vk::ImageView CreateImageView(const vk::ImageViewCreateInfo& info);
 
         void UploadImageData(void* data, AllocatedImage& image);
 

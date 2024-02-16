@@ -31,6 +31,7 @@ namespace Yutrel
 
         glm::mat4 view_matrix;
         glm::vec3 camera_position;
+        float aspect_radio;
 
         DirectionalLight directional_light;
 

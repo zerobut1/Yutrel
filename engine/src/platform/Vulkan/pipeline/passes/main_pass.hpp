@@ -2,6 +2,7 @@
 
 #include "platform/Vulkan/pipeline/passes/render_pass.hpp"
 
+#include <array>
 #include <glm/glm.hpp>
 
 #include <stdint.h>
@@ -71,14 +72,19 @@ namespace Yutrel
 
         struct
         {
-            alignas(64) glm::mat4 view;
-            alignas(64) glm::mat4 projection;
-            alignas(16) glm::vec3 camera_position;
+            glm::mat4 view;
+            glm::mat4 projection;
+            glm::vec3 camera_position;
+            float padding_1;
             // 光源颜色的第四位为intensity
-            alignas(16) glm::vec4 ambient_color;
-            alignas(16) glm::vec4 directional_light_color;
-            alignas(16) glm::vec3 directional_light_direction;
-            alignas(64) glm::mat4 directional_light_VP;
+            glm::vec4 ambient_color;
+            glm::vec4 directional_light_color;
+            glm::vec3 directional_light_direction;
+            float padding_2;
+            // alignas(64) glm::mat4 directional_light_VP;
+            // todo 控制级联阴影大小
+            std::array<float, 4> cascade_splits;
+            std::array<glm::mat4, 4> directional_light_VP;
         } m_scene_uniform_data;
         AllocatedBuffer m_scene_uniform_buffer;
 
