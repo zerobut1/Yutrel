@@ -2,9 +2,7 @@
 
 #include "vulkan_rhi.hpp"
 
-// #include "platform/Vulkan/asset/vulkan_mesh.hpp"
-// #include "platform/Vulkan/initializers/initializers.hpp"
-// #include "platform/Vulkan/utils/vulkan_utils.hpp"
+#include "platform/Vulkan/utils/imgui_style.hpp"
 
 #include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
@@ -16,14 +14,6 @@
 #include <tuple>
 #include <vcruntime.h>
 #include <vector>
-#include <vk_mem_alloc_enums.hpp>
-#include <vk_mem_alloc_handles.hpp>
-#include <vk_mem_alloc_structs.hpp>
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_core.h>
-#include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_handles.hpp>
-#include <vulkan/vulkan_structs.hpp>
 
 namespace Yutrel
 {
@@ -98,16 +88,16 @@ namespace Yutrel
         m_surface = static_cast<vk::SurfaceKHR>(surface);
 
         // 设备特性
-        VkPhysicalDeviceFeatures device_features{};
+        vk::PhysicalDeviceFeatures device_features{};
         device_features.samplerAnisotropy = vk::True;
 
         // vulkan 1.2 特性
-        VkPhysicalDeviceVulkan12Features features_12{};
+        vk::PhysicalDeviceVulkan12Features features_12{};
         features_12.bufferDeviceAddress = vk::True;
         features_12.descriptorIndexing  = vk::True;
 
         // vulkan 1.3 特性
-        VkPhysicalDeviceVulkan13Features features_13{};
+        vk::PhysicalDeviceVulkan13Features features_13{};
         features_13.dynamicRendering = vk::True;
         features_13.synchronization2 = vk::True;
 
@@ -319,7 +309,61 @@ namespace Yutrel
         YUTREL_ASSERT(vkCreateDescriptorPool(m_device, &pool_info, nullptr, &imgui_pool) == VK_SUCCESS, "Failed to create descriptor pool");
 
         //---------初始化imgui-----------
+        IMGUI_CHECKVERSION();
         ImGui::CreateContext();
+
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+        ImGui::StyleColorsDark();
+
+        ImGuiStyle& style                      = ImGui::GetStyle();
+        style.GrabRounding                     = 4.0f;
+        ImVec4* colors                         = style.Colors;
+        colors[ImGuiCol_Text]                  = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY800);
+        colors[ImGuiCol_TextDisabled]          = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY500);
+        colors[ImGuiCol_WindowBg]              = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY100);
+        colors[ImGuiCol_ChildBg]               = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+        colors[ImGuiCol_PopupBg]               = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY50);
+        colors[ImGuiCol_Border]                = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY300);
+        colors[ImGuiCol_BorderShadow]          = ImGui::ColorConvertU32ToFloat4(Spectrum::Static::NONE);
+        colors[ImGuiCol_FrameBg]               = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY75);
+        colors[ImGuiCol_FrameBgHovered]        = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY50);
+        colors[ImGuiCol_FrameBgActive]         = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY200);
+        colors[ImGuiCol_TitleBg]               = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY300);
+        colors[ImGuiCol_TitleBgActive]         = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY200);
+        colors[ImGuiCol_TitleBgCollapsed]      = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY400);
+        colors[ImGuiCol_MenuBarBg]             = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY100);
+        colors[ImGuiCol_ScrollbarBg]           = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY100);
+        colors[ImGuiCol_ScrollbarGrab]         = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY400);
+        colors[ImGuiCol_ScrollbarGrabHovered]  = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY600);
+        colors[ImGuiCol_ScrollbarGrabActive]   = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY700);
+        colors[ImGuiCol_CheckMark]             = ImGui::ColorConvertU32ToFloat4(Spectrum::BLUE500);
+        colors[ImGuiCol_SliderGrab]            = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY700);
+        colors[ImGuiCol_SliderGrabActive]      = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY800);
+        colors[ImGuiCol_Button]                = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY75);
+        colors[ImGuiCol_ButtonHovered]         = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY50);
+        colors[ImGuiCol_ButtonActive]          = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY200);
+        colors[ImGuiCol_Header]                = ImGui::ColorConvertU32ToFloat4(Spectrum::BLUE400);
+        colors[ImGuiCol_HeaderHovered]         = ImGui::ColorConvertU32ToFloat4(Spectrum::BLUE500);
+        colors[ImGuiCol_HeaderActive]          = ImGui::ColorConvertU32ToFloat4(Spectrum::BLUE600);
+        colors[ImGuiCol_Separator]             = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY400);
+        colors[ImGuiCol_SeparatorHovered]      = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY600);
+        colors[ImGuiCol_SeparatorActive]       = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY700);
+        colors[ImGuiCol_ResizeGrip]            = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY400);
+        colors[ImGuiCol_ResizeGripHovered]     = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY600);
+        colors[ImGuiCol_ResizeGripActive]      = ImGui::ColorConvertU32ToFloat4(Spectrum::GRAY700);
+        colors[ImGuiCol_PlotLines]             = ImGui::ColorConvertU32ToFloat4(Spectrum::BLUE400);
+        colors[ImGuiCol_PlotLinesHovered]      = ImGui::ColorConvertU32ToFloat4(Spectrum::BLUE600);
+        colors[ImGuiCol_PlotHistogram]         = ImGui::ColorConvertU32ToFloat4(Spectrum::BLUE400);
+        colors[ImGuiCol_PlotHistogramHovered]  = ImGui::ColorConvertU32ToFloat4(Spectrum::BLUE600);
+        colors[ImGuiCol_TextSelectedBg]        = ImGui::ColorConvertU32ToFloat4((Spectrum::BLUE400 & 0x00FFFFFF) | 0x33000000);
+        colors[ImGuiCol_DragDropTarget]        = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+        colors[ImGuiCol_NavHighlight]          = ImGui::ColorConvertU32ToFloat4((Spectrum::GRAY900 & 0x00FFFFFF) | 0x0A000000);
+        colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+        colors[ImGuiCol_NavWindowingDimBg]     = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+        colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 
         ImGui_ImplGlfw_InitForVulkan(raw_window, true);
 
@@ -327,18 +371,23 @@ namespace Yutrel
         init_info.Instance              = m_instance;
         init_info.PhysicalDevice        = m_GPU;
         init_info.Device                = m_device;
+        init_info.QueueFamily           = m_graphics_queue_family;
         init_info.Queue                 = m_graphics_queue;
         init_info.DescriptorPool        = imgui_pool;
         init_info.MinImageCount         = 3;
         init_info.ImageCount            = 3;
+        init_info.MSAASamples           = VK_SAMPLE_COUNT_1_BIT;
         init_info.UseDynamicRendering   = true;
         init_info.ColorAttachmentFormat = static_cast<VkFormat>(m_swapchain_format);
-        init_info.MSAASamples           = VK_SAMPLE_COUNT_1_BIT;
 
         ImGui_ImplVulkan_Init(&init_info, VK_NULL_HANDLE);
 
-        ImGui_ImplVulkan_CreateFontsTexture();
-        ImGui_ImplVulkan_DestroyFontsTexture();
+        io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\msyh.ttc", 24.0f, NULL, io.Fonts->GetGlyphRangesChineseFull());
+
+        auto cmd_buffer = BeginSingleTimeCommands();
+        ImGui_ImplVulkan_CreateFontsTexture(cmd_buffer);
+        EndSingleTimeCommands(cmd_buffer);
+        ImGui_ImplVulkan_DestroyFontUploadObjects();
 
         m_main_deletion_queue.PushFunction(
             [=]()
