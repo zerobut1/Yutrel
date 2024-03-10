@@ -2,20 +2,11 @@
 
 #include "main_pass.hpp"
 
-#include "function/render/renderer.hpp"
 #include "platform/Vulkan/asset/shaders.hpp"
-#include "platform/Vulkan/asset/vulkan_asset.hpp"
 #include "platform/Vulkan/asset/vulkan_material.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
-
-#include <array>
-#include <stdint.h>
-#include <vcruntime.h>
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_structs.hpp>
 
 namespace Yutrel
 {
@@ -154,8 +145,8 @@ namespace Yutrel
 
         {
             //----------shader--------------
-            vk::ShaderModule triangle_vert_shader = m_rhi->CreateShaderModule(TRIANGLE_VERT_CODE);
-            vk::ShaderModule texture_frag_shader  = m_rhi->CreateShaderModule(TEXTURE_FRAG_CODE);
+            vk::ShaderModule triangle_vert_shader = m_rhi->CreateShaderModule(PBR_VERT_CODE);
+            vk::ShaderModule texture_frag_shader  = m_rhi->CreateShaderModule(PBR_FRAG_CODE);
 
             //------------推送常量------------
             auto push_constant_range =

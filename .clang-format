@@ -14,11 +14,7 @@ ColumnLimit: 0
 # 开括号后的对齐
 AlignAfterOpenBracket: Align
 
-# 缩进宽度
-IndentWidth: 4
-
 # 大括号换行风格
-BreakBeforeBraces: Custom
 BraceWrapping:
     AfterCaseLabel: true
     AfterClass: true

@@ -1,14 +1,16 @@
 #pragma once
 
+#include <vector>
+
 namespace Yutrel
 {
     // clang-format off
-    static const std::vector<unsigned char> TRIANGLE_VERT_CODE{
-        #include "triangle.vert.spv.h"
+    static const std::vector<unsigned char> PBR_VERT_CODE{
+        #include "pbr.vert.spv.h"
     };
 
-    static const std::vector<unsigned char> TEXTURE_FRAG_CODE{
-        #include "texture_image.frag.spv.h"
+    static const std::vector<unsigned char> PBR_FRAG_CODE{
+        #include "pbr.frag.spv.h"
     };
 
     static const std::vector<unsigned char> SHADOWMAP_VERT_CODE{
