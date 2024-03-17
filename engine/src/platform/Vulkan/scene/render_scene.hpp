@@ -1,13 +1,16 @@
 #pragma once
 
 #include "function/render/renderer.hpp"
+#include "platform/Vulkan/asset/vulkan_skybox.hpp"
 #include "resource/component/light.hpp"
+
 #include <vector>
 
 namespace Yutrel
 {
     struct VulkanPBRMaterial;
     struct VulkanMesh;
+    struct VulkanSkybox;
 
     struct VulkanRenderObject
     {
@@ -33,6 +36,9 @@ namespace Yutrel
         glm::mat4 GetDirectionalLightMatrix(float cur_near_plane, float cur_far_plane);
 
     public:
+        // skybox
+        Ref<VulkanSkybox> skybox;
+
         // 光源
         DirectionalLight directional_light;
 

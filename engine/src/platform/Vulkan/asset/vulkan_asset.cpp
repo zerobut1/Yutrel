@@ -3,6 +3,8 @@
 #include "vulkan_asset.hpp"
 
 #include "platform/Vulkan/vulkan_renderer.hpp"
+#include <array>
+#include <cstdint>
 #include <stdint.h>
 #include <vk_mem_alloc_enums.hpp>
 #include <vulkan/vulkan.hpp>
@@ -205,6 +207,88 @@ namespace Yutrel
             m_materials.insert({material, vulkan_material});
         }
         return m_materials[material];
+    }
+
+    Ref<VulkanSkybox> VulkanAssetManager::SetSkybox(Skybox skybox)
+    {
+        auto vulkan_skybox = CreateRef<VulkanSkybox>();
+
+        //-------------------brdf_lut---------------
+        AllocatedImage new_image =
+            m_rhi->CreateImage(
+                {static_cast<uint32_t>(skybox.brdf_lut->image->width),
+                 static_cast<uint32_t>(skybox.brdf_lut->image->height),
+                 1},
+                vk::Format::eR32G32B32A32Sfloat,
+                vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
+                true);
+
+        // 将数据加载到图片
+        m_rhi->UploadImageData(skybox.brdf_lut->image->pixels, new_image);
+
+        // 释放内存
+        skybox.brdf_lut->ReleaseImage();
+
+        //-------------------irradiance-------------
+        vulkan_skybox->irradiance =
+            m_rhi->CreateCubeMap(
+                {static_cast<uint32_t>(skybox.irradiace_pos_x_map->image->width),
+                 static_cast<uint32_t>(skybox.irradiace_pos_x_map->image->height),
+                 1},
+                vk::Format::eR32G32B32A32Sfloat,
+                vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
+                true);
+
+        m_rhi->UploadCubeMapData({
+                                     skybox.irradiace_pos_x_map->image->pixels,
+                                     skybox.irradiace_neg_x_map->image->pixels,
+                                     skybox.irradiace_pos_z_map->image->pixels,
+                                     skybox.irradiace_neg_z_map->image->pixels,
+                                     skybox.irradiace_pos_y_map->image->pixels,
+                                     skybox.irradiace_neg_y_map->image->pixels,
+                                 },
+                                 vulkan_skybox->irradiance);
+
+        // 释放内存
+        skybox.irradiace_pos_x_map->ReleaseImage();
+        skybox.irradiace_neg_x_map->ReleaseImage();
+        skybox.irradiace_pos_z_map->ReleaseImage();
+        skybox.irradiace_neg_z_map->ReleaseImage();
+        skybox.irradiace_pos_y_map->ReleaseImage();
+        skybox.irradiace_neg_y_map->ReleaseImage();
+
+        //-------------------prefiltered-------------
+        vulkan_skybox->prefiltered =
+            m_rhi->CreateCubeMap(
+                {static_cast<uint32_t>(skybox.prefiltered_pos_x_map->image->width),
+                 static_cast<uint32_t>(skybox.prefiltered_pos_x_map->image->height),
+                 1},
+                vk::Format::eR32G32B32A32Sfloat,
+                vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc,
+                true);
+
+        m_rhi->UploadCubeMapData({
+                                     skybox.prefiltered_pos_x_map->image->pixels,
+                                     skybox.prefiltered_neg_x_map->image->pixels,
+                                     skybox.prefiltered_pos_z_map->image->pixels,
+                                     skybox.prefiltered_neg_z_map->image->pixels,
+                                     skybox.prefiltered_pos_y_map->image->pixels,
+                                     skybox.prefiltered_neg_y_map->image->pixels,
+                                 },
+                                 vulkan_skybox->prefiltered);
+
+        // 释放内存
+        skybox.prefiltered_pos_x_map->ReleaseImage();
+        skybox.prefiltered_neg_x_map->ReleaseImage();
+        skybox.prefiltered_pos_z_map->ReleaseImage();
+        skybox.prefiltered_neg_z_map->ReleaseImage();
+        skybox.prefiltered_pos_y_map->ReleaseImage();
+        skybox.prefiltered_neg_y_map->ReleaseImage();
+
+        //----------------cube----------------
+        vulkan_skybox->cube = SetVulkanMesh(skybox.cube);
+
+        return vulkan_skybox;
     }
 
     AllocatedBuffer VulkanAssetManager::UploadMaterialData(Ref<Material> material)

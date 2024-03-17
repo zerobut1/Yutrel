@@ -14,6 +14,7 @@
 #include <tuple>
 #include <vcruntime.h>
 #include <vector>
+#include <vulkan/vulkan_enums.hpp>
 
 namespace Yutrel
 {
@@ -744,9 +745,88 @@ namespace Yutrel
         return new_view;
     }
 
+    AllocatedImage VulkanRHI::CreateCubeMap(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped)
+    {
+        AllocatedImage new_image;
+        new_image.format = format;
+        new_image.extent = extent;
+
+        auto image_ci =
+            vk::ImageCreateInfo()
+                .setImageType(vk::ImageType::e2D)
+                .setFlags(vk::ImageCreateFlagBits::eCubeCompatible)
+                .setFormat(format)
+                .setExtent(extent)
+                .setMipLevels(1)
+                .setArrayLayers(6)
+                .setSamples(vk::SampleCountFlagBits::e1)
+                .setTiling(vk::ImageTiling::eOptimal)
+                .setUsage(usage);
+        if (mipmapped)
+        {
+            new_image.mipmapped = true;
+            image_ci.setMipLevels(static_cast<uint32_t>(std::floor(std::log2(std::max(extent.width, extent.height)))) + 1);
+        }
+
+        // 将图片保存至GPU上
+        auto image_ai =
+            vma::AllocationCreateInfo()
+                .setUsage(vma::MemoryUsage::eGpuOnly)
+                .setRequiredFlags(vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+        std::tie(new_image.image, new_image.allocation) = m_allocator.createImage(image_ci, image_ai);
+
+        //---------创建图像视图-----------
+        auto subresource_range =
+            vk::ImageSubresourceRange()
+                .setBaseMipLevel(0)
+                .setLevelCount(1)
+                .setBaseArrayLayer(0)
+                .setLayerCount(6);
+
+        switch (format)
+        {
+        case vk::Format::eD16Unorm:
+        case vk::Format::eD24UnormS8Uint:
+        case vk::Format::eD32Sfloat:
+        case vk::Format::eD32SfloatS8Uint:
+            subresource_range.setAspectMask(vk::ImageAspectFlagBits::eDepth);
+            break;
+        default:
+            subresource_range.setAspectMask(vk::ImageAspectFlagBits::eColor);
+            break;
+        }
+
+        auto view_ci =
+            vk::ImageViewCreateInfo()
+                .setImage(new_image.image)
+                .setFormat(format)
+                .setViewType(vk::ImageViewType::eCube)
+                .setSubresourceRange(subresource_range);
+
+        new_image.image_view = m_device.createImageView(view_ci);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                m_device.destroyImageView(new_image.image_view);
+                m_allocator.destroyImage(new_image.image, new_image.allocation);
+            });
+
+        return new_image;
+    }
+
     void VulkanRHI::UploadImageData(void* data, AllocatedImage& image)
     {
-        size_t DATA_SIZE = image.extent.width * image.extent.height * image.extent.depth * 4;
+        size_t DATA_SIZE;
+        if (image.format == vk::Format::eR32G32B32A32Sfloat)
+        {
+            DATA_SIZE = image.extent.width * image.extent.height * image.extent.depth * 4 * 4;
+        }
+        else
+        {
+            DATA_SIZE = image.extent.width * image.extent.height * image.extent.depth * 4;
+        }
 
         // CPU_TO_GPU内存有时可能会不够大
         AllocatedBuffer staging_buffer =
@@ -797,6 +877,62 @@ namespace Yutrel
                                 vk::ImageLayout::eTransferDstOptimal,
                                 vk::ImageLayout::eShaderReadOnlyOptimal);
             }
+        }
+        EndSingleTimeCommands(cmd_buffer);
+
+        DestroyBuffer(staging_buffer);
+    }
+
+    void VulkanRHI::UploadCubeMapData(std::array<void*, 6> data, AllocatedImage& image)
+    {
+        const size_t DATA_SIZE      = image.extent.width * image.extent.height * 4 * 4;
+        const size_t CUBE_DATA_SIZE = DATA_SIZE * 6;
+
+        // CPU_TO_GPU内存有时可能会不够大
+        AllocatedBuffer staging_buffer =
+            CreateBuffer(CUBE_DATA_SIZE,
+                         vk::BufferUsageFlagBits::eTransferSrc,
+                         vma::MemoryUsage::eCpuOnly,
+                         false);
+
+        // 将图像数据存入暂存缓冲区
+        for (int i = 0; i < 6; i++)
+        {
+            memcpy((void*)(static_cast<char*>(staging_buffer.info.pMappedData) + DATA_SIZE * i), data[i], DATA_SIZE);
+        }
+        // memcpy(staging_buffer.info.pMappedData, data.data(), CUBE_DATA_SIZE);
+
+        // 转换格式
+        vk::CommandBuffer cmd_buffer = BeginSingleTimeCommands();
+        {
+            // 转换布局
+            TransitionImage(cmd_buffer,
+                            image.image,
+                            vk::ImageLayout::eUndefined,
+                            vk::ImageLayout::eTransferDstOptimal);
+
+            // 图像拷贝到GPU
+            auto image_subresource =
+                vk::ImageSubresourceLayers()
+                    .setAspectMask(vk::ImageAspectFlagBits::eColor)
+                    .setMipLevel(0)
+                    .setBaseArrayLayer(0)
+                    .setLayerCount(6);
+
+            auto copy_region =
+                vk::BufferImageCopy()
+                    .setBufferOffset(0)
+                    .setBufferRowLength(0)
+                    .setBufferImageHeight(0)
+                    .setImageExtent(image.extent)
+                    .setImageSubresource(image_subresource);
+
+            cmd_buffer.copyBufferToImage(staging_buffer.buffer, image.image, vk::ImageLayout::eTransferDstOptimal, copy_region);
+
+            TransitionImage(cmd_buffer,
+                            image.image,
+                            vk::ImageLayout::eTransferDstOptimal,
+                            vk::ImageLayout::eShaderReadOnlyOptimal);
         }
         EndSingleTimeCommands(cmd_buffer);
 

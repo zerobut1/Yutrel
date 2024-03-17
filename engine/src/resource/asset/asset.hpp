@@ -21,6 +21,8 @@ namespace Yutrel
 
         Ref<struct Texture> AddTexture(const std::string& path);
 
+        Ref<struct Texture> AddHDRTexture(const std::string& path);
+
         Ref<struct GLTFScene> AddGLTFScene(const std::string& path);
 
         void LoadFromFile(Ref<Mesh> mesh);
@@ -46,6 +48,8 @@ namespace Yutrel
         static void LoadGLTFScenes(gecs::querier<Ref<GLTFScene>, Transform, gecs::mut<Children>> scenes,
                                    gecs::resource<gecs::mut<AssetManager>> asset_manager,
                                    gecs::commands cmd);
+
+        static void LoadSkyboxes(gecs::querier<Skybox> skyboxes, gecs::resource<gecs::mut<AssetManager>> asset_manager);
 
     private:
         std::vector<Ref<Mesh>> m_meshes;

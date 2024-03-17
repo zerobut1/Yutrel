@@ -22,8 +22,7 @@ namespace Yutrel
 
     struct Transform
     {
-        glm::mat4 model_matrix{
-            1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+        glm::mat4 model_matrix{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
     };
 
     struct PbrBundle
@@ -38,6 +37,27 @@ namespace Yutrel
         Ref<struct GLTFScene> scene;
         Transform transform;
         Children children;
+    };
+
+    struct Skybox
+    {
+        Ref<struct Texture> brdf_lut;
+
+        Ref<Texture> irradiace_pos_x_map;
+        Ref<Texture> irradiace_neg_x_map;
+        Ref<Texture> irradiace_pos_y_map;
+        Ref<Texture> irradiace_neg_y_map;
+        Ref<Texture> irradiace_pos_z_map;
+        Ref<Texture> irradiace_neg_z_map;
+
+        Ref<Texture> prefiltered_pos_x_map;
+        Ref<Texture> prefiltered_neg_x_map;
+        Ref<Texture> prefiltered_pos_y_map;
+        Ref<Texture> prefiltered_neg_y_map;
+        Ref<Texture> prefiltered_pos_z_map;
+        Ref<Texture> prefiltered_neg_z_map;
+
+        Ref<Mesh> cube;
     };
 
 } // namespace Yutrel

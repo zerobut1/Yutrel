@@ -89,7 +89,11 @@ namespace Yutrel
 
         vk::ImageView CreateImageView(const vk::ImageViewCreateInfo& info);
 
+        AllocatedImage CreateCubeMap(vk::Extent3D extent, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
+
         void UploadImageData(void* data, AllocatedImage& image);
+
+        void UploadCubeMapData(std::array<void*, 6> data, AllocatedImage& image);
 
         AllocatedBuffer CreateBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, vma::MemoryUsage memory_usage, bool auto_destroy = true);
 

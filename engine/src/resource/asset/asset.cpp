@@ -19,7 +19,6 @@
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vcruntime.h>
 #include <vector>
 
@@ -38,6 +37,14 @@ namespace Yutrel
     Ref<Texture> AssetManager::AddTexture(const std::string& path)
     {
         return m_textures.emplace_back(CreateRef<Texture>(path));
+    }
+
+    Ref<Texture> AssetManager::AddHDRTexture(const std::string& path)
+    {
+        auto texture    = m_textures.emplace_back(CreateRef<Texture>(path));
+        texture->is_HDR = true;
+
+        return texture;
     }
 
     Ref<GLTFScene> AssetManager::AddGLTFScene(const std::string& path)
@@ -107,7 +114,15 @@ namespace Yutrel
         texture->image = CreateRef<Image>();
 
         // 从文件中读取
-        texture->image->pixels = stbi_load(texture->path.c_str(), &texture->image->width, &texture->image->height, &texture->image->channels, STBI_rgb_alpha);
+        if (texture->is_HDR)
+        {
+
+            texture->image->pixels = stbi_loadf(texture->path.c_str(), &texture->image->width, &texture->image->height, &texture->image->channels, STBI_rgb_alpha);
+        }
+        else
+        {
+            texture->image->pixels = stbi_load(texture->path.c_str(), &texture->image->width, &texture->image->height, &texture->image->channels, STBI_rgb_alpha);
+        }
 
         if (!texture->image->pixels)
         {
@@ -399,6 +414,72 @@ namespace Yutrel
             if (!scene->is_loaded)
             {
                 asset_manager->LoadFromFile(entity, scene, transform, children, cmd);
+            }
+        }
+    }
+
+    void AssetManager::LoadSkyboxes(gecs::querier<Skybox> skyboxes, gecs::resource<gecs::mut<AssetManager>> asset_manager)
+    {
+        for (const auto& [__, skybox] : skyboxes)
+        {
+            // if (!skybox.hdr->is_loaded)
+            // {
+            //     asset_manager->LoadFromFile(skybox.hdr);
+            // }
+
+            if (!skybox.brdf_lut->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.brdf_lut);
+            }
+
+            if (!skybox.irradiace_pos_x_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.irradiace_pos_x_map);
+            }
+            if (!skybox.irradiace_neg_x_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.irradiace_neg_x_map);
+            }
+            if (!skybox.irradiace_pos_y_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.irradiace_pos_y_map);
+            }
+            if (!skybox.irradiace_neg_y_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.irradiace_neg_y_map);
+            }
+            if (!skybox.irradiace_pos_z_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.irradiace_pos_z_map);
+            }
+            if (!skybox.irradiace_neg_z_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.irradiace_neg_z_map);
+            }
+
+            if (!skybox.prefiltered_pos_x_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.prefiltered_pos_x_map);
+            }
+            if (!skybox.prefiltered_neg_x_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.prefiltered_neg_x_map);
+            }
+            if (!skybox.prefiltered_pos_y_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.prefiltered_pos_y_map);
+            }
+            if (!skybox.prefiltered_neg_y_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.prefiltered_neg_y_map);
+            }
+            if (!skybox.prefiltered_pos_z_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.prefiltered_pos_z_map);
+            }
+            if (!skybox.prefiltered_neg_z_map->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.prefiltered_neg_z_map);
             }
         }
     }

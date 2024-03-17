@@ -19,10 +19,30 @@ void SetUp(gecs::commands cmds,
             scene,
         });
 
-    auto sun = cmds.create();
+    auto sky = cmds.create();
     Yutrel::DirectionalLight directional_light{};
     directional_light.direction = glm::normalize(glm::vec3(1.0f, -1.0f, 0.0f));
-    cmds.emplace<Yutrel::DirectionalLight>(sun, std::move(directional_light));
+    cmds.emplace<Yutrel::DirectionalLight>(sky, std::move(directional_light));
+    cmds.emplace<Yutrel::Skybox>(
+        sky,
+        Yutrel::Skybox{
+            asset_manager->AddHDRTexture("resource/skybox/brdf_lut.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_irradiance_X+.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_irradiance_X-.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_irradiance_Y+.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_irradiance_Y-.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_irradiance_Z+.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_irradiance_Z-.hdr"),
+
+            asset_manager->AddHDRTexture("resource/skybox/skybox_specular_X+.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_specular_X-.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_specular_Y+.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_specular_Y-.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_specular_Z+.hdr"),
+            asset_manager->AddHDRTexture("resource/skybox/skybox_specular_Z-.hdr"),
+
+            asset_manager->AddMesh("resource/skybox/cube.obj"),
+        });
 }
 
 void UpdateCamera(gecs::resource<gecs::mut<Yutrel::Camera>> camera,

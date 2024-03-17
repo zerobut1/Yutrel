@@ -83,6 +83,7 @@ namespace Yutrel
     }
 
     void RendererResource::Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
+                                  gecs::querier<Skybox> skyboxes,
                                   gecs::querier<DirectionalLight> directional_lights,
                                   gecs::resource<RendererResource> render,
                                   gecs::resource<UIResource> ui,
@@ -94,6 +95,15 @@ namespace Yutrel
         swap_data->ui              = ui->ui;
         swap_data->view_matrix     = camera->GetViewMatrix();
         swap_data->camera_position = camera->GetPosition();
+
+        for (const auto& [_, skybox] : skyboxes)
+        {
+            if (!skybox.cube->is_loaded)
+            {
+                asset_manager->LoadFromFile(skybox.cube);
+            }
+            swap_data->skybox = skybox;
+        }
 
         // todo 多光源的时候怎么处理
         for (const auto& [_, light] : directional_lights)

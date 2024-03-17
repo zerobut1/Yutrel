@@ -3,6 +3,7 @@
 #include "main_pass.hpp"
 
 #include "platform/Vulkan/asset/shaders.hpp"
+#include "platform/Vulkan/asset/vulkan_asset.hpp"
 #include "platform/Vulkan/asset/vulkan_material.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
@@ -35,6 +36,18 @@ namespace Yutrel
         m_draw_extent = m_rhi->GetSwapChainExtent();
 
         UpdateUniformBuffer();
+
+        static bool is_skybox_loaded = false;
+
+        if (!is_skybox_loaded)
+        {
+            auto writer =
+                DescriptorWriter()
+                    .WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, vk::DescriptorType::eUniformBuffer)
+                    .WriteImage(1, m_render_scene->skybox->prefiltered.image_view, m_shadowmap_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler);
+            m_rhi->UpdateDescriptorSets(writer, m_descriptors[skybox_descriptor].set);
+            is_skybox_loaded = true;
+        }
 
         //--------绘制------------
         vk::CommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
@@ -137,16 +150,32 @@ namespace Yutrel
 
             m_descriptors[material_descriptor].layout = m_rhi->CreateDescriptorSetLayout(layout_ci);
         }
+
+        // skybox
+        {
+            DescriptorSetLayoutCreateInfo layout_info;
+
+            auto layout_ci =
+                DescriptorSetLayoutCreateInfo()
+                    .AddBinding(0, vk::DescriptorType::eUniformBuffer)
+                    .AddBinding(1, vk::DescriptorType::eCombinedImageSampler)
+                    .SetShaderStage(vk::ShaderStageFlagBits::eAllGraphics);
+
+            m_descriptors[skybox_descriptor].layout = m_rhi->CreateDescriptorSetLayout(layout_ci);
+
+            m_descriptors[skybox_descriptor].set = m_rhi->AllocateDescriptorSets(m_descriptors[skybox_descriptor].layout);
+        }
     }
 
     void MainPass::InitPipelines()
     {
         m_pipelines.resize(pipeline_count);
 
+        //-----------main-----------
         {
             //----------shader--------------
-            vk::ShaderModule triangle_vert_shader = m_rhi->CreateShaderModule(PBR_VERT_CODE);
-            vk::ShaderModule texture_frag_shader  = m_rhi->CreateShaderModule(PBR_FRAG_CODE);
+            vk::ShaderModule pbr_vert_shader = m_rhi->CreateShaderModule(PBR_VERT_CODE);
+            vk::ShaderModule pbr_frag_shader = m_rhi->CreateShaderModule(PBR_FRAG_CODE);
 
             //------------推送常量------------
             auto push_constant_range =
@@ -171,7 +200,7 @@ namespace Yutrel
             auto render_pipeline_ci =
                 RenderPipelineCreateInfo()
                     .SetPipelineLayout(m_pipelines[main_pipeline].layout)
-                    .SetShaders(triangle_vert_shader, texture_frag_shader)
+                    .SetShaders(pbr_vert_shader, pbr_frag_shader)
                     .SetInputTopolygy(vk::PrimitiveTopology::eTriangleList)
                     .SetPolygonMode(vk::PolygonMode::eFill)
                     .SetCullMode(vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise)
@@ -184,8 +213,53 @@ namespace Yutrel
             m_pipelines[main_pipeline].pipeline = m_rhi->CreateRenderPipeline(render_pipeline_ci);
 
             //--------清除---------
-            m_rhi->DestroyShaderModule(triangle_vert_shader);
-            m_rhi->DestroyShaderModule(texture_frag_shader);
+            m_rhi->DestroyShaderModule(pbr_vert_shader);
+            m_rhi->DestroyShaderModule(pbr_frag_shader);
+        }
+
+        //-----------skybox-----------
+        {
+            //----------shader--------------
+            vk::ShaderModule skybox_vert_shader = m_rhi->CreateShaderModule(SKYBOX_VERT_CODE);
+            vk::ShaderModule skybox_frag_shader = m_rhi->CreateShaderModule(SKYBOX_FRAG_CODE);
+
+            //------------推送常量------------
+            auto push_constant_range =
+                vk::PushConstantRange()
+                    .setOffset(0)
+                    .setSize(sizeof(m_push_constants))
+                    .setStageFlags(vk::ShaderStageFlagBits::eVertex);
+
+            //-----------管线布局-------------
+            std::vector<vk::DescriptorSetLayout> descriptor_set_layouts{
+                m_descriptors[skybox_descriptor].layout,
+            };
+
+            auto pipeline_ci =
+                vk::PipelineLayoutCreateInfo()
+                    .setPushConstantRanges(push_constant_range)
+                    .setSetLayouts(descriptor_set_layouts);
+            m_pipelines[skybox_pipeline].layout = m_rhi->CreatePipelineLayout(pipeline_ci);
+
+            //-----------创建管线----------
+            auto render_pipeline_ci =
+                RenderPipelineCreateInfo()
+                    .SetPipelineLayout(m_pipelines[skybox_pipeline].layout)
+                    .SetShaders(skybox_vert_shader, skybox_frag_shader)
+                    .SetInputTopolygy(vk::PrimitiveTopology::eTriangleList)
+                    .SetPolygonMode(vk::PolygonMode::eFill)
+                    .SetCullMode(vk::CullModeFlagBits::eFront, vk::FrontFace::eCounterClockwise)
+                    .SetMultisamplingNone()
+                    .DisableBlending()
+                    .DisableDepthTest()
+                    .SetColorAttachmentFormat(m_draw_image.format)
+                    .SetDepthFormat(m_depth_image.format);
+
+            m_pipelines[skybox_pipeline].pipeline = m_rhi->CreateRenderPipeline(render_pipeline_ci);
+
+            //--------清除---------
+            m_rhi->DestroyShaderModule(skybox_vert_shader);
+            m_rhi->DestroyShaderModule(skybox_frag_shader);
         }
     }
 
@@ -276,9 +350,6 @@ namespace Yutrel
 
         cmd_buffer.beginRendering(render_info);
 
-        // 绑定管线
-        cmd_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].pipeline);
-
         // 设定viewport
         auto viewport =
             vk::Viewport()
@@ -294,8 +365,27 @@ namespace Yutrel
         // 设定scissor
         cmd_buffer.setScissor(0, vk::Rect2D({0, 0}, m_draw_extent));
 
+        // skybox
+        {
+            cmd_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelines[skybox_pipeline].layout, 0, m_descriptors[skybox_descriptor].set, {});
+
+            cmd_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipelines[skybox_pipeline].pipeline);
+
+            m_push_constants.vertex_buffer = m_render_scene->skybox->cube->vertex_buffer_address;
+
+            cmd_buffer.pushConstants(m_pipelines[skybox_pipeline].layout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(m_push_constants), &m_push_constants);
+
+            // 绑定IBO
+            cmd_buffer.bindIndexBuffer(m_render_scene->skybox->cube->index_buffer.buffer, 0, vk::IndexType::eUint32);
+
+            cmd_buffer.drawIndexed(m_render_scene->skybox->cube->index_count, 1, 0, 0, 0);
+        }
+
         // 绑定全局变量描述符
         cmd_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].layout, 0, m_descriptors[scene_descriptor].set, {});
+
+        // 绑定管线
+        cmd_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_pipelines[main_pipeline].pipeline);
 
         for (auto& pair1 : main_camera_mesh_drawcall_batch)
         {

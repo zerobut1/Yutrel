@@ -29,4 +29,12 @@ namespace Yutrel
         #include "quad.frag.spv.h"
     };
 
+    static const std::vector<unsigned char> SKYBOX_VERT_CODE{
+        #include "skybox.vert.spv.h"
+    };
+
+    static const std::vector<unsigned char> SKYBOX_FRAG_CODE{
+        #include "skybox.frag.spv.h"
+    };
+
 } // namespace Yutrel

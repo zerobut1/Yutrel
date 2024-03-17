@@ -18,25 +18,6 @@ namespace Yutrel
         return instance;
     }
 
-    // 默认的资源以及事件的创建
-    // 返回World&以方便链式调用
-    // World& Application::AddDefaultPlugin()
-    // {
-    // m_world
-    //     .SetResource(ExitTrigger())
-    //     .SetResource(Window::Create("Yutrel", 1920, 1080))
-    //     .SetResource(Input::Create())
-    //     .SetResource(Time::Create())
-    //     .SetResource(Renderer::Create(*m_world.GetResource<Ref<Window>>()))
-    //     .SetResource(Paths())
-    //     .AddStartupSystem(Renderer::InitRenderData)
-    //     .AddSystem(Window::Update)
-    //     .AddSystem(Time::Update)
-    //     .AddSystem(ExitTrigger::DetectShouldExit);
-
-    // return m_world;
-    // }
-
     Application& Application::Init(const std::string& title /* = "Yutrel App"*/, uint32_t width /* = 1920*/, uint32_t height /* = 1080*/)
     {
         LOG_INFO("Initlizing");
@@ -61,6 +42,7 @@ namespace Yutrel
             .regist_update_system<AssetManager::LoadGLTFScenes>()
             .regist_update_system<AssetManager::LoadMeshes>()
             .regist_update_system<AssetManager::LoadMaterials>()
+            .regist_update_system<AssetManager::LoadSkyboxes>()
             .regist_update_system<RendererResource::Update>();
 
         return *this;

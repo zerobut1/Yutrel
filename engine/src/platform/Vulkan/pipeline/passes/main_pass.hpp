@@ -47,6 +47,7 @@ namespace Yutrel
         enum pipelines : uint8_t
         {
             main_pipeline = 0,
+            skybox_pipeline,
 
             pipeline_count,
         };
@@ -55,6 +56,7 @@ namespace Yutrel
         {
             scene_descriptor = 0,
             material_descriptor,
+            skybox_descriptor,
 
             descriptor_count,
         };

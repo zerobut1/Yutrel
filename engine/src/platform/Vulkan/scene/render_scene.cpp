@@ -28,6 +28,12 @@ namespace Yutrel
         projection_matrix[1][1] *= -1;
         // todo 摄像机控制fov和近远平面
 
+        // skybox
+        if (!skybox)
+        {
+            skybox = m_asset_manager->SetSkybox(pass_data->skybox);
+        }
+
         // 平行光的级联阴影投影矩阵
         directional_light = pass_data->directional_light;
         GetDirectionalLightMatrices(pass_data);

@@ -31,6 +31,8 @@ namespace Yutrel
         std::string path;
         bool is_loaded{false};
 
+        bool is_HDR{false};
+
         Ref<Image> image;
     };
 } // namespace Yutrel

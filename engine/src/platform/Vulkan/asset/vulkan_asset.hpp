@@ -2,11 +2,11 @@
 
 #include "platform/Vulkan/asset/vulkan_material.hpp"
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
+#include "platform/Vulkan/asset/vulkan_skybox.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
 #include "platform/Vulkan/vulkan_types.hpp"
 
-#include <stdint.h>
 #include <unordered_map>
 #include <vulkan/vulkan_handles.hpp>
 
@@ -26,6 +26,8 @@ namespace Yutrel
 
         Ref<VulkanPBRMaterial> SetVulkanMaterial(Ref<Material> material);
 
+        Ref<VulkanSkybox> SetSkybox(Skybox skybox);
+
         void SetMaterialDescriptorSetLayout(vk::DescriptorSetLayout layout) { m_material_descriptor_set_layout = layout; }
 
     private:
@@ -36,6 +38,8 @@ namespace Yutrel
         AllocatedBuffer UploadMaterialData(Ref<Material> material);
 
         AllocatedImage UploadTexture(Ref<Texture> texture);
+
+        // AllocatedImage GengrateIrradianceCube(Ref<Texture> hdr);
 
     private:
         Ref<VulkanRHI> m_rhi;
@@ -51,8 +55,7 @@ namespace Yutrel
             vk::Sampler nearset_sampler;
         } m_default_data;
 
-        std::unordered_map<Ref<Mesh>, Ref<VulkanMesh>>
-            m_meshes;
+        std::unordered_map<Ref<Mesh>, Ref<VulkanMesh>> m_meshes;
         std::unordered_map<Ref<Texture>, AllocatedImage> m_textures;
         std::unordered_map<Ref<Material>, Ref<VulkanPBRMaterial>> m_materials;
     };
