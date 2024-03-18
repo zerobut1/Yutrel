@@ -24,6 +24,9 @@ layout(set = 0, binding = 0) uniform SceneData
 }
 u_scene_data;
 layout(set = 0, binding = 1) uniform sampler2DArray u_directional_light_shadowmap;
+layout(set = 0, binding = 2) uniform sampler2D u_brdf_lut;
+layout(set = 0, binding = 3) uniform samplerCube u_prefiltered_map;
+layout(set = 0, binding = 4) uniform samplerCube u_irradiance_map;
 
 layout(set = 1, binding = 0) uniform MaterialData
 {
@@ -94,7 +97,6 @@ vec3 CalculateNormal()
 //-------------计算反射-----------------------
 #define PI 3.1415926535897932384626433832795
 #define ALBEDO pow(texture(u_base_color_texture, in_uv).rgb, vec3(2.2))
-// #define ALBEDO texture(u_base_color_texture, in_uv).rgb
 
 // 法线分布函数
 float D_GGX(float dotNH, float roughness)
@@ -125,16 +127,25 @@ vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+vec3 PrefilteredReflection(vec3 R, float roughness)
+{
+    const float MAX_REFLECTION_LOD = 9.0; // todo: param/const
+
+    float lod  = roughness * MAX_REFLECTION_LOD;
+    float lodf = floor(lod);
+    float lodc = ceil(lod);
+    vec3 a     = textureLod(u_prefiltered_map, R, lodf).rgb;
+    vec3 b     = textureLod(u_prefiltered_map, R, lodc).rgb;
+    return mix(a, b, lod - lodf);
+}
+
 vec3 SpecularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float roughness)
 {
     // 预计算
     vec3 H      = normalize(V + L);
     float dotNV = clamp(dot(N, V), 0.0, 1.0);
     float dotNL = clamp(dot(N, L), 0.0, 1.0);
-    float dotLH = clamp(dot(L, H), 0.0, 1.0);
     float dotNH = clamp(dot(N, H), 0.0, 1.0);
-
-    vec3 light_color = vec3(1.0);
 
     vec3 color = vec3(0.0);
 
@@ -150,21 +161,6 @@ vec3 SpecularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
         vec3 kD   = (vec3(1.0) - F) * (1.0 - metallic);
         color += (kD * ALBEDO / PI + spec) * dotNL;
     }
-
-    // if (dotNL > 0.0)
-    // {
-    //     float rroughness = max(0.05, roughness);
-    //     // D = Normal distribution (Distribution of the microfacets)
-    //     float D = D_GGX(dotNH, roughness);
-    //     // G = Geometric shadowing term (Microfacets shadowing)
-    //     float G = G_SchlicksmithGGX(dotNL, dotNV, rroughness);
-    //     // F = Fresnel factor (Reflectance depending on angle of incidence)
-    //     vec3 F = F_Schlick(dotNV, F0);
-
-    //     vec3 spec = D * F * G / (4.0 * dotNL * dotNV);
-
-    //     color += spec * dotNL * light_color;
-    // }
 
     return color;
 }
@@ -191,13 +187,12 @@ void main()
     vec3 V = normalize(u_scene_data.camera_position - in_world_pos);
     vec3 R = reflect(-V, N);
 
-    vec3 albedo     = texture(u_base_color_texture, in_uv).rgb;
     float metallic  = texture(u_metallic_roughness_texture, in_uv).b;
     float roughness = texture(u_metallic_roughness_texture, in_uv).g;
 
     // 菲涅尔项
     vec3 F0 = vec3(0.04);
-    F0      = mix(F0, albedo.rgb, metallic);
+    F0      = mix(F0, ALBEDO, metallic);
 
     // 反射光
     vec3 Lo = vec3(0.0);
@@ -205,13 +200,26 @@ void main()
     vec3 L = -normalize(u_scene_data.directional_light_direction);
     Lo += SpecularContribution(L, V, N, F0, metallic, roughness) * shadow;
 
-    const float ambient = 0.02;
+    // ibl
+    vec2 brdf       = texture(u_brdf_lut, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 reflection = PrefilteredReflection(R, roughness).rgb;
+    vec3 irradiance = texture(u_irradiance_map, N).rgb;
 
-    vec3 color = ALBEDO * ambient;
-    color += Lo;
+    vec3 diffuse = irradiance * ALBEDO;
 
-    // 色调映射
-    // color = color / (color + vec3(1.0));
+    vec3 F = F_SchlickR(max(dot(N, V), 0.0), F0, roughness);
+
+    vec3 specular = reflection * (F * brdf.x + brdf.y);
+
+    vec3 kD = 1.0 - F;
+    kD *= 1.0 - metallic;
+    vec3 ambient = (kD * diffuse + specular);
+
+    vec3 color = ambient + Lo;
+
+    // tone mapping
+    color = color / (color + vec3(1.0));
+
     // 伽马矫正
     color = pow(color, vec3(0.4545));
 

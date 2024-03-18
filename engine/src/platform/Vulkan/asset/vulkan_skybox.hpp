@@ -9,6 +9,8 @@ namespace Yutrel
         AllocatedImage irradiance;
         AllocatedImage prefiltered;
 
+        AllocatedImage brdf_lut;
+
         Ref<struct VulkanMesh> cube;
     };
 } // namespace Yutrel

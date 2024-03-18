@@ -41,7 +41,18 @@ namespace Yutrel
 
         if (!is_skybox_loaded)
         {
+            // 场景
             auto writer =
+                DescriptorWriter()
+                    .WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, vk::DescriptorType::eUniformBuffer)
+                    .WriteImage(1, m_directional_light_shadowmap.image_view, m_shadowmap_sampler, vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler)
+                    .WriteImage(2, m_render_scene->skybox->brdf_lut.image_view, m_shadowmap_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler)
+                    .WriteImage(3, m_render_scene->skybox->prefiltered.image_view, m_shadowmap_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler)
+                    .WriteImage(4, m_render_scene->skybox->irradiance.image_view, m_shadowmap_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler);
+            m_rhi->UpdateDescriptorSets(writer, m_descriptors[scene_descriptor].set);
+
+            // skybox
+            writer =
                 DescriptorWriter()
                     .WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, vk::DescriptorType::eUniformBuffer)
                     .WriteImage(1, m_render_scene->skybox->prefiltered.image_view, m_shadowmap_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler);
@@ -121,19 +132,15 @@ namespace Yutrel
                 DescriptorSetLayoutCreateInfo()
                     .AddBinding(0, vk::DescriptorType::eUniformBuffer)
                     .AddBinding(1, vk::DescriptorType::eCombinedImageSampler)
+                    .AddBinding(2, vk::DescriptorType::eCombinedImageSampler)
+                    .AddBinding(3, vk::DescriptorType::eCombinedImageSampler)
+                    .AddBinding(4, vk::DescriptorType::eCombinedImageSampler)
                     .SetShaderStage(vk::ShaderStageFlagBits::eAllGraphics);
 
             m_descriptors[scene_descriptor].layout = m_rhi->CreateDescriptorSetLayout(layout_ci);
 
             // 分配描述符集
             m_descriptors[scene_descriptor].set = m_rhi->AllocateDescriptorSets(m_descriptors[scene_descriptor].layout);
-
-            // 写描述符集
-            auto writer =
-                DescriptorWriter()
-                    .WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, vk::DescriptorType::eUniformBuffer)
-                    .WriteImage(1, m_directional_light_shadowmap.image_view, m_shadowmap_sampler, vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler);
-            m_rhi->UpdateDescriptorSets(writer, m_descriptors[scene_descriptor].set);
         }
 
         // 材质

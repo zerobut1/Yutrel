@@ -214,7 +214,7 @@ namespace Yutrel
         auto vulkan_skybox = CreateRef<VulkanSkybox>();
 
         //-------------------brdf_lut---------------
-        AllocatedImage new_image =
+        vulkan_skybox->brdf_lut =
             m_rhi->CreateImage(
                 {static_cast<uint32_t>(skybox.brdf_lut->image->width),
                  static_cast<uint32_t>(skybox.brdf_lut->image->height),
@@ -224,7 +224,7 @@ namespace Yutrel
                 true);
 
         // 将数据加载到图片
-        m_rhi->UploadImageData(skybox.brdf_lut->image->pixels, new_image);
+        m_rhi->UploadImageData(skybox.brdf_lut->image->pixels, vulkan_skybox->brdf_lut);
 
         // 释放内存
         skybox.brdf_lut->ReleaseImage();
