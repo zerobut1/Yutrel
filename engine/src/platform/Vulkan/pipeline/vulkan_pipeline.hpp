@@ -1,9 +1,7 @@
 #pragma once
 
 #include "core/macro.hpp"
-// #include "platform/Vulkan/asset/render_common.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
-#include "platform/Vulkan/vulkan_types.hpp"
 #include <vulkan/vulkan_handles.hpp>
 
 namespace Yutrel
@@ -38,5 +36,8 @@ namespace Yutrel
         Ref<RenderPass> m_directional_light_pass;
         Ref<RenderPass> m_main_pass;
         Ref<RenderPass> m_imgui_pass;
+
+        Ref<RenderPass> m_base_pass;
+        Ref<RenderPass> m_lighting_pass;
     };
 } // namespace Yutrel

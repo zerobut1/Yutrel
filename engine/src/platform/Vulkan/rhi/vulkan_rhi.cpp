@@ -15,6 +15,7 @@
 #include <vcruntime.h>
 #include <vector>
 #include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace Yutrel
 {
@@ -1016,11 +1017,17 @@ namespace Yutrel
                 .setScissorCount(1);
 
         // 颜色混合
+        std::vector<vk::PipelineColorBlendAttachmentState> color_blend_attachments;
+        for (size_t i = 0; i < info.render_info.colorAttachmentCount; i++)
+        {
+            color_blend_attachments.push_back(info.color_blend_attachment);
+        }
+
         auto color_blend_state_ci =
             vk::PipelineColorBlendStateCreateInfo()
                 .setLogicOpEnable(vk::False)
                 .setLogicOp(vk::LogicOp::eCopy)
-                .setAttachments(info.color_blend_attachment);
+                .setAttachments(color_blend_attachments);
 
         // 顶点阶段
         // 不需要

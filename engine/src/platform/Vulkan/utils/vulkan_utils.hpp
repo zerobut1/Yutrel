@@ -1,6 +1,8 @@
 #pragma once
 
 #include "platform/Vulkan/vulkan_types.hpp"
+#include <array>
+#include <vector>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
@@ -57,6 +59,8 @@ namespace Yutrel
         RenderPipelineCreateInfo& EnableBlendingAlphablend();
 
         RenderPipelineCreateInfo& SetColorAttachmentFormat(vk::Format format);
+
+        RenderPipelineCreateInfo& SetColorAttachmentFormats(std::vector<vk::Format> formats);
 
         RenderPipelineCreateInfo& SetDepthFormat(vk::Format format);
 

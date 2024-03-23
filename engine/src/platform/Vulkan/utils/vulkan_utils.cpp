@@ -141,6 +141,13 @@ namespace Yutrel
         return *this;
     }
 
+    RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetColorAttachmentFormats(std::vector<vk::Format> formats)
+    {
+        render_info.setColorAttachmentFormats(formats);
+
+        return *this;
+    }
+
     RenderPipelineCreateInfo& RenderPipelineCreateInfo::SetDepthFormat(vk::Format format)
     {
         render_info.setDepthAttachmentFormat(format);

@@ -18,7 +18,6 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer
 
 layout(push_constant) uniform constants
 {
-    mat4 model_matrix;
     VertexBuffer vertex_buffer;
 }
 push_constants;
