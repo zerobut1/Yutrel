@@ -484,4 +484,15 @@ namespace Yutrel
         }
     }
 
+    void AssetManager::LoadWater(gecs::querier<Water> waters, gecs::resource<gecs::mut<AssetManager>> asset_manager)
+    {
+        for (const auto& [__, water] : waters)
+        {
+            if (!water.plane->is_loaded)
+            {
+                asset_manager->LoadFromFile(water.plane);
+            }
+        }
+    }
+
 } // namespace Yutrel

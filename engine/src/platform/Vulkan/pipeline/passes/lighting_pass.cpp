@@ -72,26 +72,17 @@ namespace Yutrel
 
         // 图像格式转换为颜色缓冲
         m_rhi->TransitionImage(cmd_buffer,
-                               m_draw_image.image,
+                               draw_image.image,
                                vk::ImageLayout::eUndefined,
                                vk::ImageLayout::eColorAttachmentOptimal);
         // 深度图像格式转换为深度附件
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_depth_image.image,
+                               depth_image.image,
                                vk::ImageLayout::eUndefined,
                                vk::ImageLayout::eDepthAttachmentOptimal);
 
         // 绘制
         DrawGeometry();
-
-        // 将渲染图像布局转换为传输源布局
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_draw_image.image,
-                               vk::ImageLayout::eColorAttachmentOptimal,
-                               vk::ImageLayout::eTransferSrcOptimal);
-
-        //-----------------------
-        CopyToSwapchain();
     }
 
     void LightingPass::InitGbuffer(LightingPassInitInfo* info)
@@ -118,8 +109,8 @@ namespace Yutrel
         };
 
         // 设为16位浮点格式以获得更高的精度
-        m_draw_image.format = vk::Format::eR16G16B16A16Sfloat;
-        m_draw_image.extent = draw_image_extent;
+        draw_image.format = vk::Format::eR16G16B16A16Sfloat;
+        draw_image.extent = draw_image_extent;
 
         vk::ImageUsageFlags draw_image_usages{};
         draw_image_usages |= vk::ImageUsageFlagBits::eTransferSrc;
@@ -127,15 +118,15 @@ namespace Yutrel
         draw_image_usages |= vk::ImageUsageFlagBits::eStorage;
         draw_image_usages |= vk::ImageUsageFlagBits::eColorAttachment;
 
-        m_draw_image = m_rhi->CreateImage(draw_image_extent, m_draw_image.format, draw_image_usages);
+        draw_image = m_rhi->CreateImage(draw_image_extent, draw_image.format, draw_image_usages);
     }
 
     void LightingPass::InitDepthImage()
     {
-        m_depth_image.format = vk::Format::eD32Sfloat;
-        m_depth_image.extent = m_draw_image.extent;
+        depth_image.format = vk::Format::eD32Sfloat;
+        depth_image.extent = draw_image.extent;
 
-        m_depth_image = m_rhi->CreateImage(m_depth_image.extent, m_depth_image.format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
+        depth_image = m_rhi->CreateImage(depth_image.extent, depth_image.format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
     }
 
     void LightingPass::InitUnifromBuffers()
@@ -245,8 +236,8 @@ namespace Yutrel
                     .SetMultisamplingNone()
                     .DisableBlending()
                     .EnableDepthTest(vk::True, vk::CompareOp::eGreaterOrEqual)
-                    .SetColorAttachmentFormats({m_draw_image.format})
-                    .SetDepthFormat(m_depth_image.format);
+                    .SetColorAttachmentFormats({draw_image.format})
+                    .SetDepthFormat(depth_image.format);
 
             m_pipelines[main_pipeline].pipeline = m_rhi->CreateRenderPipeline(render_pipeline_ci);
 
@@ -290,8 +281,8 @@ namespace Yutrel
                     .SetMultisamplingNone()
                     .DisableBlending()
                     .DisableDepthTest()
-                    .SetColorAttachmentFormat(m_draw_image.format)
-                    .SetDepthFormat(m_depth_image.format);
+                    .SetColorAttachmentFormat(draw_image.format)
+                    .SetDepthFormat(depth_image.format);
 
             m_pipelines[skybox_pipeline].pipeline = m_rhi->CreateRenderPipeline(render_pipeline_ci);
 
@@ -311,7 +302,7 @@ namespace Yutrel
 
         // 将渲染图像拷贝至交换链
         m_rhi->CopyImageToImage(m_rhi->GetCurrentCommandBuffer(),
-                                m_draw_image.image,
+                                draw_image.image,
                                 m_rhi->GetCurrentSwapchainImage(),
                                 m_draw_extent,
                                 m_rhi->GetSwapChainExtent());
@@ -363,7 +354,7 @@ namespace Yutrel
         // 颜色附件
         auto color_attachment =
             vk::RenderingAttachmentInfo()
-                .setImageView(m_draw_image.image_view)
+                .setImageView(draw_image.image_view)
                 .setImageLayout(vk::ImageLayout::eGeneral)
                 .setLoadOp(vk::AttachmentLoadOp::eClear)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)
@@ -372,7 +363,7 @@ namespace Yutrel
         // 深度附件
         auto depth_attachment =
             vk::RenderingAttachmentInfo()
-                .setImageView(m_depth_image.image_view)
+                .setImageView(depth_image.image_view)
                 .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
                 .setLoadOp(vk::AttachmentLoadOp::eClear)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)

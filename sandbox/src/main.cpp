@@ -2,6 +2,7 @@
 
 #include "ui/imgui_ui.hpp"
 
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
@@ -11,13 +12,13 @@
 void SetUp(gecs::commands cmds,
            gecs::resource<gecs::mut<Yutrel::AssetManager>> asset_manager)
 {
-    auto sponza = cmds.create();
-    auto scene  = asset_manager->AddGLTFScene("resource/sponza/sponza.gltf");
-    cmds.emplace_bundle<Yutrel::SceneBundle>(
-        sponza,
-        Yutrel::SceneBundle{
-            scene,
-        });
+    // auto sponza = cmds.create();
+    // auto scene  = asset_manager->AddGLTFScene("resource/sponza/sponza.gltf");
+    // cmds.emplace_bundle<Yutrel::SceneBundle>(
+    //     sponza,
+    //     Yutrel::SceneBundle{
+    //         scene,
+    //     });
 
     auto sky = cmds.create();
     Yutrel::DirectionalLight directional_light{};
@@ -42,6 +43,14 @@ void SetUp(gecs::commands cmds,
             asset_manager->AddHDRTexture("resource/skybox/skybox_specular_Z-.hdr"),
 
             asset_manager->AddMesh("resource/skybox/cube.obj"),
+        });
+
+    auto water = cmds.create();
+    cmds.emplace<Yutrel::Water>(
+        water,
+        Yutrel::Water{
+            asset_manager->AddMesh("resource/plane/plane.obj"),
+            {glm::scale(glm::mat4(1.0f), glm::vec3(100.0f, 1.0f, 100.0f))},
         });
 }
 

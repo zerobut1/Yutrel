@@ -21,6 +21,14 @@ namespace Yutrel
         #include "lighting.frag.spv.h"
     };
 
+    static const std::vector<unsigned char> WATER_VERT_CODE{
+        #include "water.vert.spv.h"
+    };
+
+    static const std::vector<unsigned char> WATER_FRAG_CODE{
+        #include "water.frag.spv.h"
+    };
+
     static const std::vector<unsigned char> PBR_VERT_CODE{
         #include "pbr.vert.spv.h"
     };

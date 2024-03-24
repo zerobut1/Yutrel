@@ -59,6 +59,10 @@ namespace Yutrel
         // 所有的渲染对象
         std::vector<VulkanRenderObject> render_entities;
 
+        // 水面
+        Ref<VulkanMesh> water_plane;
+        Transform water_transform;
+
     private:
         Ref<VulkanAssetManager> m_asset_manager;
     };

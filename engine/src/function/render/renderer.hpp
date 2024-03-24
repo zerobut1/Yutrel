@@ -36,6 +36,8 @@ namespace Yutrel
         Skybox skybox;
         DirectionalLight directional_light;
 
+        Water water;
+
         std::vector<RenderObject> objects;
     };
 
@@ -62,6 +64,7 @@ namespace Yutrel
 
         static void Update(gecs::querier<Ref<Mesh>, Ref<Material>, Transform> objects,
                            gecs::querier<Skybox> skyboxes,
+                           gecs::querier<Water> waters,
                            gecs::querier<DirectionalLight> directional_lights,
                            gecs::resource<RendererResource> render,
                            gecs::resource<class UIResource> ui,

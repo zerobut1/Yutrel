@@ -9,6 +9,7 @@
 #include "platform/Vulkan/pipeline/passes/lighting_pass.hpp"
 #include "platform/Vulkan/pipeline/passes/main_pass.hpp"
 #include "platform/Vulkan/pipeline/passes/render_pass.hpp"
+#include "platform/Vulkan/pipeline/passes/water_pass.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 
 #include <memory>
@@ -26,7 +27,7 @@ namespace Yutrel
         m_imgui_pass             = CreateRef<ImguiPass>();
         m_base_pass              = CreateRef<BasePass>();
         m_lighting_pass          = CreateRef<LightingPass>();
-        // m_debug_draw_pass        = CreateRef<DebugDrawPass>();
+        m_water_pass             = CreateRef<WaterPass>();
 
         DirectionalLightPassInitInfo directional_light_init_info{};
         directional_light_init_info.rhi           = m_rhi;
@@ -66,6 +67,14 @@ namespace Yutrel
         lighting_init_info.shadowmap_sampler           = std::static_pointer_cast<DirectionalLightPass>(m_directional_light_pass)->depth_sampler;
         m_lighting_pass->Init(&lighting_init_info);
 
+        WaterPassInitInfo water_init_info{};
+        water_init_info.rhi           = m_rhi;
+        water_init_info.asset_manager = m_asset_manager;
+        water_init_info.render_scene  = m_render_scene;
+        water_init_info.draw_image    = std::static_pointer_cast<LightingPass>(m_lighting_pass)->draw_image;
+        water_init_info.depth_image   = std::static_pointer_cast<LightingPass>(m_lighting_pass)->depth_image;
+        m_water_pass->Init(&water_init_info);
+
         // DebugDrawPassInitInfo debug_init_info{};
         // debug_init_info.rhi           = m_rhi;
         // debug_init_info.rhi           = m_rhi;
@@ -84,6 +93,7 @@ namespace Yutrel
 
         std::dynamic_pointer_cast<BasePass>(m_base_pass)->Draw();
         std::dynamic_pointer_cast<LightingPass>(m_lighting_pass)->Draw();
+        std::dynamic_pointer_cast<WaterPass>(m_water_pass)->Draw();
 
         std::dynamic_pointer_cast<ImguiPass>(m_imgui_pass)->DrawImgui();
 

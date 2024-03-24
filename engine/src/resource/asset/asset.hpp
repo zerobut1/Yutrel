@@ -51,6 +51,8 @@ namespace Yutrel
 
         static void LoadSkyboxes(gecs::querier<Skybox> skyboxes, gecs::resource<gecs::mut<AssetManager>> asset_manager);
 
+        static void LoadWater(gecs::querier<Water> waters, gecs::resource<gecs::mut<AssetManager>> asset_manager);
+
     private:
         std::vector<Ref<Mesh>> m_meshes;
 

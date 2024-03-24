@@ -60,4 +60,10 @@ namespace Yutrel
         Ref<Mesh> cube;
     };
 
+    struct Water
+    {
+        Ref<Mesh> plane;
+        Transform transform;
+    };
+
 } // namespace Yutrel

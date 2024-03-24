@@ -27,6 +27,12 @@ namespace Yutrel
 
         void Draw();
 
+    public:
+        // 绘制到的图像
+        AllocatedImage draw_image;
+        // 深度图像
+        AllocatedImage depth_image;
+
     private:
         //--------初始化---------
         void InitGbuffer(LightingPassInitInfo* info);
@@ -68,10 +74,6 @@ namespace Yutrel
 
         // 绘制范围
         vk::Extent2D m_draw_extent;
-        // 绘制到的图像
-        AllocatedImage m_draw_image;
-        // 深度图像
-        AllocatedImage m_depth_image;
 
         AllocatedImage gbuffer_base_color;
         AllocatedImage gbuffer_world_normal;

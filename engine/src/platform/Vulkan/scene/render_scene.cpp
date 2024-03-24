@@ -34,6 +34,10 @@ namespace Yutrel
             skybox = m_asset_manager->SetSkybox(pass_data->skybox);
         }
 
+        // 水面
+        water_plane     = m_asset_manager->SetVulkanMesh(pass_data->water.plane);
+        water_transform = pass_data->water.transform;
+
         // 平行光的级联阴影投影矩阵
         directional_light = pass_data->directional_light;
         GetDirectionalLightMatrices(pass_data);

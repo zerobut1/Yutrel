@@ -39,5 +39,6 @@ namespace Yutrel
 
         Ref<RenderPass> m_base_pass;
         Ref<RenderPass> m_lighting_pass;
+        Ref<RenderPass> m_water_pass;
     };
 } // namespace Yutrel
