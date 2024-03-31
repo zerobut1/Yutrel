@@ -15,6 +15,7 @@ namespace Yutrel
         AllocatedImage gbuffer_world_normal;
         AllocatedImage gbuffer_world_position;
         AllocatedImage gbuffer_metallic_roughness;
+        AllocatedImage gbuffer_depth;
 
         AllocatedImage directional_light_shadowmap;
         vk::Sampler shadowmap_sampler;
@@ -38,8 +39,6 @@ namespace Yutrel
         void InitGbuffer(LightingPassInitInfo* info);
 
         void InitDrawImage();
-
-        void InitDepthImage();
 
         void InitUnifromBuffers();
 

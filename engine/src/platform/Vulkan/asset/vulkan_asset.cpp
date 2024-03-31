@@ -198,7 +198,7 @@ namespace Yutrel
                               vk::DescriptorType::eCombinedImageSampler);
             writer.WriteImage(3,
                               material->normal_texture ? vulkan_material->normal_texture.image_view : m_default_data.white_texture.image_view,
-                              m_default_data.linear_sampler,
+                              m_default_data.nearset_sampler,
                               vk::ImageLayout::eShaderReadOnlyOptimal,
                               vk::DescriptorType::eCombinedImageSampler);
 

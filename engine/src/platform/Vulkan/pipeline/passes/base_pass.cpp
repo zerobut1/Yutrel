@@ -56,7 +56,7 @@ namespace Yutrel
                                vk::ImageLayout::eColorAttachmentOptimal);
         // 深度图像格式转换为深度附件
         m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_depth_image.image,
+                               gbuffer_depth.image,
                                vk::ImageLayout::eUndefined,
                                vk::ImageLayout::eDepthAttachmentOptimal);
 
@@ -119,10 +119,10 @@ namespace Yutrel
 
     void BasePass::InitDepthImage()
     {
-        m_depth_image.format = vk::Format::eD32Sfloat;
-        m_depth_image.extent = gbuffer_base_color.extent;
+        gbuffer_depth.format = vk::Format::eD32Sfloat;
+        gbuffer_depth.extent = gbuffer_base_color.extent;
 
-        m_depth_image = m_rhi->CreateImage(m_depth_image.extent, m_depth_image.format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
+        gbuffer_depth = m_rhi->CreateImage(gbuffer_depth.extent, gbuffer_depth.format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
     }
 
     void BasePass::InitUnifromBuffers()
@@ -213,7 +213,7 @@ namespace Yutrel
                                                 gbuffer_world_normal.format,
                                                 gbuffer_world_position.format,
                                                 gbuffer_metallic_roughness.format})
-                    .SetDepthFormat(m_depth_image.format);
+                    .SetDepthFormat(gbuffer_depth.format);
 
             m_pipelines[main_pipeline].pipeline = m_rhi->CreateRenderPipeline(render_pipeline_ci);
 
@@ -280,7 +280,7 @@ namespace Yutrel
         // 深度附件
         auto depth_attachment =
             vk::RenderingAttachmentInfo()
-                .setImageView(m_depth_image.image_view)
+                .setImageView(gbuffer_depth.image_view)
                 .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
                 .setLoadOp(vk::AttachmentLoadOp::eClear)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)

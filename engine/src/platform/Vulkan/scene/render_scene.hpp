@@ -4,6 +4,7 @@
 #include "platform/Vulkan/asset/vulkan_skybox.hpp"
 #include "resource/component/light.hpp"
 
+#include <malloc.h>
 #include <vector>
 
 namespace Yutrel
@@ -61,6 +62,7 @@ namespace Yutrel
 
         // 水面
         Ref<VulkanMesh> water_plane;
+        AllocatedImage water_normal;
         Transform water_transform;
 
     private:

@@ -63,6 +63,7 @@ namespace Yutrel
     struct Water
     {
         Ref<Mesh> plane;
+        Ref<Texture> normal;
         Transform transform;
     };
 

@@ -20,6 +20,14 @@ void SetUp(gecs::commands cmds,
     //         scene,
     //     });
 
+    // auto swimming_pool = cmds.create();
+    // auto scene  = asset_manager->AddGLTFScene("resource/swimming_pool/scene.gltf");
+    // cmds.emplace_bundle<Yutrel::SceneBundle>(
+    //     swimming_pool,
+    //     Yutrel::SceneBundle{
+    //         scene,
+    //     });
+
     auto sky = cmds.create();
     Yutrel::DirectionalLight directional_light{};
     directional_light.direction = glm::normalize(glm::vec3(1.0f, -1.0f, 0.0f));
@@ -45,12 +53,15 @@ void SetUp(gecs::commands cmds,
             asset_manager->AddMesh("resource/skybox/cube.obj"),
         });
 
-    auto water = cmds.create();
+    auto water      = cmds.create();
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+    model           = glm::scale(model, glm::vec3(100.0f, 1.0f, 100.0f));
     cmds.emplace<Yutrel::Water>(
         water,
         Yutrel::Water{
             asset_manager->AddMesh("resource/plane/plane.obj"),
-            {glm::scale(glm::mat4(1.0f), glm::vec3(100.0f, 1.0f, 100.0f))},
+            asset_manager->AddTexture("resource/texture/water.png"),
+            {model},
         });
 }
 

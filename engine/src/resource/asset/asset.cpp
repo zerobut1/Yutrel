@@ -492,6 +492,11 @@ namespace Yutrel
             {
                 asset_manager->LoadFromFile(water.plane);
             }
+
+            if (!water.normal->is_loaded)
+            {
+                asset_manager->LoadFromFile(water.normal);
+            }
         }
     }
 

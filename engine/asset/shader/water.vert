@@ -1,7 +1,8 @@
 #version 450
 #extension GL_EXT_buffer_reference : require
 
-layout(location = 0) out vec2 out_uv;
+layout(location = 0) out vec4 out_position;
+layout(location = 1) out vec2 out_uv;
 
 struct Vertex
 {
@@ -34,7 +35,9 @@ void main()
 {
     Vertex v = push_constants.vertex_buffer.vertices[gl_VertexIndex];
 
-    gl_Position = u_scene_data.projection * u_scene_data.view * push_constants.model * vec4(v.position, 1.0f);
+    out_position = push_constants.model * vec4(v.position, 1.0f);
+    
+    gl_Position  = u_scene_data.projection * u_scene_data.view * out_position;
 
     out_uv = v.uv;
 }

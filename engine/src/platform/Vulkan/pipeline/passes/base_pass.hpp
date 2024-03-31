@@ -27,6 +27,8 @@ namespace Yutrel
         AllocatedImage gbuffer_world_normal;
         AllocatedImage gbuffer_world_position;
         AllocatedImage gbuffer_metallic_roughness;
+        // 深度图像
+        AllocatedImage gbuffer_depth;
 
     private:
         //--------初始化---------
@@ -63,9 +65,6 @@ namespace Yutrel
 
         // 绘制范围
         vk::Extent2D m_draw_extent;
-
-        // 深度图像
-        AllocatedImage m_depth_image;
 
         struct
         {

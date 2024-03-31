@@ -56,13 +56,14 @@ namespace Yutrel
         m_base_pass->Init(&base_init_info);
 
         LightingPassInitInfo lighting_init_info{};
-        lighting_init_info.rhi                         = m_rhi;
-        lighting_init_info.asset_manager               = m_asset_manager;
-        lighting_init_info.render_scene                = m_render_scene;
-        lighting_init_info.gbuffer_base_color          = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_base_color;
-        lighting_init_info.gbuffer_world_normal        = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_world_normal;
-        lighting_init_info.gbuffer_world_position      = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_world_position;
-        lighting_init_info.gbuffer_metallic_roughness  = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_metallic_roughness;
+        lighting_init_info.rhi                        = m_rhi;
+        lighting_init_info.asset_manager              = m_asset_manager;
+        lighting_init_info.render_scene               = m_render_scene;
+        lighting_init_info.gbuffer_base_color         = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_base_color;
+        lighting_init_info.gbuffer_world_normal       = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_world_normal;
+        lighting_init_info.gbuffer_world_position     = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_world_position;
+        lighting_init_info.gbuffer_metallic_roughness = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_metallic_roughness;
+        lighting_init_info.gbuffer_depth              = std::static_pointer_cast<BasePass>(m_base_pass)->gbuffer_depth;
         lighting_init_info.directional_light_shadowmap = std::static_pointer_cast<DirectionalLightPass>(m_directional_light_pass)->depth_image;
         lighting_init_info.shadowmap_sampler           = std::static_pointer_cast<DirectionalLightPass>(m_directional_light_pass)->depth_sampler;
         m_lighting_pass->Init(&lighting_init_info);

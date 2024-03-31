@@ -30,22 +30,9 @@ namespace Yutrel
 
         void SetMaterialDescriptorSetLayout(vk::DescriptorSetLayout layout) { m_material_descriptor_set_layout = layout; }
 
-    private:
-        void InitDefaultData();
-
-        Ref<VulkanMesh> UploadMesh(Ref<Mesh> mesh);
-
-        AllocatedBuffer UploadMaterialData(Ref<Material> material);
-
         AllocatedImage UploadTexture(Ref<Texture> texture);
 
-        // AllocatedImage GengrateIrradianceCube(Ref<Texture> hdr);
-
-    private:
-        Ref<VulkanRHI> m_rhi;
-
-        vk::DescriptorSetLayout m_material_descriptor_set_layout;
-
+    public:
         struct
         {
             AllocatedImage white_texture;
@@ -54,6 +41,18 @@ namespace Yutrel
             vk::Sampler linear_sampler;
             vk::Sampler nearset_sampler;
         } m_default_data;
+
+    private:
+        void InitDefaultData();
+
+        Ref<VulkanMesh> UploadMesh(Ref<Mesh> mesh);
+
+        AllocatedBuffer UploadMaterialData(Ref<Material> material);
+
+    private:
+        Ref<VulkanRHI> m_rhi;
+
+        vk::DescriptorSetLayout m_material_descriptor_set_layout;
 
         std::unordered_map<Ref<Mesh>, Ref<VulkanMesh>> m_meshes;
         std::unordered_map<Ref<Texture>, AllocatedImage> m_textures;

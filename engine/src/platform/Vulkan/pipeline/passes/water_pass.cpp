@@ -8,6 +8,7 @@
 #include "platform/Vulkan/asset/vulkan_mesh.hpp"
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
+#include <vulkan/vulkan_enums.hpp>
 
 namespace Yutrel
 {
@@ -29,6 +30,19 @@ namespace Yutrel
 
     void WaterPass::Draw()
     {
+        static bool is_water_loaded = false;
+
+        if (!is_water_loaded)
+        {
+            auto writer =
+                DescriptorWriter()
+                    .WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, vk::DescriptorType::eUniformBuffer)
+                    .WriteImage(1, m_render_scene->water_normal.image_view, m_asset_manager->m_default_data.nearset_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler);
+            m_rhi->UpdateDescriptorSets(writer, m_descriptors[scene_descriptor].set);
+
+            is_water_loaded = true;
+        }
+
         m_draw_extent = m_rhi->GetSwapChainExtent();
 
         UpdateUniformBuffer();
@@ -64,17 +78,13 @@ namespace Yutrel
             auto layout_ci =
                 DescriptorSetLayoutCreateInfo()
                     .AddBinding(0, vk::DescriptorType::eUniformBuffer)
+                    .AddBinding(1, vk::DescriptorType::eCombinedImageSampler)
                     .SetShaderStage(vk::ShaderStageFlagBits::eAllGraphics);
 
             m_descriptors[scene_descriptor].layout = m_rhi->CreateDescriptorSetLayout(layout_ci);
 
             // 分配描述符集
             m_descriptors[scene_descriptor].set = m_rhi->AllocateDescriptorSets(m_descriptors[scene_descriptor].layout);
-
-            auto writer =
-                DescriptorWriter()
-                    .WriteBuffer(0, m_scene_uniform_buffer.buffer, sizeof(m_scene_uniform_data), 0, vk::DescriptorType::eUniformBuffer);
-            m_rhi->UpdateDescriptorSets(writer, m_descriptors[scene_descriptor].set);
         }
     }
 
@@ -115,7 +125,7 @@ namespace Yutrel
                     .SetPolygonMode(vk::PolygonMode::eFill)
                     .SetCullMode(vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise)
                     .SetMultisamplingNone()
-                    .DisableBlending()
+                    .EnableBlendingAdditive()
                     .EnableDepthTest(vk::True, vk::CompareOp::eGreaterOrEqual)
                     .SetColorAttachmentFormat(m_draw_image.format)
                     .SetDepthFormat(m_depth_image.format);
@@ -161,7 +171,7 @@ namespace Yutrel
             vk::RenderingAttachmentInfo()
                 .setImageView(m_draw_image.image_view)
                 .setImageLayout(vk::ImageLayout::eGeneral)
-                .setLoadOp(vk::AttachmentLoadOp::eDontCare)
+                .setLoadOp(vk::AttachmentLoadOp::eLoad)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)
                 .setClearValue({});
 
@@ -170,7 +180,7 @@ namespace Yutrel
             vk::RenderingAttachmentInfo()
                 .setImageView(m_depth_image.image_view)
                 .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
-                .setLoadOp(vk::AttachmentLoadOp::eDontCare)
+                .setLoadOp(vk::AttachmentLoadOp::eLoad)
                 .setStoreOp(vk::AttachmentStoreOp::eStore)
                 .setClearValue({});
 

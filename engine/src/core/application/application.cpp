@@ -43,6 +43,7 @@ namespace Yutrel
             .regist_update_system<AssetManager::LoadMeshes>()
             .regist_update_system<AssetManager::LoadMaterials>()
             .regist_update_system<AssetManager::LoadSkyboxes>()
+            .regist_update_system<AssetManager::LoadWater>()
             .regist_update_system<RendererResource::Update>();
 
         return *this;

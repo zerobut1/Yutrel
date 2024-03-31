@@ -21,6 +21,7 @@ namespace Yutrel
         gbuffer_world_normal       = _info->gbuffer_world_normal;
         gbuffer_world_position     = _info->gbuffer_world_position;
         gbuffer_metallic_roughness = _info->gbuffer_metallic_roughness;
+        depth_image                = _info->gbuffer_depth;
 
         m_directional_light_shadowmap = _info->directional_light_shadowmap;
         m_shadowmap_sampler           = _info->shadowmap_sampler;
@@ -28,8 +29,6 @@ namespace Yutrel
         InitGbuffer(_info);
 
         InitDrawImage();
-
-        InitDepthImage();
 
         InitUnifromBuffers();
 
@@ -119,14 +118,6 @@ namespace Yutrel
         draw_image_usages |= vk::ImageUsageFlagBits::eColorAttachment;
 
         draw_image = m_rhi->CreateImage(draw_image_extent, draw_image.format, draw_image_usages);
-    }
-
-    void LightingPass::InitDepthImage()
-    {
-        depth_image.format = vk::Format::eD32Sfloat;
-        depth_image.extent = draw_image.extent;
-
-        depth_image = m_rhi->CreateImage(depth_image.extent, depth_image.format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
     }
 
     void LightingPass::InitUnifromBuffers()
@@ -347,10 +338,6 @@ namespace Yutrel
             vk::ClearValue()
                 .setColor(vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f));
 
-        auto depth_clear_value =
-            vk::ClearValue()
-                .setDepthStencil(vk::ClearDepthStencilValue(0.0f));
-
         // 颜色附件
         auto color_attachment =
             vk::RenderingAttachmentInfo()
@@ -360,22 +347,13 @@ namespace Yutrel
                 .setStoreOp(vk::AttachmentStoreOp::eStore)
                 .setClearValue(color_clear_value);
 
-        // 深度附件
-        auto depth_attachment =
-            vk::RenderingAttachmentInfo()
-                .setImageView(depth_image.image_view)
-                .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
-                .setLoadOp(vk::AttachmentLoadOp::eClear)
-                .setStoreOp(vk::AttachmentStoreOp::eStore)
-                .setClearValue(depth_clear_value);
-
         // 开始渲染
         auto render_info =
             vk::RenderingInfo()
                 .setRenderArea(vk::Rect2D({0, 0}, m_draw_extent))
                 .setLayerCount(1)
                 .setColorAttachments(color_attachment)
-                .setPDepthAttachment(&depth_attachment);
+                .setPDepthAttachment({});
 
         cmd_buffer.beginRendering(render_info);
 
