@@ -82,6 +82,14 @@ namespace Yutrel
 
         // 绘制
         DrawGeometry();
+
+        // 将渲染图像布局转换为传输源布局
+        m_rhi->TransitionImage(cmd_buffer,
+                               draw_image.image,
+                               vk::ImageLayout::eColorAttachmentOptimal,
+                               vk::ImageLayout::eTransferSrcOptimal);
+
+        CopyToSwapchain();
     }
 
     void LightingPass::InitGbuffer(LightingPassInitInfo* info)

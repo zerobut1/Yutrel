@@ -203,7 +203,7 @@ void main()
     kD *= 1.0 - metallic;
     vec3 ambient = (kD * diffuse + specular);
 
-    vec3 color = ambient + Lo;
+    vec3 color = ambient * 0.01 + Lo;
 
     // tone mapping
     color = color / (color + vec3(1.0));

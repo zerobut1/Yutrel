@@ -22,7 +22,7 @@ void ImguiUI::RenderUI()
 
 void ImguiUI::Init()
 {
-    directional_light_direction = glm::normalize(glm::vec3(1.0f, -1.0f, 0.0f));
+    directional_light_direction = glm::normalize(glm::vec3(0.0f, -1.0f, 0.25f));
 }
 
 void ImguiUI::UpdateData(gecs::resource<gecs::mut<Yutrel::UIResource>> ui,
