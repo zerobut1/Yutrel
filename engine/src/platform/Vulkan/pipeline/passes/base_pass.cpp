@@ -122,7 +122,7 @@ namespace Yutrel
         gbuffer_depth.format = vk::Format::eD32Sfloat;
         gbuffer_depth.extent = gbuffer_base_color.extent;
 
-        gbuffer_depth = m_rhi->CreateImage(gbuffer_depth.extent, gbuffer_depth.format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
+        gbuffer_depth = m_rhi->CreateImage(gbuffer_depth.extent, gbuffer_depth.format, vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled);
     }
 
     void BasePass::InitUnifromBuffers()

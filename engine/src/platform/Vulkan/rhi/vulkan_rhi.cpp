@@ -542,6 +542,7 @@ namespace Yutrel
         switch (new_layout)
         {
         case vk::ImageLayout::eDepthAttachmentOptimal:
+        case vk::ImageLayout::eDepthReadOnlyOptimal:
             aspect_mask = vk::ImageAspectFlagBits::eDepth;
             break;
         case vk::ImageLayout::eDepthStencilAttachmentOptimal:

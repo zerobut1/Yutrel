@@ -84,12 +84,12 @@ namespace Yutrel
         DrawGeometry();
 
         // 将渲染图像布局转换为传输源布局
-        m_rhi->TransitionImage(cmd_buffer,
-                               draw_image.image,
-                               vk::ImageLayout::eColorAttachmentOptimal,
-                               vk::ImageLayout::eTransferSrcOptimal);
+        // m_rhi->TransitionImage(cmd_buffer,
+        //                        draw_image.image,
+        //                        vk::ImageLayout::eColorAttachmentOptimal,
+        //                        vk::ImageLayout::eTransferSrcOptimal);
 
-        CopyToSwapchain();
+        // CopyToSwapchain();
     }
 
     void LightingPass::InitGbuffer(LightingPassInitInfo* info)
@@ -124,6 +124,7 @@ namespace Yutrel
         draw_image_usages |= vk::ImageUsageFlagBits::eTransferDst;
         draw_image_usages |= vk::ImageUsageFlagBits::eStorage;
         draw_image_usages |= vk::ImageUsageFlagBits::eColorAttachment;
+        draw_image_usages |= vk::ImageUsageFlagBits::eSampled;
 
         draw_image = m_rhi->CreateImage(draw_image_extent, draw_image.format, draw_image_usages);
     }

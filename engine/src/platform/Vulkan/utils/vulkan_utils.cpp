@@ -119,11 +119,10 @@ namespace Yutrel
         color_blend_attachment
             .setColorWriteMask(vk::ColorComponentFlagBits::eR |
                                vk::ColorComponentFlagBits::eG |
-                               vk::ColorComponentFlagBits::eB |
-                               vk::ColorComponentFlagBits::eA)
+                               vk::ColorComponentFlagBits::eB)
             .setBlendEnable(vk::True)
-            .setSrcColorBlendFactor(vk::BlendFactor::eOneMinusDstAlpha)
-            .setDstColorBlendFactor(vk::BlendFactor::eDstAlpha)
+            .setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha)
+            .setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
             .setColorBlendOp(vk::BlendOp::eAdd)
             .setSrcAlphaBlendFactor(vk::BlendFactor::eOne)
             .setDstAlphaBlendFactor(vk::BlendFactor::eZero)

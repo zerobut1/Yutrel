@@ -90,6 +90,8 @@ namespace Yutrel
                     attrib.normals[3 * index.normal_index + 2],
                 };
 
+                vertex.tangent = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
                 vertex.uv = {
                     attrib.texcoords[2 * index.texcoord_index + 0],
                     1.0 - attrib.texcoords[2 * index.texcoord_index + 1],

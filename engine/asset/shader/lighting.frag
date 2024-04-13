@@ -144,6 +144,17 @@ vec3 SpecularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
     return color;
 }
 
+vec3 Uncharted2Tonemap(vec3 x)
+{
+    float A = 0.15;
+    float B = 0.50;
+    float C = 0.10;
+    float D = 0.20;
+    float E = 0.02;
+    float F = 0.30;
+    return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+}
+
 void main()
 {
     if (texture(gbuffer_metallic_roughness, in_uv).z < 0.5)
@@ -206,10 +217,11 @@ void main()
     vec3 color = ambient * 0.01 + Lo;
 
     // tone mapping
-    color = color / (color + vec3(1.0));
+    color = Uncharted2Tonemap(color * 4.5);
+    color = color * (1.0f / Uncharted2Tonemap(vec3(11.2f)));
 
     // 伽马矫正
     color = pow(color, vec3(0.4545));
 
-    out_frag_color = vec4(color, 1.0);
+    out_frag_color = vec4(color, 0.0);
 }

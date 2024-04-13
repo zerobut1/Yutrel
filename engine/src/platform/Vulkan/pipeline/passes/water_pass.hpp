@@ -48,6 +48,7 @@ namespace Yutrel
         enum descriptors : uint8_t
         {
             scene_descriptor = 0,
+            color_descriptor,
 
             descriptor_count,
         };
@@ -63,6 +64,12 @@ namespace Yutrel
         {
             glm::mat4 view;
             glm::mat4 projection;
+            glm::vec3 camera_position;
+            float padding_1;
+            // 光源颜色的第四位为intensity
+            glm::vec4 directional_light_color;
+            glm::vec3 directional_light_direction;
+            float padding_2;
         } m_scene_uniform_data;
         AllocatedBuffer m_scene_uniform_buffer;
 
@@ -70,6 +77,10 @@ namespace Yutrel
         {
             glm::mat4 model_matrix;
             vk::DeviceAddress vertex_buffer;
+            float width;
+            float height;
+            float time;
         } m_push_constants;
     };
+
 } // namespace Yutrel
