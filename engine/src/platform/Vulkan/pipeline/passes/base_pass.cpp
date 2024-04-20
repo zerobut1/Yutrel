@@ -9,6 +9,7 @@
 #include "platform/Vulkan/rhi/vulkan_rhi.hpp"
 #include "platform/Vulkan/vulkan_renderer.hpp"
 #include <vector>
+#include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
 namespace Yutrel
@@ -55,7 +56,7 @@ namespace Yutrel
                                vk::ImageLayout::eUndefined,
                                vk::ImageLayout::eColorAttachmentOptimal);
         // 深度图像格式转换为深度附件
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
+        m_rhi->TransitionDepthImage(m_rhi->GetCurrentCommandBuffer(),
                                gbuffer_depth.image,
                                vk::ImageLayout::eUndefined,
                                vk::ImageLayout::eDepthAttachmentOptimal);
@@ -122,7 +123,7 @@ namespace Yutrel
         gbuffer_depth.format = vk::Format::eD32Sfloat;
         gbuffer_depth.extent = gbuffer_base_color.extent;
 
-        gbuffer_depth = m_rhi->CreateImage(gbuffer_depth.extent, gbuffer_depth.format, vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled);
+        gbuffer_depth = m_rhi->CreateImage(gbuffer_depth.extent, gbuffer_depth.format, vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc);
     }
 
     void BasePass::InitUnifromBuffers()

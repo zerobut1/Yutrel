@@ -12,13 +12,15 @@
 void SetUp(gecs::commands cmds,
            gecs::resource<gecs::mut<Yutrel::AssetManager>> asset_manager)
 {
-    auto sponza = cmds.create();
-    auto scene  = asset_manager->AddGLTFScene("resource/sponza/sponza.gltf");
-    cmds.emplace_bundle<Yutrel::SceneBundle>(
-        sponza,
-        Yutrel::SceneBundle{
-            scene,
-        });
+    // auto sponza     = cmds.create();
+    // auto scene      = asset_manager->AddGLTFScene("resource/sponza/sponza.gltf");
+    // glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+    // cmds.emplace_bundle<Yutrel::SceneBundle>(
+    //     sponza,
+    //     Yutrel::SceneBundle{
+    //         scene,
+    //         {model},
+    //     });
 
     auto sky = cmds.create();
     Yutrel::DirectionalLight directional_light{};
@@ -47,34 +49,47 @@ void SetUp(gecs::commands cmds,
 
     auto water      = cmds.create();
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-    model           = glm::scale(model, glm::vec3(100.0f, 1.0f, 100.0f));
+    // model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 100.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(50.0f, 1.0f, 50.0f));
     cmds.emplace<Yutrel::Water>(
         water,
         Yutrel::Water{
-            asset_manager->AddMesh("resource/plane/plane2.obj"),
+            asset_manager->AddMesh("resource/plane/plane3.obj"),
             asset_manager->AddTexture("resource/texture/water.png"),
             {model},
         });
 
-    auto plane = cmds.create();
-    model      = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -5.0f, 0.0f));
-    model      = glm::scale(model, glm::vec3(100.0f, 1.0f, 100.0f));
-    cmds.emplace_bundle<Yutrel::PbrBundle>(
-        plane,
-        Yutrel::PbrBundle{
-            asset_manager->AddMesh("resource/plane/plane.obj"),
-            asset_manager->AddMaterial({
-                glm::vec4(1.0f),
-                1.0f,
-                0.0f,
-                // asset_manager->AddTexture("resource/swimming_pool/textures/tiles_baseColor.jpeg"),
-                asset_manager->AddTexture("resource/texture/black.png"),
-                asset_manager->AddTexture("resource/texture/black.png"),
-                // asset_manager->AddTexture("resource/swimming_pool/textures/tiles_metallicRoughness.png"),
-                asset_manager->AddTexture("resource/texture/normal.png"),
-            }),
-            {model},
-        });
+    auto white              = asset_manager->AddTexture("resource/Sponza/white.png");
+    auto black              = asset_manager->AddTexture("resource/texture/black.png");
+    auto metallic_roughness = asset_manager->AddTexture("resource/texture/metallic_roughness.png");
+    auto normal             = asset_manager->AddTexture("resource/texture/normal.png");
+
+    auto plane = asset_manager->AddMesh("resource/plane/plane.obj");
+
+    for (int i = -4; i < 5; i++)
+    {
+        for (int j = -4; j < 5; j++)
+        {
+            model = glm::translate(glm::mat4(1.0f), glm::vec3(i * 10.0, -5.0, j * 10.0));
+            model = glm::scale(model, glm::vec3(5.0f, 1.0f, 5.0f));
+
+            auto enti = cmds.create();
+            cmds.emplace_bundle<Yutrel::PbrBundle>(
+                enti,
+                Yutrel::PbrBundle{
+                    plane,
+                    asset_manager->AddMaterial({
+                        glm::vec4(1.0f),
+                        1.0f,
+                        0.0f,
+                        (i + j) % 2 == 0 ? white : black,
+                        metallic_roughness,
+                        normal,
+                    }),
+                    {model},
+                });
+        }
+    }
 }
 
 void UpdateCamera(gecs::resource<gecs::mut<Yutrel::Camera>> camera,
@@ -132,7 +147,8 @@ int main()
     Yutrel::Application::Create()
         .Init("Sandbox", 1920, 1080)
         .AddResource<Yutrel::UIResource>(Yutrel::CreateRef<ImguiUI>())
-        .AddResource<Yutrel::Camera>(glm::vec3{0.0f, 3.0f, 0.0f})
+        // .AddResource<Yutrel::Camera>(glm::vec3{0.0f, 3.0f, 0.0f})
+        .AddResource<Yutrel::Camera>(glm::vec3{0.0f, 3.0f, 50.0f})
         .AddStartupSystem<SetUp>()
         .AddSystem<ImguiUI::UpdateData>()
         .AddSystem<UpdateCamera>()

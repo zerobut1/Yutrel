@@ -26,8 +26,6 @@ namespace Yutrel
         m_directional_light_shadowmap = _info->directional_light_shadowmap;
         m_shadowmap_sampler           = _info->shadowmap_sampler;
 
-        InitGbuffer(_info);
-
         InitDrawImage();
 
         InitUnifromBuffers();
@@ -75,10 +73,10 @@ namespace Yutrel
                                vk::ImageLayout::eUndefined,
                                vk::ImageLayout::eColorAttachmentOptimal);
         // 深度图像格式转换为深度附件
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               depth_image.image,
-                               vk::ImageLayout::eUndefined,
-                               vk::ImageLayout::eDepthAttachmentOptimal);
+        m_rhi->TransitionDepthImage(m_rhi->GetCurrentCommandBuffer(),
+                                    depth_image.image,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::ImageLayout::eDepthAttachmentOptimal);
 
         // 绘制
         DrawGeometry();
@@ -90,21 +88,6 @@ namespace Yutrel
         //                        vk::ImageLayout::eTransferSrcOptimal);
 
         // CopyToSwapchain();
-    }
-
-    void LightingPass::InitGbuffer(LightingPassInitInfo* info)
-    {
-        vk::Extent3D gbuffer_extent{
-            m_rhi->GetSwapChainExtent(),
-            1,
-        };
-
-        vk::ImageUsageFlags draw_image_usages{};
-        draw_image_usages |= vk::ImageUsageFlagBits::eTransferSrc;
-        draw_image_usages |= vk::ImageUsageFlagBits::eTransferDst;
-        draw_image_usages |= vk::ImageUsageFlagBits::eStorage;
-        draw_image_usages |= vk::ImageUsageFlagBits::eColorAttachment;
-        draw_image_usages |= vk::ImageUsageFlagBits::eSampled;
     }
 
     void LightingPass::InitDrawImage()

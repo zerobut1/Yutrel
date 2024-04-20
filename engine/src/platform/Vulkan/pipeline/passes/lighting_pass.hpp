@@ -36,8 +36,6 @@ namespace Yutrel
 
     private:
         //--------初始化---------
-        void InitGbuffer(LightingPassInitInfo* info);
-
         void InitDrawImage();
 
         void InitUnifromBuffers();

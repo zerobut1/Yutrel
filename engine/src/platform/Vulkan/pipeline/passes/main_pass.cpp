@@ -69,10 +69,10 @@ namespace Yutrel
                                vk::ImageLayout::eUndefined,
                                vk::ImageLayout::eColorAttachmentOptimal);
         // 深度图像格式转换为深度附件
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_depth_image.image,
-                               vk::ImageLayout::eUndefined,
-                               vk::ImageLayout::eDepthAttachmentOptimal);
+        m_rhi->TransitionDepthImage(m_rhi->GetCurrentCommandBuffer(),
+                                    m_depth_image.image,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::ImageLayout::eDepthAttachmentOptimal);
 
         // 绘制
         DrawGeometry();

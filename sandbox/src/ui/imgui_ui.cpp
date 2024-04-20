@@ -8,14 +8,14 @@
 
 void ImguiUI::RenderUI()
 {
-    if (ImGui::Begin("Status"))
-    {
-        ImGui::Text("FPS: %d", fps);
+    // if (ImGui::Begin("Status"))
+    // {
+    //     ImGui::Text("FPS: %d", fps);
 
-        ImGui::InputFloat3("平行光方向", reinterpret_cast<float*>(&directional_light_direction));
+    //     ImGui::InputFloat3("平行光方向", reinterpret_cast<float*>(&directional_light_direction));
 
-        ImGui::End();
-    }
+    //     ImGui::End();
+    // }
 
     // ImGui::ShowDemoWindow();
 }

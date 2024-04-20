@@ -18,7 +18,10 @@ namespace Yutrel
 
         auto _info = static_cast<WaterPassInitInfo*>(info);
 
-        m_draw_image  = _info->draw_image;
+        InitImages();
+
+        m_draw_image = _info->draw_image;
+
         m_depth_image = _info->depth_image;
 
         InitUnifromBuffers();
@@ -32,11 +35,6 @@ namespace Yutrel
     {
         static bool is_water_loaded = false;
 
-        m_rhi->TransitionImage(m_rhi->GetCurrentCommandBuffer(),
-                               m_depth_image.image,
-                               vk::ImageLayout::eDepthAttachmentOptimal,
-                               vk::ImageLayout::eDepthReadOnlyOptimal);
-
         if (!is_water_loaded)
         {
             auto writer =
@@ -46,7 +44,8 @@ namespace Yutrel
                     .WriteImage(2, m_render_scene->skybox->brdf_lut.image_view, m_asset_manager->m_default_data.linear_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler)
                     .WriteImage(3, m_render_scene->skybox->prefiltered.image_view, m_asset_manager->m_default_data.linear_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler)
                     .WriteImage(4, m_render_scene->skybox->irradiance.image_view, m_asset_manager->m_default_data.linear_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler)
-                    .WriteImage(5, m_depth_image.image_view, m_asset_manager->m_default_data.linear_sampler, vk::ImageLayout::eDepthReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler);
+                    .WriteImage(5, m_scene_color.image_view, m_asset_manager->m_default_data.linear_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler)
+                    .WriteImage(6, m_scene_depth.image_view, m_asset_manager->m_default_data.nearset_sampler, vk::ImageLayout::eShaderReadOnlyOptimal, vk::DescriptorType::eCombinedImageSampler);
             m_rhi->UpdateDescriptorSets(writer, m_descriptors[scene_descriptor].set);
 
             is_water_loaded = true;
@@ -59,6 +58,60 @@ namespace Yutrel
         //--------绘制------------
         vk::CommandBuffer cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
+        // 拷贝场景颜色
+        m_rhi->TransitionImage(cmd_buffer,
+                               m_draw_image.image,
+                               vk::ImageLayout::eColorAttachmentOptimal,
+                               vk::ImageLayout::eTransferSrcOptimal);
+
+        m_rhi->TransitionImage(cmd_buffer,
+                               m_scene_color.image,
+                               vk::ImageLayout::eUndefined,
+                               vk::ImageLayout::eTransferDstOptimal);
+
+        m_rhi->CopyImageToImage(cmd_buffer,
+                                m_draw_image.image,
+                                m_scene_color.image,
+                                m_draw_extent,
+                                m_draw_extent);
+
+        m_rhi->TransitionImage(cmd_buffer,
+                               m_draw_image.image,
+                               vk::ImageLayout::eTransferSrcOptimal,
+                               vk::ImageLayout::eColorAttachmentOptimal);
+
+        m_rhi->TransitionImage(cmd_buffer,
+                               m_scene_color.image,
+                               vk::ImageLayout::eTransferDstOptimal,
+                               vk::ImageLayout::eShaderReadOnlyOptimal);
+
+        // 拷贝深度图
+        m_rhi->TransitionDepthImage(cmd_buffer,
+                                    m_depth_image.image,
+                                    vk::ImageLayout::eDepthAttachmentOptimal,
+                                    vk::ImageLayout::eTransferSrcOptimal);
+
+        m_rhi->TransitionDepthImage(cmd_buffer,
+                                    m_scene_depth.image,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::ImageLayout::eTransferDstOptimal);
+
+        m_rhi->CopyDepthImageToImage(cmd_buffer,
+                                     m_depth_image.image,
+                                     m_scene_depth.image,
+                                     m_draw_extent,
+                                     m_draw_extent);
+
+        m_rhi->TransitionDepthImage(cmd_buffer,
+                                    m_depth_image.image,
+                                    vk::ImageLayout::eTransferSrcOptimal,
+                                    vk::ImageLayout::eDepthAttachmentOptimal);
+
+        m_rhi->TransitionDepthImage(cmd_buffer,
+                                    m_scene_depth.image,
+                                    vk::ImageLayout::eTransferDstOptimal,
+                                    vk::ImageLayout::eShaderReadOnlyOptimal);
+
         // 绘制
         DrawGeometry();
 
@@ -70,6 +123,34 @@ namespace Yutrel
 
         //-----------------------
         CopyToSwapchain();
+    }
+
+    void WaterPass::InitImages()
+    {
+        vk::Extent3D image_extent{
+            3840,
+            2160,
+            1,
+        };
+
+        vk::ImageUsageFlags scene_color_usages{};
+        scene_color_usages |= vk::ImageUsageFlagBits::eTransferSrc;
+        scene_color_usages |= vk::ImageUsageFlagBits::eTransferDst;
+        scene_color_usages |= vk::ImageUsageFlagBits::eStorage;
+        scene_color_usages |= vk::ImageUsageFlagBits::eColorAttachment;
+        scene_color_usages |= vk::ImageUsageFlagBits::eSampled;
+
+        // scene color
+        m_scene_color.format = vk::Format::eR16G16B16A16Sfloat;
+        m_scene_color.extent = image_extent;
+
+        m_scene_color = m_rhi->CreateImage(image_extent, m_scene_color.format, scene_color_usages);
+
+        // scene depth
+        m_scene_depth.format = vk::Format::eD32Sfloat;
+        m_scene_depth.extent = image_extent;
+
+        m_scene_depth = m_rhi->CreateImage(image_extent, m_scene_depth.format, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst);
     }
 
     void WaterPass::InitUnifromBuffers()
@@ -92,6 +173,7 @@ namespace Yutrel
                     .AddBinding(3, vk::DescriptorType::eCombinedImageSampler)
                     .AddBinding(4, vk::DescriptorType::eCombinedImageSampler)
                     .AddBinding(5, vk::DescriptorType::eCombinedImageSampler)
+                    .AddBinding(6, vk::DescriptorType::eCombinedImageSampler)
                     .SetShaderStage(vk::ShaderStageFlagBits::eAllGraphics);
 
             m_descriptors[scene_descriptor].layout = m_rhi->CreateDescriptorSetLayout(layout_ci);
@@ -189,6 +271,8 @@ namespace Yutrel
         m_scene_uniform_data.camera_position             = m_render_scene->camera_position;
         m_scene_uniform_data.directional_light_color     = glm::vec4(m_render_scene->directional_light.color, m_render_scene->directional_light.intensity);
         m_scene_uniform_data.directional_light_direction = glm::vec4(m_render_scene->directional_light.direction, 1.0f);
+        m_scene_uniform_data.near_plane                  = m_render_scene->near_plane;
+        m_scene_uniform_data.far_plane                   = m_render_scene->far_plane;
 
         memcpy(m_scene_uniform_buffer.info.pMappedData, &m_scene_uniform_data, sizeof(m_scene_uniform_data));
     }
@@ -208,13 +292,13 @@ namespace Yutrel
                 .setClearValue({});
 
         // 深度附件
-        // auto depth_attachment =
-        //     vk::RenderingAttachmentInfo()
-        //         .setImageView(m_depth_image.image_view)
-        //         .setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-        //         .setLoadOp(vk::AttachmentLoadOp::eLoad)
-        //         .setStoreOp(vk::AttachmentStoreOp::eNone)
-        //         .setClearValue({});
+        auto depth_attachment =
+            vk::RenderingAttachmentInfo()
+                .setImageView(m_depth_image.image_view)
+                .setImageLayout(vk::ImageLayout::eDepthAttachmentOptimal)
+                .setLoadOp(vk::AttachmentLoadOp::eLoad)
+                .setStoreOp(vk::AttachmentStoreOp::eNone)
+                .setClearValue({});
 
         // 开始渲染
         auto render_info =
@@ -222,7 +306,7 @@ namespace Yutrel
                 .setRenderArea(vk::Rect2D({0, 0}, m_draw_extent))
                 .setLayerCount(1)
                 .setColorAttachments(color_attachment)
-                .setPDepthAttachment({});
+                .setPDepthAttachment(&depth_attachment);
 
         cmd_buffer.beginRendering(render_info);
 

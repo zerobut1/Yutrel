@@ -7,6 +7,7 @@ layout(location = 1) in vec2 in_uv;
 layout(location = 2) in vec2 in_screen_uv;
 layout(location = 3) in vec3 in_normal;
 layout(location = 4) in vec4 in_tangent;
+layout(location = 5) in float in_time;
 
 layout(set = 0, binding = 0) uniform SceneData
 {
@@ -15,6 +16,8 @@ layout(set = 0, binding = 0) uniform SceneData
     vec3 camera_position;
     vec4 directional_light_color;
     vec3 directional_light_direction;
+    float near;
+    float far;
 }
 u_scene_data;
 
@@ -22,7 +25,8 @@ layout(set = 0, binding = 1) uniform sampler2D u_normal_texture;
 layout(set = 0, binding = 2) uniform sampler2D u_brdf_lut;
 layout(set = 0, binding = 3) uniform samplerCube u_prefiltered_map;
 layout(set = 0, binding = 4) uniform samplerCube u_irradiance_map;
-layout(set = 0, binding = 5) uniform sampler2D u_scene_depth;
+layout(set = 0, binding = 5) uniform sampler2D u_scene_color;
+layout(set = 0, binding = 6) uniform sampler2D u_scene_depth;
 
 //-------------计算反射-----------------------
 #define PI 3.1415926535897932384626433832795
@@ -68,6 +72,8 @@ vec3 PrefilteredReflection(vec3 R, float roughness)
     return mix(a, b, lod - lodf);
 }
 
+#define BASE_COLOR vec3(0.0, 0.3, 1.0)
+
 vec3 SpecularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float roughness)
 {
     // 预计算
@@ -89,7 +95,7 @@ vec3 SpecularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
         vec3 spec = D * F * G / (4.0 * dotNL * dotNV + 0.001);
         vec3 kD   = (vec3(1.0) - F) * (1.0 - metallic);
         // color += spec * dotNL;
-        color += (kD * vec3(0.4, 0.8, 1.0) / PI + spec) * dotNL;
+        color += (kD * BASE_COLOR / PI + spec) * dotNL;
     }
 
     return color;
@@ -118,24 +124,43 @@ vec3 Uncharted2Tonemap(vec3 x)
     return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
+float GetLinerSceneDepth(float scene_depth, float near, float far)
+{
+    return near * far / ((far - near) * scene_depth + near);
+}
+
+vec3 SampleNormal()
+{
+    // vec2 base_uv   = in_position.xz * 0.01 + mod(in_time * 0.00003, 1.0);
+    vec2 base_uv   = in_position.xz * 0.1;
+    vec2 offset_uv = vec2(0.0, 0.3);
+    vec3 normal_1  = texture(u_normal_texture, base_uv + offset_uv).xzy * 2.0 - 1.0;
+    vec3 normal_2  = texture(u_normal_texture, base_uv + vec2(0.5, 0.0) - offset_uv).xzy * 2.0 - 1.0;
+    vec3 normal_3  = texture(u_normal_texture, base_uv.yx + offset_uv).xzy * 2.0 - 1.0;
+    vec3 normal_4  = texture(u_normal_texture, base_uv.yx + vec2(0.5, 0.0) - offset_uv).xzy * 2.0 - 1.0;
+    // return normalize(normal_1 + normal_2 + normal_3 + normal_4);
+    return normalize(normal_1);
+}
+
 void main()
 {
-    vec3 base_color   = vec3(0.4, 0.8, 1.0);
-    vec3 world_normal = CalculateNormal();
-    // vec3 world_normal   = vec3(0.0, 1.0, 0.0);
+    vec3 base_color = BASE_COLOR;
+    // vec3 world_normal = CalculateNormal();
+    vec3 world_normal   = SampleNormal();
     vec3 world_position = in_position.xyz;
-    float metallic      = 0.7;
+    float metallic      = 0.0;
     float roughness     = 0.0;
-    // vec3 scene_color    = texture(u_scene_color, in_screen_uv).rgb;
+
+    vec3 scene_color  = texture(u_scene_color, in_screen_uv).rgb;
+    float scene_depth = texture(u_scene_depth, in_screen_uv).r;
 
     //-------------PBR-------------
-    vec3 N = world_normal;
+    vec3 N = normalize(world_normal);
     vec3 V = normalize(u_scene_data.camera_position - world_position);
-    vec3 R = reflect(-V, N);
+    vec3 R = normalize(reflect(-V, N));
 
     // 基础反射率
     vec3 F0 = vec3(0.15);
-    // vec3 F0 = vec3(0.2);
 
     // 反射光
     vec3 Lo = vec3(0.0);
@@ -158,31 +183,40 @@ void main()
     kD *= 1.0 - metallic;
     vec3 ambient = (kD * diffuse + specular);
 
-    vec3 color = ambient + Lo;
-    // vec3 color = ambient;
+    // vec3 reflect_color = ambient;
+    vec3 reflect_color = ambient + Lo;
+    // vec3 reflect_color = reflection * base_color;
 
-    // color = mix(scene_color, color, F.x);
+    vec3 color = vec3(1.0);
 
-    // tone mapping
+    float view_scene_depth = GetLinerSceneDepth(scene_depth, u_scene_data.near, u_scene_data.far);
+    float view_depth       = GetLinerSceneDepth(gl_FragCoord.z, u_scene_data.near, u_scene_data.far);
+
+    float water_depth = view_scene_depth - view_depth;
+    water_depth       = clamp(water_depth, 0.0, 20.0) * 0.05;
+    float fresnel     = (0.8 + 0.2 * F.x);
+    // fresnel       = (fresnel - 0.5) * 4;
+
+    scene_color = mix(scene_color, BASE_COLOR, water_depth);
+
+    color = mix(scene_color, reflect_color, fresnel);
+    // color = vec3(fresnel);
+
+    // // tone mapping
     color = Uncharted2Tonemap(color * 4.5);
     color = color * (1.0f / Uncharted2Tonemap(vec3(11.2f)));
 
-    // 伽马矫正
+    // // 伽马矫正
     color = pow(color, vec3(0.4545));
 
-    float depth = texture(u_scene_depth, in_screen_uv).r;
-    depth       = 1.0 - clamp(depth, 0.0, 0.1) * 10;
-
-    // color.b = lerp(0.0, 1.0, 1.0 - depth);
-    // color = mix(vec3(1.0), vec3(0.0), 1.0 - depth);
-
-    out_frag_color.rgb = color * F.x;
-    // out_frag_color.rgb = in_normal.xyz;
-    // out_frag_color.rgb = color * F.x;
+    // out_frag_color.rgb = color;
     // out_frag_color.rgb = vec3(0.4, 0.8, 1.0);
-    // out_frag_color.rgb = vec3(depth);
-    // out_frag_color.a = (0.8 + 0.2 * F.x) * depth;
-    out_frag_color.a = 0.8 + 0.2 * F.x;
-    // out_frag_color.a = 1.0;
-    // out_frag_color.a = F.x;
+    out_frag_color.rgb = world_normal;
+    // out_frag_color.rgb = vec3(water_depth);
+    // out_frag_color.rgb = vec3(scene_depth);
+    // out_frag_color.rgb = vec3(0.0, 1.0, 0.0);
+    // out_frag_color.rgb = F;
+
+    // out_frag_color.a = 0.8 + 0.2 * F.x;
+    out_frag_color.a = 1.0;
 }

@@ -66,7 +66,7 @@ namespace Yutrel
         sampler_ci
             .setMagFilter(vk::Filter::eLinear)
             .setMinFilter(vk::Filter::eLinear)
-            .setMipmapMode(vk::SamplerMipmapMode::eNearest);
+            .setMipmapMode(vk::SamplerMipmapMode::eLinear);
 
         m_default_data.linear_sampler = m_rhi->CreateSampler(sampler_ci);
     }

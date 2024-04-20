@@ -66,9 +66,11 @@ namespace Yutrel
         //-----------图像操作----------
         // 转换图像布局
         void TransitionImage(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
+        void TransitionDepthImage(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
 
         // 拷贝图像
         void CopyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size);
+        void CopyDepthImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size);
 
         // 生成mipmap
         void GenerateMipmaps(vk::CommandBuffer cmd_buffer, vk::Image image, vk::Extent2D extent);

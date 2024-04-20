@@ -40,17 +40,17 @@ namespace Yutrel
 
         auto cmd_buffer = m_rhi->GetCurrentCommandBuffer();
 
-        m_rhi->TransitionImage(cmd_buffer,
-                               depth_image.image,
-                               vk::ImageLayout::eUndefined,
-                               vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        m_rhi->TransitionDepthImage(cmd_buffer,
+                                    depth_image.image,
+                                    vk::ImageLayout::eUndefined,
+                                    vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
         Draw();
 
-        m_rhi->TransitionImage(cmd_buffer,
-                               depth_image.image,
-                               vk::ImageLayout::eDepthStencilAttachmentOptimal,
-                               vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+        m_rhi->TransitionDepthImage(cmd_buffer,
+                                    depth_image.image,
+                                    vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                                    vk::ImageLayout::eDepthStencilReadOnlyOptimal);
     }
 
     void DirectionalLightPass::InitDepthImage()
@@ -60,7 +60,7 @@ namespace Yutrel
         depth_image_usages |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
         depth_image_usages |= vk::ImageUsageFlagBits::eSampled;
 
-        depth_image = m_rhi->CreateImage(vk::Extent3D{4096, 4096, 1}, vk::Format::eD32SfloatS8Uint, depth_image_usages, false, m_render_scene->SHADOWMAP_CASCADE_COUNT);
+        depth_image = m_rhi->CreateImage(vk::Extent3D{4096, 4096, 1}, vk::Format::eD32Sfloat, depth_image_usages, false, m_render_scene->SHADOWMAP_CASCADE_COUNT);
 
         //-----------------采样器--------------
         auto sampler_ci =

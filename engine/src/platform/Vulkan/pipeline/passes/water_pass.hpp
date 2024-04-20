@@ -24,6 +24,8 @@ namespace Yutrel
 
     private:
         //--------初始化---------
+        void InitImages();
+
         void InitUnifromBuffers();
 
         void InitDescriptors();
@@ -60,6 +62,9 @@ namespace Yutrel
         // 深度图像
         AllocatedImage m_depth_image;
 
+        AllocatedImage m_scene_color;
+        AllocatedImage m_scene_depth;
+
         struct
         {
             glm::mat4 view;
@@ -69,7 +74,8 @@ namespace Yutrel
             // 光源颜色的第四位为intensity
             glm::vec4 directional_light_color;
             glm::vec3 directional_light_direction;
-            float padding_2;
+            float near_plane;
+            float far_plane;
         } m_scene_uniform_data;
         AllocatedBuffer m_scene_uniform_buffer;
 

@@ -223,5 +223,6 @@ void main()
     // 伽马矫正
     color = pow(color, vec3(0.4545));
 
-    out_frag_color = vec4(color, 0.0);
+    // out_frag_color = vec4(color, 0.0);
+    out_frag_color = vec4(base_color, 0.0);
 }

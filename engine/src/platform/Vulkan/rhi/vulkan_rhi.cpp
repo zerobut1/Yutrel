@@ -92,6 +92,7 @@ namespace Yutrel
         // 设备特性
         vk::PhysicalDeviceFeatures device_features{};
         device_features.samplerAnisotropy = vk::True;
+        device_features.fillModeNonSolid  = vk::True;
 
         // vulkan 1.2 特性
         vk::PhysicalDeviceVulkan12Features features_12{};
@@ -538,22 +539,29 @@ namespace Yutrel
 
     void VulkanRHI::TransitionImage(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout)
     {
-        vk::ImageAspectFlags aspect_mask;
-        switch (new_layout)
-        {
-        case vk::ImageLayout::eDepthAttachmentOptimal:
-        case vk::ImageLayout::eDepthReadOnlyOptimal:
-            aspect_mask = vk::ImageAspectFlagBits::eDepth;
-            break;
-        case vk::ImageLayout::eDepthStencilAttachmentOptimal:
-        case vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimal:
-        case vk::ImageLayout::eDepthStencilReadOnlyOptimal:
-            aspect_mask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
-            break;
-        default:
-            aspect_mask = vk::ImageAspectFlagBits::eColor;
-            break;
-        }
+        vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor;
+
+        auto image_barrier =
+            vk::ImageMemoryBarrier2()
+                .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+                .setSrcAccessMask(vk::AccessFlagBits2::eMemoryWrite)
+                .setDstStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+                .setDstAccessMask(vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead)
+                .setOldLayout(cur_layout)
+                .setNewLayout(new_layout)
+                .setSubresourceRange(vk::ImageSubresourceRange(aspect_mask, 0, vk::RemainingMipLevels, 0, vk::RemainingArrayLayers))
+                .setImage(image);
+
+        auto dependency_info =
+            vk::DependencyInfo()
+                .setImageMemoryBarriers(image_barrier);
+
+        cmd_buffer.pipelineBarrier2(dependency_info);
+    }
+
+    void VulkanRHI::TransitionDepthImage(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout)
+    {
+        vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eDepth;
 
         auto image_barrier =
             vk::ImageMemoryBarrier2()
@@ -591,6 +599,29 @@ namespace Yutrel
                 .setDstImage(destination)
                 .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
                 .setFilter(vk::Filter::eLinear)
+                .setRegions(blit_region);
+
+        cmd_buffer.blitImage2(blit_image_info);
+    }
+
+    void VulkanRHI::CopyDepthImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size)
+    {
+        auto blit_region =
+            vk::ImageBlit2()
+                .setSrcOffsets({vk::Offset3D(),
+                                vk::Offset3D(src_size.width, src_size.height, 1)})
+                .setDstOffsets({vk::Offset3D(),
+                                vk::Offset3D(dst_size.width, dst_size.height, 1)})
+                .setSrcSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eDepth, 0, 0, 1))
+                .setDstSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eDepth, 0, 0, 1));
+
+        auto blit_image_info =
+            vk::BlitImageInfo2()
+                .setSrcImage(source)
+                .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+                .setDstImage(destination)
+                .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setFilter(vk::Filter::eNearest)
                 .setRegions(blit_region);
 
         cmd_buffer.blitImage2(blit_image_info);
