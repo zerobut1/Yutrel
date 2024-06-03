@@ -1,16 +1,16 @@
 {
 	"folders": [
 		{
+			"name": "Yutrel",
 			"path": "."
 		},
 		{
-			"path": "engine"
+			"name": "Engine",
+			"path": "src/Engine"
 		},
 		{
-			"path": "sandbox"
-		},
-		{
-			"path": "engine/asset/shader"
+			"name": "Sandbox",
+			"path": "src/Sandbox"
 		}
 	],
 	"settings": {}

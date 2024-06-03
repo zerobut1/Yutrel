@@ -3,9 +3,6 @@
 .VSCodeCounter
 build
 vsxmake2022
-resource
 imgui.ini
 
-todo.md
-
-!Engine/src/resource
+assets
