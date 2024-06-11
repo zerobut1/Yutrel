@@ -3,12 +3,13 @@ target("YutrelEngine")
     set_toolchains("clang")
 
     add_files("$(projectdir)/src/Engine/**.cpp")
-    add_headerfiles("$(projectdir)/src/Engine/**.hpp")
+    add_headerfiles("$(projectdir)/src/Engine/**.h")
 
-    -- add_includedirs(path.join(os.scriptdir(), "src"), {public = true})
+    add_includedirs("$(projectdir)/src/Engine/", {public = true})
 
-    -- set_pcxxheader(path.join(os.scriptdir(), "src", "core", "pch", "yutrel_pch.hpp"))
-    -- add_includedirs(path.join(os.scriptdir(), "src", "core", "pch"))
+    add_packages("spdlog")
+
+    add_packages("vulkansdk","vk-bootstrap","vulkan-memory-allocator-hpp")
 
     -- add_defines("GLM_FORCE_DEPTH_ZERO_TO_ONE")
 

@@ -1,9 +1,12 @@
 #pragma once
 
+#include <vulkan/vulkan.hpp>
+
 namespace Yutrel
 {
     struct ContextCreateInfo
     {
+        bool enable_validation_layers{true};
     };
 
     class Context
@@ -20,5 +23,9 @@ namespace Yutrel
 
     private:
         void Destroy();
+
+    private:
+        vk::Instance m_instance;
+        vk::DebugUtilsMessengerEXT m_debug_messenger;
     };
 } // namespace Yutrel
