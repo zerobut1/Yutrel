@@ -2,16 +2,22 @@
 
 #include "Core/log.h"
 
+#include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
 
 namespace Yutrel
 {
-    Context::~Context()
+    Context::Context(const ContextCreateInfo& info)
     {
-        Destroy();
+        init(info);
     }
 
-    bool Context::Init(const ContextCreateInfo& info)
+    Context::~Context()
+    {
+        destroy();
+    }
+
+    void Context::init(const ContextCreateInfo& info)
     {
         //--------------instance------------------
         // todo instance拓展
@@ -25,9 +31,9 @@ namespace Yutrel
 
         if (!inst_ret)
         {
-            Destroy();
+            destroy();
             LOG_ERROR("Failed to create Vulkan instance.\n");
-            return false;
+            return;
         }
 
         vkb::Instance vkb_instance = inst_ret.value();
@@ -37,54 +43,51 @@ namespace Yutrel
         m_debug_messenger = vkb_instance.debug_messenger;
 
         //-------------GPU-------------------------
-        // 设备特性
-        vk::PhysicalDeviceFeatures device_features{};
-        device_features.samplerAnisotropy = vk::True;
-        device_features.fillModeNonSolid  = vk::True;
-
-        // vulkan 1.2 特性
-        vk::PhysicalDeviceVulkan12Features features_12{};
-        features_12.bufferDeviceAddress = vk::True;
-        features_12.descriptorIndexing  = vk::True;
-
-        // vulkan 1.3 特性
-        vk::PhysicalDeviceVulkan13Features features_13{};
-        features_13.dynamicRendering = vk::True;
-        features_13.synchronization2 = vk::True;
+        // 创建surface
+        VkSurfaceKHR surface;
+        glfwCreateWindowSurface(m_instance, info.window, nullptr, &surface);
+        m_surface = static_cast<vk::SurfaceKHR>(surface);
 
         // 选择物理设备
-        // vkb::PhysicalDeviceSelector selector{vkb_instance};
-        // vkb::PhysicalDevice physical_device =
-        //     selector
-        //         .set_minimum_version(1, 3)
-        //         .set_required_features(device_features)
-        //         .set_required_features_12(features_12)
-        //         .set_required_features_13(features_13)
-        //         .set_surface(m_surface)
-        //         .select()
-        //         .value();
+        vkb::PhysicalDeviceSelector selector{vkb_instance};
+        vkb::PhysicalDevice physical_device =
+            selector
+                .set_minimum_version(1, 3)
+                .set_required_features(info.device_features)
+                .set_required_features_12(info.device_features_12)
+                .set_required_features_13(info.device_features_13)
+                .set_surface(m_surface)
+                .select()
+                .value();
 
-        // // 创建逻辑设备
-        // vkb::DeviceBuilder device_builder{physical_device};
+        // 创建逻辑设备
+        vkb::DeviceBuilder device_builder{physical_device};
 
-        // vkb::Device vkb_device = device_builder
-        //                              .build()
-        //                              .value();
+        vkb::Device vkb_device = device_builder.build().value();
 
-        // // 获取设备
-        // m_GPU            = physical_device.physical_device;
-        // m_GPU_properties = vkb_device.physical_device.properties;
-        // m_device         = vkb_device.device;
+        // 获取设备
+        m_GPU            = physical_device.physical_device;
+        m_GPU_properties = vkb_device.physical_device.properties;
+        m_device         = vkb_device.device;
 
-        // // 获取图形队列
-        // m_graphics_queue        = vkb_device.get_queue(vkb::QueueType::graphics).value();
-        // m_graphics_queue_family = vkb_device.get_queue_index(vkb::QueueType::graphics).value();
-
-        return true;
+        // 获取图形队列
+        m_graphics_queue              = vkb_device.get_queue(vkb::QueueType::graphics).value();
+        m_graphics_queue_family_index = vkb_device.get_queue_index(vkb::QueueType::graphics).value();
     }
 
-    void Context::Destroy()
+    void Context::destroy()
     {
+        // 销毁窗口表面
+        m_instance.destroySurfaceKHR(m_surface);
+
+        // 销毁逻辑设备
+        m_device.destroy();
+
+        // 销毁debug messenger
+        vkb::destroy_debug_utils_messenger(m_instance, m_debug_messenger);
+
+        // 销毁vulkan实例
+        m_instance.destroy();
     }
 
 } // namespace Yutrel

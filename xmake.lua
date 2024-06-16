@@ -8,7 +8,7 @@ add_rules("mode.debug", "mode.release")
 set_languages("c++17")
 
 -- 通用
-add_requires("glfw","glm","spdlog","stb")
+add_requires("glfw","spdlog","stb")
 
 -- Vulkan
 add_requires("vulkansdk","vk-bootstrap","vulkan-memory-allocator-hpp")

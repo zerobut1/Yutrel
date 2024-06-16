@@ -7,7 +7,7 @@ target("YutrelEngine")
 
     add_includedirs("$(projectdir)/src/Engine/", {public = true})
 
-    add_packages("spdlog")
+    add_packages("spdlog","glfw")
 
     add_packages("vulkansdk","vk-bootstrap","vulkan-memory-allocator-hpp")
 
