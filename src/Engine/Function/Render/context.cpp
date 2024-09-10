@@ -54,8 +54,8 @@ namespace Yutrel
             selector
                 .set_minimum_version(1, 3)
                 .set_required_features(info.device_features)
-                .set_required_features_12(info.device_features_12)
-                .set_required_features_13(info.device_features_13)
+                // .set_required_features_12(info.device_features_12)
+                // .set_required_features_13(info.device_features_13)
                 .set_surface(m_surface)
                 .select()
                 .value();

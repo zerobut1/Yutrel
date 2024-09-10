@@ -1,10 +1,14 @@
 #include "window.h"
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 #include <Core/log.h>
 
 namespace Yutrel
 {
-    Window::Window(const WindowCreateInfo& info)
+    Window::Window(const Window::CreateInfo& info)
+        : m_callbacks(info.callbacks)
     {
         LOG_INFO("Creating Window : {0} ({1},{2})", info.title, info.width, info.height);
         init(info);
@@ -15,7 +19,7 @@ namespace Yutrel
         shutdown();
     }
 
-    void Window::init(const WindowCreateInfo& info)
+    void Window::init(const Window::CreateInfo& info)
     {
         // 初始化glfw
         if (!glfwInit())
@@ -28,38 +32,38 @@ namespace Yutrel
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         // 创建窗口
-        m_width  = info.width;
-        m_height = info.height;
-        m_window = glfwCreateWindow(m_width, m_height, info.title.c_str(), nullptr, nullptr);
-        if (!m_window)
+        m_width       = info.width;
+        m_height      = info.height;
+        m_GLFW_window = glfwCreateWindow(m_width, m_height, info.title.c_str(), nullptr, nullptr);
+        if (!m_GLFW_window)
         {
             LOG_CRITICAL("Failed to Create GLFW Window");
             glfwTerminate();
             return;
         }
 
-        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwSetInputMode(m_GLFW_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-        glfwSetWindowUserPointer(m_window, this);
+        glfwSetWindowUserPointer(m_GLFW_window, this);
 
         glfwSetErrorCallback(errorCallback);
 
         // 设置回调函数
-        glfwSetKeyCallback(m_window, keyCallback);
-        glfwSetCharCallback(m_window, charCallback);
-        glfwSetCharModsCallback(m_window, charModsCallback);
-        glfwSetMouseButtonCallback(m_window, mouseButtonCallback);
-        glfwSetCursorPosCallback(m_window, cursorPosCallback);
-        glfwSetCursorEnterCallback(m_window, cursorEnterCallback);
-        glfwSetScrollCallback(m_window, scrollCallback);
-        glfwSetDropCallback(m_window, dropCallback);
-        glfwSetWindowSizeCallback(m_window, windowSizeCallback);
-        glfwSetWindowCloseCallback(m_window, windowCloseCallback);
+        glfwSetKeyCallback(m_GLFW_window, keyCallback);
+        glfwSetCharCallback(m_GLFW_window, charCallback);
+        glfwSetCharModsCallback(m_GLFW_window, charModsCallback);
+        glfwSetMouseButtonCallback(m_GLFW_window, mouseButtonCallback);
+        glfwSetCursorPosCallback(m_GLFW_window, cursorPosCallback);
+        glfwSetCursorEnterCallback(m_GLFW_window, cursorEnterCallback);
+        glfwSetScrollCallback(m_GLFW_window, scrollCallback);
+        glfwSetDropCallback(m_GLFW_window, dropCallback);
+        glfwSetWindowSizeCallback(m_GLFW_window, windowSizeCallback);
+        glfwSetWindowCloseCallback(m_GLFW_window, windowCloseCallback);
     }
 
     void Window::shutdown()
     {
-        glfwDestroyWindow(m_window);
+        glfwDestroyWindow(m_GLFW_window);
         glfwTerminate();
     }
 
@@ -70,12 +74,34 @@ namespace Yutrel
 
     bool Window::shouldClose() const
     {
-        return glfwWindowShouldClose(m_window);
+        return glfwWindowShouldClose(m_GLFW_window);
     }
 
     void Window::setTitle(const std::string& title)
     {
-        glfwSetWindowTitle(m_window, title.c_str());
+        glfwSetWindowTitle(m_GLFW_window, title.c_str());
+    }
+
+    void Window::resize(uint32_t width, uint32_t height)
+    {
+        glfwSetWindowSize(m_GLFW_window, width, height);
+        updateWindowSize();
+        m_callbacks->handleWindowSizeChange();
+    }
+
+    void Window::updateWindowSize()
+    {
+        int32_t width, height;
+        glfwGetWindowSize(m_GLFW_window, &width, &height);
+        setWindowSize(width, height);
+    }
+
+    void Window::setWindowSize(uint32_t width, uint32_t height)
+    {
+        YUTREL_ASSERT(width > 0 && height > 0, "");
+
+        m_width  = width;
+        m_height = height;
     }
 
     void Window::errorCallback(int error, const char* description)
@@ -88,7 +114,7 @@ namespace Yutrel
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onKey(key, scancode, action, mods);
+            // _window->onKey(key, scancode, action, mods);
         }
     }
 
@@ -97,7 +123,7 @@ namespace Yutrel
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onChar(codepoint);
+            // _window->onChar(codepoint);
         }
     }
 
@@ -106,7 +132,7 @@ namespace Yutrel
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onCharMods(codepoint, mods);
+            // _window->onCharMods(codepoint, mods);
         }
     }
 
@@ -115,7 +141,7 @@ namespace Yutrel
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onMouseButton(button, action, mods);
+            // _window->onMouseButton(button, action, mods);
         }
     }
 
@@ -124,7 +150,7 @@ namespace Yutrel
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onCursorPos(xpos, ypos);
+            // _window->onCursorPos(xpos, ypos);
         }
     }
 
@@ -133,7 +159,7 @@ namespace Yutrel
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onCursorEnter(entered);
+            // _window->onCursorEnter(entered);
         }
     }
 
@@ -142,7 +168,7 @@ namespace Yutrel
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onScroll(xoffset, yoffset);
+            // _window->onScroll(xoffset, yoffset);
         }
     }
 
@@ -151,68 +177,27 @@ namespace Yutrel
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onDrop(count, paths);
+            // _window->onDrop(count, paths);
         }
     }
 
     void Window::windowSizeCallback(GLFWwindow* window, int width, int height)
     {
+        if (width == 0 || height == 0)
+        {
+            return;
+        }
+
         auto _window = (Window*)glfwGetWindowUserPointer(window);
         if (_window)
         {
-            _window->onWindowSize(width, height);
+            _window->resize(width, height);
         }
     }
 
     void Window::windowCloseCallback(GLFWwindow* window)
     {
         glfwSetWindowShouldClose(window, true);
-    }
-
-    void Window::onKey(int key, int scancode, int action, int mods)
-    {
-        for (auto& func : m_OnKeyFunc)
-            func(key, scancode, action, mods);
-    }
-    void Window::onChar(unsigned int codepoint)
-    {
-        for (auto& func : m_OnCharFunc)
-            func(codepoint);
-    }
-    void Window::onCharMods(int codepoint, unsigned int mods)
-    {
-        for (auto& func : m_OnCharModsFunc)
-            func(codepoint, mods);
-    }
-    void Window::onMouseButton(int button, int action, int mods)
-    {
-        for (auto& func : m_OnMouseButtonFunc)
-            func(button, action, mods);
-    }
-    void Window::onCursorPos(double xpos, double ypos)
-    {
-        for (auto& func : m_OnCursorPosFunc)
-            func(xpos, ypos);
-    }
-    void Window::onCursorEnter(int entered)
-    {
-        for (auto& func : m_OnCursorEnterFunc)
-            func(entered);
-    }
-    void Window::onScroll(double xoffset, double yoffset)
-    {
-        for (auto& func : m_OnScrollFunc)
-            func(xoffset, yoffset);
-    }
-    void Window::onDrop(int count, const char** paths)
-    {
-        for (auto& func : m_OnDropFunc)
-            func(count, paths);
-    }
-    void Window::onWindowSize(int width, int height)
-    {
-        for (auto& func : m_OnWindowSizeFunc)
-            func(width, height);
     }
 
 } // namespace Yutrel

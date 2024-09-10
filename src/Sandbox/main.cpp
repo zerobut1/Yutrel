@@ -1,16 +1,17 @@
-#include "test_component.h"
+#include <Yutrel.h>
+
+#include "triangle.h"
 
 using namespace Yutrel;
 
 int main()
 {
     ApplicationCreateInfo application_ci{};
-    application_ci.name                              = "Sandbox";
-    application_ci.device_features.samplerAnisotropy = vk::True;
+    application_ci.name = "Sandbox";
 
     auto app = std::make_unique<Application>(application_ci);
 
-    app->addComponent(std::make_shared<TestComponent>());
+    app->addComponent(std::make_shared<Triangle>());
 
     app->run();
 

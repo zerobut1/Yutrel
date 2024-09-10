@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Function/Window/window.h"
+
 #include <vulkan/vulkan.hpp>
 
 #include <memory>
@@ -13,28 +15,21 @@ namespace Yutrel
         std::string name{"Yutrel App"};
         uint32_t width{1920};
         uint32_t height{1080};
-        vk::PhysicalDeviceFeatures device_features{};
-        vk::PhysicalDeviceVulkan12Features device_features_12{};
-        vk::PhysicalDeviceVulkan13Features device_features_13{};
-
-        ApplicationCreateInfo()
-        {
-            device_features_13.synchronization2 = vk::True;
-        }
     };
 
     class ComponentBase;
 
-    class Application
+    class Application final : public Window::ICallbacks
     {
     public:
         Application() = delete;
         explicit Application(const ApplicationCreateInfo& info);
-        virtual ~Application();
+        ~Application();
 
         Application(const Application&)            = delete;
         Application& operator=(const Application&) = delete;
 
+    public:
         void run();
 
         void addComponent(const std::shared_ptr<ComponentBase>& component);
@@ -46,10 +41,14 @@ namespace Yutrel
         void shutdown();
 
     private:
+        void handleWindowSizeChange() override;
+
+    private:
         std::vector<std::shared_ptr<ComponentBase>> m_components;
 
-        std::shared_ptr<class Window> m_window;
         std::shared_ptr<Renderer> m_renderer;
+        std::shared_ptr<class Window> m_window;
+        std::shared_ptr<class Swapchain> m_swapchain;
     };
 
     class ComponentBase
