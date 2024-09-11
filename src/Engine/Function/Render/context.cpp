@@ -7,7 +7,7 @@
 
 namespace Yutrel
 {
-    Context::Context(const ContextCreateInfo& info)
+    Context::Context(const CreateInfo& info)
     {
         init(info);
     }
@@ -17,7 +17,7 @@ namespace Yutrel
         destroy();
     }
 
-    void Context::init(const ContextCreateInfo& info)
+    void Context::init(const CreateInfo& info)
     {
         //--------------instance------------------
         // todo instance拓展
@@ -42,21 +42,19 @@ namespace Yutrel
         m_instance        = vkb_instance.instance;
         m_debug_messenger = vkb_instance.debug_messenger;
 
-        //-------------GPU-------------------------
-        // 创建surface
-        VkSurfaceKHR surface;
-        glfwCreateWindowSurface(m_instance, info.window, nullptr, &surface);
-        m_surface = static_cast<vk::SurfaceKHR>(surface);
+        //--------------GPU------------------
+        VkPhysicalDeviceVulkan12Features device_features_12 = info.device_features_12;
+        VkPhysicalDeviceVulkan13Features device_features_13 = info.device_features_13;
 
         // 选择物理设备
         vkb::PhysicalDeviceSelector selector{vkb_instance};
         vkb::PhysicalDevice physical_device =
             selector
                 .set_minimum_version(1, 3)
+                .defer_surface_initialization()
                 .set_required_features(info.device_features)
-                // .set_required_features_12(info.device_features_12)
-                // .set_required_features_13(info.device_features_13)
-                .set_surface(m_surface)
+                .set_required_features_12(device_features_12)
+                .set_required_features_13(device_features_13)
                 .select()
                 .value();
 
@@ -77,9 +75,6 @@ namespace Yutrel
 
     void Context::destroy()
     {
-        // 销毁窗口表面
-        m_instance.destroySurfaceKHR(m_surface);
-
         // 销毁逻辑设备
         m_device.destroy();
 

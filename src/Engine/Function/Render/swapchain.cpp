@@ -1,13 +1,16 @@
 #include "swapchain.h"
 
 #include "Function/Render/context.h"
+#include "Function/Render/renderer.h"
+#include "Function/Window/window.h"
 
+#include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
 
 namespace Yutrel
 {
-    Swapchain::Swapchain(const SwapchianCreateInfo& info)
-        : m_context(info.context)
+    Swapchain::Swapchain(const CreateInfo& info)
+        : m_context(info.renderer->getContext())
     {
         init(info);
     }
@@ -17,15 +20,20 @@ namespace Yutrel
         destroy();
     }
 
-    void Swapchain::init(const SwapchianCreateInfo& info)
+    void Swapchain::init(const CreateInfo& info)
     {
-        vkb::SwapchainBuilder swapchain_builder(m_context->getGPU(), m_context->getDevice(), m_context->getSurface());
+        // surface
+        VkSurfaceKHR surface;
+        glfwCreateWindowSurface(m_context->getInstance(), info.window->getWindow(), nullptr, &surface);
+        m_surface = static_cast<vk::SurfaceKHR>(surface);
+
+        vkb::SwapchainBuilder swapchain_builder(m_context->getGPU(), m_context->getDevice(), m_surface);
 
         vkb::Swapchain vkb_swapchain =
             swapchain_builder
                 .use_default_format_selection()
                 .set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
-                .set_desired_extent(info.width, info.height)
+                .set_desired_extent(info.window->getWidth(), info.window->getHeight())
                 .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
                 .build()
                 .value();
@@ -53,12 +61,14 @@ namespace Yutrel
     {
         auto device = m_context->getDevice();
 
-        device.destroy(m_swapchain);
-
         for (auto view : m_image_views)
         {
             device.destroy(view);
         }
+
+        device.destroy(m_swapchain);
+
+        m_context->getInstance().destroy(m_surface);
     }
 
     void Swapchain::acquireNextImage(vk::Semaphore semaphore)

@@ -1,47 +1,55 @@
-// #pragma once
+#pragma once
 
-// #include <vk_mem_alloc.hpp>
-// #include <vulkan/vulkan.hpp>
+#include <vk_mem_alloc.hpp>
+#include <vulkan/vulkan.hpp>
 
-// struct GLFWwindow;
+struct GLFWwindow;
 
-// namespace Yutrel
-// {
-//     struct RendererCreateInfo
-//     {
-//     };
+namespace Yutrel
+{
 
-//     class Renderer final
-//     {
-//     public:
-//         Renderer() = delete;
-//         explicit Renderer(const RendererCreateInfo& info);
-//         ~Renderer();
+    class Renderer final
+    {
+    public:
+        struct CreateInfo
+        {
+            vk::PhysicalDeviceFeatures device_features{};
+            vk::PhysicalDeviceVulkan12Features device_features_12{};
+            vk::PhysicalDeviceVulkan13Features device_features_13{};
+        };
 
-//         Renderer(const Renderer&)            = delete;
-//         Renderer& operator=(const Renderer&) = delete;
+    public:
+        Renderer() = delete;
+        explicit Renderer(const CreateInfo& info);
+        ~Renderer();
 
-//         vk::CommandBuffer prepareBeforeRender();
-//         void submitRendering();
-//         void framePresent();
+        Renderer(const Renderer&)            = delete;
+        Renderer& operator=(const Renderer&) = delete;
 
-//         void transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
+    public:
+        std::shared_ptr<class Context> getContext() { return m_context; }
 
-//     private:
-//         void init(const RendererCreateInfo& info);
-//         void shutdown();
+        vk::CommandBuffer prepareBeforeRender();
+        void submitRendering();
+        void framePresent();
 
-//         std::shared_ptr<class Frame> getCurrentFrame() const { return m_frames[m_frame_count % s_max_frame]; }
+        void transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
 
-//     private:
-//         static constexpr uint8_t s_max_frame{2};
+    private:
+        void init(const CreateInfo& info);
+        void shutdown();
 
-//         std::shared_ptr<class Context> m_context;
-//         std::shared_ptr<class ResourceManager> m_resource_manager;
+        std::shared_ptr<class Frame> getCurrentFrame() const { return m_frames[m_frame_count % s_max_frame]; }
 
-//         uint32_t m_frame_count{0};
-//         std::array<std::shared_ptr<Frame>, s_max_frame> m_frames;
-//         vk::CommandPool m_cmd_pool{nullptr};
-//     };
+    private:
+        static constexpr uint8_t s_max_frame{2};
 
-// } // namespace Yutrel
+        std::shared_ptr<Context> m_context;
+        std::shared_ptr<class ResourceManager> m_resource_manager;
+
+        uint32_t m_frame_count{0};
+        std::array<std::shared_ptr<Frame>, s_max_frame> m_frames;
+        vk::CommandPool m_cmd_pool{nullptr};
+    };
+
+} // namespace Yutrel

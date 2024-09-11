@@ -2,6 +2,7 @@
 
 #include "Core/log.h"
 #include "Function/Render/renderer.h"
+#include "Function/Render/swapchain.h"
 #include "Function/Window/window.h"
 
 namespace Yutrel
@@ -35,18 +36,25 @@ namespace Yutrel
         LOG_INFO("Yutrel init {}", info.name);
 
         //---------renderer---------
-        // RendererCreateInfo renderer_ci;
-
-        // m_renderer = std::make_shared<Renderer>(renderer_ci);
+        Renderer::CreateInfo renderer_ci{};
+        // todo 拓展
+        m_renderer = std::make_shared<Renderer>(renderer_ci);
 
         //----------窗口----------
-        Window::CreateInfo window_ci;
+        Window::CreateInfo window_ci{};
         window_ci.title     = info.name;
         window_ci.width     = info.width;
         window_ci.height    = info.height;
         window_ci.callbacks = this;
 
         m_window = std::make_shared<Window>(window_ci);
+
+        //----------交换链------------
+        Swapchain::CreateInfo swapchain_ci{};
+        swapchain_ci.renderer = m_renderer;
+        swapchain_ci.window   = m_window;
+
+        m_swapchain = std::make_shared<Swapchain>(swapchain_ci);
     }
 
     void Application::shutdown()
@@ -67,16 +75,16 @@ namespace Yutrel
             {
                 m_window->pollEvents();
 
-                // auto cmd_buffer = m_renderer->prepareBeforeRender();
+                auto cmd_buffer = m_renderer->prepareBeforeRender();
 
-                // for (auto& c : m_components)
-                // {
-                //     c->onRender(cmd_buffer);
-                // }
+                for (auto& c : m_components)
+                {
+                    c->onRender(cmd_buffer);
+                }
 
-                // m_renderer->submitRendering();
+                m_renderer->submitRendering();
 
-                // m_renderer->framePresent();
+                m_renderer->framePresent();
             }
         }
         catch (const std::exception& e)
@@ -93,8 +101,6 @@ namespace Yutrel
     void Application::handleWindowSizeChange()
     {
         YUTREL_ASSERT(m_renderer && m_window && m_swapchain, "");
-
-        LOG_INFO("resize window");
     }
 
 } // namespace Yutrel

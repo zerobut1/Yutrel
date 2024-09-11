@@ -7,7 +7,7 @@
 
 namespace Yutrel
 {
-    Window::Window(const Window::CreateInfo& info)
+    Window::Window(const CreateInfo& info)
         : m_callbacks(info.callbacks)
     {
         LOG_INFO("Creating Window : {0} ({1},{2})", info.title, info.width, info.height);
@@ -19,7 +19,7 @@ namespace Yutrel
         shutdown();
     }
 
-    void Window::init(const Window::CreateInfo& info)
+    void Window::init(const CreateInfo& info)
     {
         // 初始化glfw
         if (!glfwInit())

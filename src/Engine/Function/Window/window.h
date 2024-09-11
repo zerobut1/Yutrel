@@ -33,14 +33,14 @@ namespace Yutrel
 
     public:
         Window() = delete;
-        explicit Window(const Window::CreateInfo& info);
+        explicit Window(const CreateInfo& info);
         ~Window();
 
         Window(const Window&)            = delete;
         Window& operator=(const Window&) = delete;
 
     public:
-        void init(const Window::CreateInfo& info);
+        void init(const CreateInfo& info);
         void shutdown();
 
         void pollEvents() const;
@@ -49,7 +49,7 @@ namespace Yutrel
         void resize(uint32_t width, uint32_t height);
 
         GLFWwindow* getWindow() const { return m_GLFW_window; };
-        uint32_t getwidth() const { return m_width; };
+        uint32_t getWidth() const { return m_width; };
         uint32_t getHeight() const { return m_height; };
 
     private:

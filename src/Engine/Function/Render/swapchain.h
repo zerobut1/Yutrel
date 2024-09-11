@@ -2,20 +2,22 @@
 
 #include <vulkan/vulkan.hpp>
 
+struct GLFWwindow;
+
 namespace Yutrel
 {
-    struct SwapchianCreateInfo
-    {
-        std::shared_ptr<class Context> context;
-        uint32_t width;
-        uint32_t height;
-    };
-
     class Swapchain final
     {
     public:
+        struct CreateInfo
+        {
+            std::shared_ptr<class Renderer> renderer;
+            std::shared_ptr<class Window> window;
+        };
+
+    public:
         Swapchain() = delete;
-        explicit Swapchain(const SwapchianCreateInfo& info);
+        explicit Swapchain(const CreateInfo& info);
         ~Swapchain();
 
         Swapchain(const Swapchain&)            = delete;
@@ -28,10 +30,11 @@ namespace Yutrel
         vk::Image getCurrentImage() const { return m_images[m_cur_image_index]; }
 
     private:
-        void init(const SwapchianCreateInfo& info);
+        void init(const CreateInfo& info);
         void destroy();
 
     private:
+        vk::SurfaceKHR m_surface{nullptr};
         vk::SwapchainKHR m_swapchain{nullptr};
         vk::Format m_format;
         vk::Extent2D m_extent;
@@ -40,7 +43,7 @@ namespace Yutrel
         uint32_t m_image_count{0};
         uint32_t m_cur_image_index{0};
 
-        std::shared_ptr<Context> m_context;
+        std::shared_ptr<class Context> m_context;
     };
 
 } // namespace Yutrel
