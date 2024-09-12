@@ -35,6 +35,8 @@ namespace Yutrel
         void addComponent(const std::shared_ptr<ComponentBase>& component);
 
         std::shared_ptr<class Renderer> getRenderer() const { return m_renderer; }
+        std::shared_ptr<class Window> getWindow() const { return m_window; }
+        std::shared_ptr<class Swapchain> getSwapchain() const { return m_swapchain; }
 
     private:
         void init(const ApplicationCreateInfo& info);
@@ -47,8 +49,8 @@ namespace Yutrel
         std::vector<std::shared_ptr<ComponentBase>> m_components;
 
         std::shared_ptr<Renderer> m_renderer;
-        std::shared_ptr<class Window> m_window;
-        std::shared_ptr<class Swapchain> m_swapchain;
+        std::shared_ptr<Window> m_window;
+        std::shared_ptr<Swapchain> m_swapchain;
     };
 
     class ComponentBase

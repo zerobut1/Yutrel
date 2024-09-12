@@ -61,41 +61,26 @@ namespace Yutrel
             frame.reset();
         }
 
-        // m_swapchain.reset();
-
         m_context.reset();
     }
 
-    vk::CommandBuffer Renderer::prepareBeforeRender()
+    std::shared_ptr<Frame> Renderer::prepareBeforeRender()
     {
         auto cur_frame = getCurrentFrame();
 
         // fence
         cur_frame->waitForFence();
 
-        // 获取交换链图像
-        // m_swapchain->acquireNextImage(cur_frame->getAvailableForRenderSemaphore());
-
-        // begin cmd buffer
-        return cur_frame->beginCommandBuffer();
+        return cur_frame;
     }
 
-    void Renderer::submitRendering()
+    void Renderer::submitRendering(std::shared_ptr<Frame> cur_frame)
     {
-        auto cur_frame = getCurrentFrame();
-
         // 终止指令缓冲
         cur_frame->endCommandBuffer();
 
         // 提交指令
         cur_frame->submitCommandBuffer();
-    }
-
-    void Renderer::framePresent()
-    {
-        auto cur_frame = getCurrentFrame();
-
-        // m_swapchain->present(cur_frame->getFinishedForPresentationSemaphore());
 
         m_frame_count++;
     }

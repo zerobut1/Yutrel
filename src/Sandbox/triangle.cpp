@@ -16,15 +16,14 @@ void Triangle::onDetach()
 
 void Triangle::onRender(vk::CommandBuffer cmd_buffer)
 {
-    // auto swapchain = m_renderer->getSwapchain();
+    auto swapchain = m_app->getSwapchain();
 
-    // m_renderer->transitionImageLayout(cmd_buffer,
-    //                                   swapchain->getCurrentImage(),
-    //                                   vk::ImageLayout::eUndefined,
-    //                                   vk::ImageLayout::ePresentSrcKHR);
+    m_renderer->transitionImageLayout(cmd_buffer,
+                                      swapchain->getCurrentImage(),
+                                      vk::ImageLayout::eUndefined,
+                                      vk::ImageLayout::ePresentSrcKHR);
 }
 
 void Triangle::createDrawImage()
 {
-
 }

@@ -28,18 +28,16 @@ namespace Yutrel
 
     public:
         std::shared_ptr<class Context> getContext() { return m_context; }
+        std::shared_ptr<class Frame> getCurrentFrame() const { return m_frames[m_frame_count % s_max_frame]; }
 
-        vk::CommandBuffer prepareBeforeRender();
-        void submitRendering();
-        void framePresent();
+        std::shared_ptr<Frame> prepareBeforeRender();
+        void submitRendering(std::shared_ptr<Frame> cur_frame);
 
         void transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
 
     private:
         void init(const CreateInfo& info);
         void shutdown();
-
-        std::shared_ptr<class Frame> getCurrentFrame() const { return m_frames[m_frame_count % s_max_frame]; }
 
     private:
         static constexpr uint8_t s_max_frame{2};

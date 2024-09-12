@@ -61,6 +61,8 @@ namespace Yutrel
     {
         auto device = m_context->getDevice();
 
+        device.waitIdle();
+
         for (auto view : m_image_views)
         {
             device.destroy(view);

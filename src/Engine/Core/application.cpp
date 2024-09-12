@@ -1,6 +1,7 @@
 #include "application.h"
 
 #include "Core/log.h"
+#include "Function/Render/frame.h"
 #include "Function/Render/renderer.h"
 #include "Function/Render/swapchain.h"
 #include "Function/Window/window.h"
@@ -37,8 +38,9 @@ namespace Yutrel
 
         //---------renderer---------
         Renderer::CreateInfo renderer_ci{};
-        // todo 拓展
-        m_renderer = std::make_shared<Renderer>(renderer_ci);
+        renderer_ci.device_features.samplerAnisotropy   = vk::True;
+        renderer_ci.device_features_13.synchronization2 = vk::True;
+        m_renderer                                      = std::make_shared<Renderer>(renderer_ci);
 
         //----------窗口----------
         Window::CreateInfo window_ci{};
@@ -65,6 +67,10 @@ namespace Yutrel
             c->onDetach();
         }
         m_components.clear();
+
+        m_swapchain.reset();
+        m_window.reset();
+        m_renderer.reset();
     }
 
     void Application::run()
@@ -75,16 +81,22 @@ namespace Yutrel
             {
                 m_window->pollEvents();
 
-                auto cmd_buffer = m_renderer->prepareBeforeRender();
+                // todo resize
+
+                auto cur_frame = m_renderer->prepareBeforeRender();
+
+                m_swapchain->acquireNextImage(cur_frame->getAvailableForRenderSemaphore());
+
+                auto cmd_buffer = cur_frame->beginCommandBuffer();
 
                 for (auto& c : m_components)
                 {
                     c->onRender(cmd_buffer);
                 }
 
-                m_renderer->submitRendering();
+                m_renderer->submitRendering(cur_frame);
 
-                m_renderer->framePresent();
+                m_swapchain->present(cur_frame->getFinishedForPresentationSemaphore());
             }
         }
         catch (const std::exception& e)
