@@ -41,9 +41,6 @@ namespace Yutrel
     struct Image
     {
         vk::Image image;
-        vk::ImageView image_view;
-        vk::Extent3D extent;
-        vk::Format format;
         vma::Allocation allocation;
     };
 
@@ -57,7 +54,10 @@ namespace Yutrel
         ResourceManager(const ResourceManager&)            = delete;
         ResourceManager& operator=(const ResourceManager&) = delete;
 
-        Image CreateImage();
+    public:
+        Image createImage(const vk::ImageCreateInfo& info);
+        vk::ImageView createImageView(const vk::ImageViewCreateInfo& info);
+        vk::Sampler createSampler(const vk::SamplerCreateInfo& info);
 
     private:
         void init();
@@ -67,5 +67,6 @@ namespace Yutrel
         std::shared_ptr<Context> m_context;
 
         vma::Allocator m_allocator{nullptr};
+        DeletionQueue m_main_deletion_queue;
     };
 } // namespace Yutrel

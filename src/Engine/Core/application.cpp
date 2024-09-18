@@ -83,20 +83,37 @@ namespace Yutrel
 
                 // todo resize
 
-                auto cur_frame = m_renderer->prepareBeforeRender();
-
-                m_swapchain->acquireNextImage(cur_frame->getAvailableForRenderSemaphore());
-
-                auto cmd_buffer = cur_frame->beginCommandBuffer();
-
-                for (auto& c : m_components)
+                // 重建渲染视口大小
                 {
-                    c->onRender(cmd_buffer);
+                    const bool b_need_resize = (m_window->getWidth() != m_viewport_width) || (m_window->getHeight() != m_viewport_height);
+                    if (b_need_resize)
+                    {
+                        m_viewport_width  = m_window->getWidth();
+                        m_viewport_height = m_window->getHeight();
+                        for (auto& c : m_components)
+                        {
+                            c->onResize(m_viewport_width, m_viewport_height);
+                        }
+                    }
                 }
 
-                m_renderer->submitRendering(cur_frame);
+                // 渲染一帧
+                {
+                    auto cur_frame = m_renderer->prepareBeforeRender();
 
-                m_swapchain->present(cur_frame->getFinishedForPresentationSemaphore());
+                    m_swapchain->acquireNextImage(cur_frame->getAvailableForRenderSemaphore());
+
+                    auto cmd_buffer = cur_frame->beginCommandBuffer();
+
+                    for (auto& c : m_components)
+                    {
+                        c->onRender(cmd_buffer);
+                    }
+
+                    m_renderer->submitRendering(cur_frame);
+
+                    m_swapchain->present(cur_frame->getFinishedForPresentationSemaphore());
+                }
             }
         }
         catch (const std::exception& e)

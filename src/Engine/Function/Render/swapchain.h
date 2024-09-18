@@ -23,11 +23,13 @@ namespace Yutrel
         Swapchain(const Swapchain&)            = delete;
         Swapchain& operator=(const Swapchain&) = delete;
 
+    public:
         void acquireNextImage(vk::Semaphore semaphore);
         vk::Result present(vk::Semaphore semaphore);
 
         vk::SwapchainKHR getSwapchain() const { return m_swapchain; }
         vk::Image getCurrentImage() const { return m_images[m_cur_image_index]; }
+        vk::Extent2D getExtent() const { return m_extent; }
 
     private:
         void init(const CreateInfo& info);

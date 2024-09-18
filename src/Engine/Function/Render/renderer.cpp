@@ -85,6 +85,44 @@ namespace Yutrel
         m_frame_count++;
     }
 
+    vk::CommandBuffer Renderer::beginSingleTimeCommandBuffer()
+    {
+        auto cmd_buffer_ai =
+            vk::CommandBufferAllocateInfo()
+                .setCommandPool(m_cmd_pool)
+                .setCommandBufferCount(1)
+                .setLevel(vk::CommandBufferLevel::ePrimary);
+
+        vk::CommandBuffer cmd_buffer = m_context->getDevice().allocateCommandBuffers(cmd_buffer_ai).front();
+
+        auto cmd_buffer_bi =
+            vk::CommandBufferBeginInfo()
+                .setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+        cmd_buffer.begin(cmd_buffer_bi);
+
+        return cmd_buffer;
+    }
+
+    void Renderer::endSingleTimeCommandBuffer(vk::CommandBuffer cmd_buffer)
+    {
+        cmd_buffer.end();
+
+        auto cmd_buffer_si =
+            vk::CommandBufferSubmitInfo()
+                .setCommandBuffer(cmd_buffer);
+        auto submit_info =
+            vk::SubmitInfo2()
+                .setCommandBufferInfos(cmd_buffer_si);
+
+        auto queue = m_context->getGraphicsQueue();
+
+        queue.submit2(submit_info);
+        queue.waitIdle();
+
+        m_context->getDevice().freeCommandBuffers(m_cmd_pool, cmd_buffer);
+    }
+
     void Renderer::transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout)
     {
         vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor;
