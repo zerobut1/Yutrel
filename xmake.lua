@@ -17,4 +17,4 @@ add_requires("glslang", {configs = {binaryonly = true}})
 -- imgui
 add_requires("imgui v1.89.8-docking", {configs = {glfw_vulkan = true}})
 
-includes("src")
+includes("Engine","Sandbox")
