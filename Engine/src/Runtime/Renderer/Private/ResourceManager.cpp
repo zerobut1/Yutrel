@@ -24,20 +24,19 @@ namespace Yutrel
         allocator_ci.physicalDevice   = m_context->getGPU();
         allocator_ci.device           = m_context->getDevice();
         allocator_ci.instance         = m_context->getInstance();
-        // allocator_ci.pVulkanFunctions = &vulkanFunctions;
 
         vmaCreateAllocator(&allocator_ci, &m_allocator);
     }
 
     void ResourceManager::destroy()
     {
+        m_main_deletion_queue.flush();
         vmaDestroyAllocator(m_allocator);
     }
 
     Image ResourceManager::createImage(const vk::ImageCreateInfo& info)
     {
         Image res_image;
-        res_image.image = m_context->getDevice().createImage(info);
 
         auto image_ai          = VmaAllocationCreateInfo{};
         image_ai.usage         = VMA_MEMORY_USAGE_AUTO;

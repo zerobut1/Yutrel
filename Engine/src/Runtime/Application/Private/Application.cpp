@@ -68,7 +68,7 @@ namespace Yutrel
         }
         m_components.clear();
 
-        // m_swapchain.reset();
+        m_swapchain.reset();
         m_window.reset();
         m_renderer.reset();
     }
