@@ -10,15 +10,7 @@ target("Renderer")
 
     add_packages(
         "vulkansdk",
-        "vulkan-memory-allocator-hpp",
-        "spdlog",
-        "glfw",
-        "vk-bootstrap"
+        "vulkan-memory-allocator",
+        "vk-bootstrap",
+        { public = true }
     )
-
-    -- add_defines("GLM_FORCE_DEPTH_ZERO_TO_ONE")
-
-    -- 着色器
-    -- add_rules("utils.glsl2spv",{bin2c = true})
-    -- add_files("asset/shader/**.vert","asset/shader/**.frag","asset/shader/**.comp")
-    -- add_packages("glslang")

@@ -1,9 +1,8 @@
-#include "window.h"
+#include "Window.h"
 
-#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include "log.h"
+#include "Log.h"
 
 namespace Yutrel
 {
@@ -24,7 +23,7 @@ namespace Yutrel
         // 初始化glfw
         if (!glfwInit())
         {
-            LOG_CRITICAL("Failed to Init GLFW");
+            LOG_FATAL("Failed to Init GLFW");
             return;
         }
 
@@ -37,7 +36,7 @@ namespace Yutrel
         m_GLFW_window = glfwCreateWindow(m_width, m_height, info.title.c_str(), nullptr, nullptr);
         if (!m_GLFW_window)
         {
-            LOG_CRITICAL("Failed to Create GLFW Window");
+            LOG_FATAL("Failed to Create GLFW Window");
             glfwTerminate();
             return;
         }

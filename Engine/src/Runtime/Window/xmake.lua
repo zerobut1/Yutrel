@@ -8,4 +8,4 @@ target("Window")
 
     add_deps("Core")
 
-    add_packages("spdlog","glfw","vulkansdk")
+    add_packages("glfw","vulkansdk", {public = true})

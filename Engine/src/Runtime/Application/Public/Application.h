@@ -1,6 +1,6 @@
 #pragma once
 
-#include "window.h"
+#include "Window.h"
 
 #include <vulkan/vulkan.hpp>
 
@@ -36,7 +36,7 @@ namespace Yutrel
 
         std::shared_ptr<class Renderer> getRenderer() const { return m_renderer; }
         std::shared_ptr<class Window> getWindow() const { return m_window; }
-        // std::shared_ptr<class Swapchain> getSwapchain() const { return m_swapchain; }
+        std::shared_ptr<class Swapchain> getSwapchain() const { return m_swapchain; }
 
     private:
         void init(const ApplicationCreateInfo& info);
@@ -50,7 +50,7 @@ namespace Yutrel
 
         std::shared_ptr<Renderer> m_renderer;
         std::shared_ptr<Window> m_window;
-        // std::shared_ptr<Swapchain> m_swapchain;
+        std::shared_ptr<Swapchain> m_swapchain;
 
         uint32_t m_viewport_width{0};
         uint32_t m_viewport_height{0};

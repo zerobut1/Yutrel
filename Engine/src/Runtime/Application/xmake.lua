@@ -7,5 +7,3 @@ target("Application")
     add_includedirs("./Public", { public = true })
     
     add_deps("Core", "Window", "Renderer")
-
-    add_packages("vulkansdk","spdlog")

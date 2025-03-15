@@ -1,7 +1,8 @@
-#include "log.h"
+#include "Log.h"
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 namespace Yutrel
 {
@@ -28,5 +29,6 @@ namespace Yutrel
     {
         m_logger->flush();
         spdlog::drop_all();
-    }
+    }    
+
 } // namespace Yutrel

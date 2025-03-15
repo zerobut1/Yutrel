@@ -6,4 +6,4 @@ target("Core")
 
     add_includedirs("./Public", { public = true })
     
-    add_packages("spdlog","vulkansdk")
+    add_packages("spdlog", {public = true})

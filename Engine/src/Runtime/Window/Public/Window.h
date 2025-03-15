@@ -73,7 +73,7 @@ namespace Yutrel
         GLFWwindow* m_GLFW_window{nullptr};
         uint32_t m_width{0};
         uint32_t m_height{0};
-        WindowMode m_window_mode{WindowMode::Normal};
+        // WindowMode m_window_mode{WindowMode::Normal};
         ICallbacks* m_callbacks{nullptr};
     };
 } // namespace Yutrel

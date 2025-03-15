@@ -1,10 +1,10 @@
-#include "application.h"
+#include "Application.h"
 
-#include "log.h"
-#include "frame.h"
-#include "renderer.h"
-#include "swapchain.h"
-#include "window.h"
+#include "Log.h"
+#include "Frame.h"
+#include "Renderer.h"
+#include "Swapchain.h"
+#include "Window.h"
 
 namespace Yutrel
 {
@@ -37,10 +37,10 @@ namespace Yutrel
         LOG_INFO("Yutrel init {}", info.name);
 
         //---------renderer---------
-        // Renderer::CreateInfo renderer_ci{};
-        // renderer_ci.device_features.samplerAnisotropy   = vk::True;
-        // renderer_ci.device_features_13.synchronization2 = vk::True;
-        // m_renderer                                      = std::make_shared<Renderer>(renderer_ci);
+        Renderer::CreateInfo renderer_ci{};
+        renderer_ci.device_features.samplerAnisotropy   = vk::True;
+        renderer_ci.device_features_13.synchronization2 = vk::True;
+        m_renderer                                      = std::make_shared<Renderer>(renderer_ci);
 
         //----------窗口----------
         Window::CreateInfo window_ci{};
@@ -52,11 +52,11 @@ namespace Yutrel
         m_window = std::make_shared<Window>(window_ci);
 
         //----------交换链------------
-        // Swapchain::CreateInfo swapchain_ci{};
-        // swapchain_ci.renderer = m_renderer;
-        // swapchain_ci.window   = m_window;
+        Swapchain::CreateInfo swapchain_ci{};
+        swapchain_ci.renderer = m_renderer;
+        swapchain_ci.window   = m_window;
 
-        // m_swapchain = std::make_shared<Swapchain>(swapchain_ci);
+        m_swapchain = std::make_shared<Swapchain>(swapchain_ci);
     }
 
     void Application::shutdown()
@@ -98,22 +98,22 @@ namespace Yutrel
                 }
 
                 // 渲染一帧
-                // {
-                //     auto cur_frame = m_renderer->prepareBeforeRender();
+                {
+                    auto cur_frame = m_renderer->prepareBeforeRender();
 
-                //     m_swapchain->acquireNextImage(cur_frame->getAvailableForRenderSemaphore());
+                    m_swapchain->acquireNextImage(cur_frame->getAvailableForRenderSemaphore());
 
-                //     auto cmd_buffer = cur_frame->beginCommandBuffer();
+                    auto cmd_buffer = cur_frame->beginCommandBuffer();
 
-                //     for (auto& c : m_components)
-                //     {
-                //         c->onRender(cmd_buffer);
-                //     }
+                    for (auto& c : m_components)
+                    {
+                        c->onRender(cmd_buffer);
+                    }
 
-                //     m_renderer->submitRendering(cur_frame);
+                    m_renderer->submitRendering(cur_frame);
 
-                //     m_swapchain->present(cur_frame->getFinishedForPresentationSemaphore());
-                // }
+                    m_swapchain->present(cur_frame->getFinishedForPresentationSemaphore());
+                }
             }
         }
         catch (const std::exception& e)

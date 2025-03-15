@@ -1,7 +1,8 @@
-#include "context.h"
+#include "Context.h"
 
-#include "log.h"
+#include "Log.h"
 
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <VKBootstrap.h>
 

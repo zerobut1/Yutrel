@@ -1,4 +1,4 @@
-#include "image.h"
+#include "Image.h"
 
 namespace Yutrel::utils
 {

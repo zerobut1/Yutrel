@@ -1,7 +1,7 @@
-#include "frame.h"
+#include "Frame.h"
 
-#include "log.h"
-#include "context.h"
+#include "Log.h"
+#include "Context.h"
 
 namespace Yutrel
 {
