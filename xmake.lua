@@ -15,7 +15,9 @@ add_requires("glfw","spdlog","stb")
 add_requires("vulkansdk","vk-bootstrap","vulkan-memory-allocator")
 
 -- imgui
--- add_requires("imgui v1.89.8-docking", {configs = {glfw_vulkan = true}})
 add_requires("imgui", {configs = {glfw_vulkan = true}})
+
+-- shader
+add_requires("glslang", {configs = {binaryonly = true}})
 
 includes("Engine","Sandbox")

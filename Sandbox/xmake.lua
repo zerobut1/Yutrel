@@ -14,3 +14,8 @@ target("Sandbox")
     )
 
     add_packages("vulkansdk")
+
+    -- shader
+    add_rules("utils.hlsl2spv", {bin2c = true})
+    add_files("shader/*.hlsl")
+    add_packages("directxshadercompiler")

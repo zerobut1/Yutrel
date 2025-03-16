@@ -1,8 +1,10 @@
 #include "Renderer.h"
 
-#include "Log.h"
 #include "Context.h"
+#include "DescriptorSet.h"
 #include "Frame.h"
+#include "Log.h"
+#include "Pipeline.h"
 #include "ResourceManager.h"
 
 #define VMA_IMPLEMENTATION
@@ -31,13 +33,13 @@ namespace Yutrel
 
         m_context = std::make_shared<Context>(context_ci);
 
-        //----------帧数据--------------
+        //----------帧数据------------
         for (auto& frame : m_frames)
         {
             frame = std::make_shared<Frame>(m_context);
         }
 
-        //--------资源管理
+        //--------资源管理—————————————
         m_resource_manager = std::make_shared<ResourceManager>(m_context);
 
         //---------单次指令池-------------
@@ -47,6 +49,21 @@ namespace Yutrel
                 .setFlags({});
 
         m_cmd_pool = m_context->getDevice().createCommandPool(cmd_pool_ci);
+
+        //--------descriptorsets---------
+        std::vector<vk::DescriptorPoolSize> sizes{
+            {vk::DescriptorType::eUniformBuffer, 100},
+            {vk::DescriptorType::eStorageImage, 100},
+            {vk::DescriptorType::eCombinedImageSampler, 100},
+        };
+
+        auto pool_ci =
+            vk::DescriptorPoolCreateInfo()
+                .setFlags({})
+                .setMaxSets(100)
+                .setPoolSizes(sizes);
+
+        m_descriptor_pool = m_context->getDevice().createDescriptorPool(pool_ci);
     }
 
     void Renderer::shutdown()
@@ -54,6 +71,8 @@ namespace Yutrel
         auto device = m_context->getDevice();
 
         device.waitIdle();
+
+        device.destroy(m_descriptor_pool);
 
         device.destroy(m_cmd_pool);
 
@@ -169,6 +188,65 @@ namespace Yutrel
                 .setRegions(blit_region);
 
         cmd_buffer.blitImage2(blit_image_info);
+    }
+
+    vk::DescriptorSetLayout Renderer::createDescriptorSetLayout(DescriptorSetLayoutCreateInfo& info)
+    {
+        return m_resource_manager->createDescriptorSetLayout(info);
+    }
+
+    vk::DescriptorSet Renderer::allocateDescriptorSets(vk::DescriptorSetLayout layout)
+    {
+        auto set_ai =
+            vk::DescriptorSetAllocateInfo()
+                .setDescriptorPool(m_descriptor_pool)
+                .setDescriptorSetCount(1)
+                .setSetLayouts(layout);
+
+        vk::DescriptorSet set = m_context->getDevice().allocateDescriptorSets(set_ai).front();
+
+        return set;
+    }
+
+    void Renderer::updateDescriptorSets(DescriptorWriter& writer, vk::DescriptorSet set)
+    {
+        for (auto& write : writer.writes)
+        {
+            write.setDstSet(set);
+        }
+        m_context->getDevice().updateDescriptorSets(writer.writes, {});
+    }
+
+    vk::ShaderModule Renderer::createShaderModule(const std::vector<unsigned char>& shader_code)
+    {
+        auto shader_ci =
+            vk::ShaderModuleCreateInfo()
+                .setCodeSize(shader_code.size())
+                .setPCode(reinterpret_cast<const uint32_t*>(shader_code.data()));
+
+        VkShaderModule shader_module = m_context->getDevice().createShaderModule(shader_ci);
+
+        return shader_module;
+    }
+
+    void Renderer::destroyShaderModule(vk::ShaderModule shader)
+    {
+        m_context->getDevice().destroyShaderModule(shader);
+    }
+
+    vk::PipelineLayout Renderer::createPipelineLayout(const vk::PipelineLayoutCreateInfo& info)
+    {
+        return m_resource_manager->createPipelineLayout(info);
+    }
+
+    vk::Pipeline Renderer::createRenderPipeline(const RenderPipelineCreateInfo& info)
+    {
+        return m_resource_manager->createRenderPipeline(info);
+    }
+
+    vk::Pipeline Renderer::createComputePipeline(vk::ComputePipelineCreateInfo info)
+    {
+        return m_resource_manager->createComputePipeline(info);
     }
 
 } // namespace Yutrel

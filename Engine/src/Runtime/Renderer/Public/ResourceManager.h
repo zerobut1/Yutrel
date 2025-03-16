@@ -60,6 +60,14 @@ namespace Yutrel
         vk::ImageView createImageView(const vk::ImageViewCreateInfo& info);
         vk::Sampler createSampler(const vk::SamplerCreateInfo& info);
 
+        vk::DescriptorSetLayout createDescriptorSetLayout(struct DescriptorSetLayoutCreateInfo& info);
+
+        vk::PipelineLayout createPipelineLayout(const vk::PipelineLayoutCreateInfo& info);
+
+        vk::Pipeline createRenderPipeline(const struct RenderPipelineCreateInfo& info);
+
+        vk::Pipeline createComputePipeline(vk::ComputePipelineCreateInfo info);
+
     private:
         void init();
         void destroy();

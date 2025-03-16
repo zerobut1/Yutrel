@@ -1,7 +1,7 @@
 #include "Application.h"
 #include "RenderTarget.h"
 
-class Triangle : public Yutrel::ComponentBase
+class Compute : public Yutrel::ComponentBase
 {
 public:
     void onAttach(Yutrel::Application* app) override;
@@ -13,6 +13,10 @@ public:
     void onResize(uint32_t width, uint32_t height) override;
 
 private:
+    void initDescriptors();
+
+    void initPipeline();
+
     void draw(vk::CommandBuffer cmd_buffer);
 
 private:
@@ -23,4 +27,10 @@ private:
 
     uint32_t m_viewport_width{0};
     uint32_t m_viewport_height{0};
+
+    vk::DescriptorSet m_descriptor_set;
+    vk::DescriptorSetLayout m_descriptor_set_layout;
+
+    vk::PipelineLayout m_pipeline_layout;
+    vk::Pipeline m_pipeline;
 };

@@ -1,4 +1,4 @@
-#include "Triangle.h"
+#include "Compute.h"
 
 using namespace Yutrel;
 
@@ -9,7 +9,7 @@ int main()
 
     auto app = std::make_unique<Application>(application_ci);
 
-    app->addComponent(std::make_shared<Triangle>());
+    app->addComponent(std::make_shared<Compute>());
 
     app->run();
 

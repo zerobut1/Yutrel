@@ -6,7 +6,6 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
-
     class Renderer final
     {
     public:
@@ -36,9 +35,28 @@ namespace Yutrel
         vk::CommandBuffer beginSingleTimeCommandBuffer();
         void endSingleTimeCommandBuffer(vk::CommandBuffer cmd_buffer);
 
+        //--------Image---------
         void transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
 
         void copyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size);
+
+        //--------DescriptorSet----------
+        vk::DescriptorSetLayout createDescriptorSetLayout(struct DescriptorSetLayoutCreateInfo& info);
+
+        vk::DescriptorSet allocateDescriptorSets(vk::DescriptorSetLayout layout);
+
+        void updateDescriptorSets(struct DescriptorWriter& writer, vk::DescriptorSet set);
+
+        //--------Pipeline--------------
+        vk::ShaderModule createShaderModule(const std::vector<unsigned char>& shader_code);
+
+        void destroyShaderModule(vk::ShaderModule shader);
+
+        vk::PipelineLayout createPipelineLayout(const vk::PipelineLayoutCreateInfo& info);
+
+        vk::Pipeline createRenderPipeline(const struct RenderPipelineCreateInfo& info);
+
+        vk::Pipeline createComputePipeline(vk::ComputePipelineCreateInfo info);
 
     private:
         void init(const CreateInfo& info);
@@ -53,6 +71,7 @@ namespace Yutrel
         uint32_t m_frame_count{0};
         std::array<std::shared_ptr<Frame>, s_max_frame> m_frames;
         vk::CommandPool m_cmd_pool{nullptr};
+        vk::DescriptorPool m_descriptor_pool{nullptr};
     };
 
 } // namespace Yutrel
