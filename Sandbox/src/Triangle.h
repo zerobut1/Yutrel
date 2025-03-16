@@ -13,6 +13,9 @@ public:
     void onResize(uint32_t width, uint32_t height) override;
 
 private:
+    void draw(vk::CommandBuffer cmd_buffer);
+
+private:
     Yutrel::Application* m_app;
     std::shared_ptr<Yutrel::Renderer> m_renderer;
 

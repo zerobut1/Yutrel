@@ -148,4 +148,27 @@ namespace Yutrel
         cmd_buffer.pipelineBarrier2(dependency_info);
     }
 
+    void Renderer::copyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size)
+    {
+        auto blit_region =
+            vk::ImageBlit2()
+                .setSrcOffsets({vk::Offset3D(),
+                                vk::Offset3D(src_size.width, src_size.height, 1)})
+                .setDstOffsets({vk::Offset3D(),
+                                vk::Offset3D(dst_size.width, dst_size.height, 1)})
+                .setSrcSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1))
+                .setDstSubresource(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1));
+
+        auto blit_image_info =
+            vk::BlitImageInfo2()
+                .setSrcImage(source)
+                .setSrcImageLayout(vk::ImageLayout::eTransferSrcOptimal)
+                .setDstImage(destination)
+                .setDstImageLayout(vk::ImageLayout::eTransferDstOptimal)
+                .setFilter(vk::Filter::eLinear)
+                .setRegions(blit_region);
+
+        cmd_buffer.blitImage2(blit_image_info);
+    }
+
 } // namespace Yutrel

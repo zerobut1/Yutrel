@@ -38,6 +38,8 @@ namespace Yutrel
 
         void transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
 
+        void copyImageToImage(vk::CommandBuffer cmd_buffer, vk::Image source, vk::Image destination, vk::Extent2D src_size, vk::Extent2D dst_size);
+
     private:
         void init(const CreateInfo& info);
         void shutdown();
