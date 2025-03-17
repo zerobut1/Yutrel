@@ -8,27 +8,41 @@ struct PushConstants {
     uint viewport_height;
 } push_constant;
 
-bool HitSphere(in Ray ray, float3 center, float radius)
+float HitSphere(in Ray ray, float3 center, float radius)
 {
-    float3 oc = center - ray.origin;
+    float3 co = ray.origin - center;
     float a = dot(ray.direction, ray.direction);
-    float b = 2.0 * dot(oc, ray.direction);
-    float c = dot(oc, oc) - radius * radius;
+    float half_b = dot(co, ray.direction);
+    float c = dot(co, co) - radius * radius;
 
-    float discriminant = b*b - 4*a*c;
-    return discriminant > 0;
+    float discriminant = half_b * half_b - a * c;
+
+    [flatten]
+    if(discriminant < 0)
+    {
+        return -1.0f;
+    }
+    else
+    {
+        return (-half_b - sqrt(discriminant)) / a;
+    }
 }
 
 float3 RayColor(in Ray ray) 
 {
-    if(HitSphere(ray, float3(0, 0, -1.0f), 0.5f))
+    float3 sphere_center = float3(0, 0, -1.0f);
+    float sphere_radius = 0.5f;
+    float t = HitSphere(ray, sphere_center, sphere_radius);
+    [flatten]
+    if(t > 0.0f)
     {
-        return float3(1, 0, 0);
+        float3 N = normalize(RayAt(ray, t) - sphere_center);
+        return N;
     }
 
     float3 direction = normalize(ray.direction);
-    float t = 0.5 * (direction.y + 1.0);
-    return (1.0-t) * float3(1.0, 1.0, 1.0) + t * float3(0.4, 0.8, 1.0);
+    t = 0.5 * (direction.y + 1.0);
+    return (1.0 - t) * float3(1.0, 1.0, 1.0) + t * float3(0.4, 0.8, 1.0);
 }
 
 [numthreads(16, 16, 1)]
