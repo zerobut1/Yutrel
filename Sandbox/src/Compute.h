@@ -33,4 +33,10 @@ private:
 
     vk::PipelineLayout m_pipeline_layout;
     vk::Pipeline m_pipeline;
+
+    struct PushConstants
+    {
+        uint32_t viewport_width;
+        uint32_t viewport_height;
+    } m_push_constants;
 };

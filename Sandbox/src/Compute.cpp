@@ -59,6 +59,9 @@ void Compute::onResize(uint32_t width, uint32_t height)
 {
     m_viewport_width  = width;
     m_viewport_height = height;
+
+    m_push_constants.viewport_width  = m_viewport_width;
+    m_push_constants.viewport_height = m_viewport_height;
 }
 
 void Compute::initDescriptors()
@@ -79,8 +82,16 @@ void Compute::initDescriptors()
 
 void Compute::initPipeline()
 {
-    auto compute_layout_ci = vk::PipelineLayoutCreateInfo()
-                                 .setSetLayouts(m_descriptor_set_layout);
+    auto push_constant_range =
+        vk::PushConstantRange()
+            .setOffset(0)
+            .setSize(sizeof(PushConstants))
+            .setStageFlags(vk::ShaderStageFlagBits::eCompute);
+
+    auto compute_layout_ci =
+        vk::PipelineLayoutCreateInfo()
+            .setPushConstantRanges(push_constant_range)
+            .setSetLayouts(m_descriptor_set_layout);
 
     m_pipeline_layout = m_renderer->createPipelineLayout(compute_layout_ci);
 
@@ -108,6 +119,8 @@ void Compute::draw(vk::CommandBuffer cmd_buffer)
     cmd_buffer.bindPipeline(vk::PipelineBindPoint::eCompute, m_pipeline);
 
     cmd_buffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, m_pipeline_layout, 0, 1, &m_descriptor_set, 0, nullptr);
+
+    cmd_buffer.pushConstants(m_pipeline_layout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(m_push_constants), &m_push_constants);
 
     auto extent = m_main_rt->getExtent();
 
