@@ -8,9 +8,24 @@ struct PushConstants {
     uint viewport_height;
 } push_constant;
 
+bool HitSphere(in Ray ray, float3 center, float radius)
+{
+    float3 oc = center - ray.origin;
+    float a = dot(ray.direction, ray.direction);
+    float b = 2.0 * dot(oc, ray.direction);
+    float c = dot(oc, oc) - radius * radius;
+
+    float discriminant = b*b - 4*a*c;
+    return discriminant > 0;
+}
 
 float3 RayColor(in Ray ray) 
 {
+    if(HitSphere(ray, float3(0, 0, -1.0f), 0.5f))
+    {
+        return float3(1, 0, 0);
+    }
+
     float3 direction = normalize(ray.direction);
     float t = 0.5 * (direction.y + 1.0);
     return (1.0-t) * float3(1.0, 1.0, 1.0) + t * float3(0.4, 0.8, 1.0);
