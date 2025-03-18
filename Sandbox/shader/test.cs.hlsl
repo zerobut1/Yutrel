@@ -1,4 +1,4 @@
-#include "Common.hlsl"
+#include "Sphere.hlsl"
 
 RWTexture2D<float4> output_texture;
 
@@ -8,68 +8,62 @@ struct PushConstants {
     uint viewport_height;
 } push_constant;
 
-double HitSphere(in Ray ray, double3 center, double radius)
+[numthreads(16, 16, 1)]
+void main(
+	int3 dispatch_thread_id : SV_DispatchThreadID,
+	int3 group_thread_id : SV_GroupThreadID
+	)
 {
-    double3 co = ray.origin - center;
-    double a = dot(ray.direction, ray.direction);
-    double half_b = dot(co, ray.direction);
-    double c = dot(co, co) - radius * radius;
+	int2 screen_position = int2(dispatch_thread_id.xy);
+	float width = push_constant.viewport_width;
+    float height = push_constant.viewport_height;
+    float u = float(screen_position.x) / width;
+    float v = float(screen_position.y) / height;
 
-    double discriminant = half_b * half_b - a * c;
+    float3 origin = float3(0, 0, 0);
+    float3 vertical = float3(0, -2.0f, 0);
+    float3 horizontal = float3((width / height) * 2.0f, 0, 0);
+    float3 upper_left_corner = float3(-(width / height), 1.0f, -1.0f);
+
+    Ray ray;
+    ray.origin = origin;
+    ray.direction = upper_left_corner + u * horizontal + v * vertical;
+
+    Sphere spheres[2];
+    spheres[0].center = float3(0, 0, -1);
+    spheres[0].radius = 0.5f;
+    spheres[1].center = float3(0, -100.5f, -1.0f);
+    spheres[1].radius = 100.0f;
+
+    float4 out_color = float4(0, 0, 0, 1);
+
+    HitRecord rec;
+    bool is_hit = false;
+    float closest_so_far = POSITIVE_INFINITY;
+    [unroll]
+    for(int i=0; i<2; i++)
+    {
+        HitRecord temp_rec;
+        [flatten]
+        if(spheres[i].hit(ray, 0, closest_so_far, temp_rec))
+        {
+            is_hit = true;
+            closest_so_far = temp_rec.t;
+            rec = temp_rec;
+        }
+    }
 
     [flatten]
-    if(discriminant < 0)
+    if(is_hit)
     {
-        return -1.0;
+        out_color.xyz = 0.5 * (rec.normal + float3(1, 1, 1));
     }
     else
     {
-        return (-half_b - sqrt(discriminant)) / a;
-    }
-}
-
-double3 RayColor(in Ray ray) 
-{
-    double3 sphere_center = double3(0, 0, -1.0);
-    double sphere_radius = 0.5;
-    double t = HitSphere(ray, sphere_center, sphere_radius);
-    [flatten]
-    if(t > 0.0)
-    {
-        double3 N = normalize(ray.At(t) - sphere_center);
-        return N;
+        float3 direction = normalize(ray.direction);
+        float t = 0.5 * (direction.y + 1.0);
+        out_color.xyz = (1.0 - t) * float3(1.0, 1.0, 1.0) + t * float3(0.4, 0.8, 1.0);
     }
 
-    double3 direction = normalize(ray.direction);
-    t = 0.5 * (direction.y + 1.0);
-    return (1.0 - t) * double3(1.0, 1.0, 1.0) + t * double3(0.4, 0.8, 1.0);
-}
-
-[numthreads(16, 16, 1)]
-void main(
-	uint3 dispatch_thread_id : SV_DispatchThreadID,
-	uint3 group_thread_id : SV_GroupThreadID
-	)
-{
-	double2 screen_position = double2(dispatch_thread_id.xy);
-	double width = push_constant.viewport_width;
-    double height = push_constant.viewport_height;
-    double2 uv = screen_position / double2(width, height);
-
-    double3 origin = double3(0, 0, 0);
-    double3 vertical = double3(0, -2.0, 0);
-    double3 horizontal = double3((width / height) * 2.0, 0, 0);
-    double3 upper_left_corner = double3(-(width / height), 1.0, -1.0);
-
-    {
-        double4 color = double4(0.0, 0.0, 0.0, 1.0);
-
-        Ray ray;
-        ray.origin = origin;
-        ray.direction = upper_left_corner + uv.x * horizontal + uv.y * vertical;
-
-        color.xyz = RayColor(ray);
-		
-		output_texture[dispatch_thread_id.xy] = color;
-    }
+	output_texture[dispatch_thread_id.xy] = out_color;
 }
