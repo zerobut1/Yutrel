@@ -1,10 +1,22 @@
-struct Ray
+class Ray
 {
-    float3 origin;
-    float3 direction;
+    double3 origin;
+    double3 direction;
+
+    double3 At(float t)
+    {
+        return origin + direction * t;
+    }
 };
 
-float3 RayAt(in Ray ray, in float t)
+struct HitRecord
 {
-    return ray.origin + ray.direction * t;
-}
+    double3 position;
+    double3 normal;
+    double t;
+};
+
+interface Object
+{
+    bool hit(Ray ray, double t_min, double t_max, out HitRecord rec);
+};
