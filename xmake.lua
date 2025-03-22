@@ -9,7 +9,7 @@ set_languages("c++17")
 set_toolchains("clang")
 
 -- 通用
-add_requires("glfw","spdlog","stb")
+add_requires("glfw","spdlog","stb","glm")
 
 -- Vulkan
 add_requires("vulkansdk","vk-bootstrap","vulkan-memory-allocator")

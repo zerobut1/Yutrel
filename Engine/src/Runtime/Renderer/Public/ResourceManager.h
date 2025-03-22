@@ -43,6 +43,7 @@ namespace Yutrel
     {
         vk::Image image;
         VmaAllocation allocation;
+        VmaAllocationInfo info;
     };
 
     class ResourceManager final
@@ -56,6 +57,8 @@ namespace Yutrel
         ResourceManager& operator=(const ResourceManager&) = delete;
 
     public:
+        Buffer createBuffer(const vk::BufferCreateInfo& create_info, const VmaAllocationCreateInfo& allocation_info);
+
         Image createImage(const vk::ImageCreateInfo& info);
         vk::ImageView createImageView(const vk::ImageViewCreateInfo& info);
         vk::Sampler createSampler(const vk::SamplerCreateInfo& info);
@@ -66,7 +69,7 @@ namespace Yutrel
 
         vk::Pipeline createRenderPipeline(const struct RenderPipelineCreateInfo& info);
 
-        vk::Pipeline createComputePipeline(vk::ComputePipelineCreateInfo info);
+        vk::Pipeline createComputePipeline(const vk::ComputePipelineCreateInfo& info);
 
     private:
         void init();

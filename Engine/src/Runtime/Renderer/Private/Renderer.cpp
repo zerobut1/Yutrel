@@ -145,6 +145,20 @@ namespace Yutrel
         m_context->getDevice().freeCommandBuffers(m_cmd_pool, cmd_buffer);
     }
 
+    Buffer Renderer::createBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VkMemoryPropertyFlags required_flags)
+    {
+        auto buffer_ci =
+            vk::BufferCreateInfo()
+                .setSize(alloc_size)
+                .setUsage(buffer_usage);
+
+        auto allocation_ci  = VmaAllocationCreateInfo{};
+        allocation_ci.usage = memory_usage;
+        allocation_ci.flags = required_flags;
+
+        return m_resource_manager->createBuffer(buffer_ci, allocation_ci);
+    }
+
     void Renderer::transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout)
     {
         vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor;
@@ -244,7 +258,7 @@ namespace Yutrel
         return m_resource_manager->createRenderPipeline(info);
     }
 
-    vk::Pipeline Renderer::createComputePipeline(vk::ComputePipelineCreateInfo info)
+    vk::Pipeline Renderer::createComputePipeline(const vk::ComputePipelineCreateInfo& info)
     {
         return m_resource_manager->createComputePipeline(info);
     }

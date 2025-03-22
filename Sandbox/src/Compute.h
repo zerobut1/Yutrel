@@ -1,5 +1,7 @@
-#include "Application.h"
-#include "RenderTarget.h"
+#include <Application.h>
+#include <RenderTarget.h>
+
+#include <glm/glm.hpp>
 
 class Compute : public Yutrel::ComponentBase
 {
@@ -13,6 +15,8 @@ public:
     void onResize(uint32_t width, uint32_t height) override;
 
 private:
+    void initDataBuffer();
+
     void initDescriptors();
 
     void initPipeline();
@@ -34,9 +38,21 @@ private:
     vk::PipelineLayout m_pipeline_layout;
     vk::Pipeline m_pipeline;
 
+    Yutrel::Buffer sphere_buffer;
+
     struct PushConstants
     {
         uint32_t viewport_width;
         uint32_t viewport_height;
+        uint32_t sphere_count;
     } m_push_constants;
+
+    struct Sphere
+    {
+        glm::vec3 center;
+        float radius;
+    };
+    std::vector<Sphere> m_spheres;
+
+    constexpr static uint32_t max_sphere_num = 10000;
 };

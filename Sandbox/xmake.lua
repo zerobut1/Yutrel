@@ -13,7 +13,7 @@ target("Sandbox")
         "Window"
     )
 
-    add_packages("vulkansdk")
+    add_packages("glm")
 
     -- shader
     add_rules("utils.hlsl2spv", {bin2c = true})

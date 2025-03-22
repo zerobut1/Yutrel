@@ -6,7 +6,11 @@ RWTexture2D<float4> output_texture;
 struct PushConstants {
     uint viewport_width;
     uint viewport_height;
-} push_constant;
+    uint sphere_count;
+} push_constants;
+
+[[vk::binding(1, 0)]]
+StructuredBuffer<Sphere> spheres;
 
 [numthreads(16, 16, 1)]
 void main(
@@ -15,8 +19,8 @@ void main(
 	)
 {
 	int2 screen_position = int2(dispatch_thread_id.xy);
-	float width = push_constant.viewport_width;
-    float height = push_constant.viewport_height;
+	float width = push_constants.viewport_width;
+    float height = push_constants.viewport_height;
     float u = float(screen_position.x) / width;
     float v = float(screen_position.y) / height;
 
@@ -29,19 +33,13 @@ void main(
     ray.origin = origin;
     ray.direction = upper_left_corner + u * horizontal + v * vertical;
 
-    Sphere spheres[2];
-    spheres[0].center = float3(0, 0, -1);
-    spheres[0].radius = 0.5f;
-    spheres[1].center = float3(0, -100.5f, -1.0f);
-    spheres[1].radius = 100.0f;
-
     float4 out_color = float4(0, 0, 0, 1);
 
     HitRecord rec;
     bool is_hit = false;
     float closest_so_far = POSITIVE_INFINITY;
     [unroll]
-    for(int i=0; i<2; i++)
+    for(int i=0; i<push_constants.sphere_count; i++)
     {
         HitRecord temp_rec;
         [flatten]

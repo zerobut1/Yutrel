@@ -20,6 +20,7 @@ void Compute::onAttach(Yutrel::Application* app)
     rt_ci.layout = vk::ImageLayout::eGeneral;
     m_main_rt    = Yutrel::RenderTarget::create(m_renderer, rt_ci);
 
+    initDataBuffer();
     initDescriptors();
     initPipeline();
 }
@@ -64,11 +65,23 @@ void Compute::onResize(uint32_t width, uint32_t height)
     m_push_constants.viewport_height = m_viewport_height;
 }
 
+void Compute::initDataBuffer()
+{
+    m_spheres.emplace_back(Sphere{glm::vec3(0, 0, -1.0f), 0.5f});
+    m_spheres.emplace_back(Sphere{glm::vec3(0, -100.5f, -1.0f), 100.0f});
+
+    m_push_constants.sphere_count = m_spheres.size();
+
+    sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    memcpy(sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
+}
+
 void Compute::initDescriptors()
 {
     auto layout_ci =
         DescriptorSetLayoutCreateInfo()
             .AddBinding(0, vk::DescriptorType::eStorageImage)
+            .AddBinding(1, vk::DescriptorType::eStorageBuffer)
             .SetShaderStage(vk::ShaderStageFlagBits::eCompute);
 
     m_descriptor_set_layout = m_renderer->createDescriptorSetLayout(layout_ci);
@@ -76,7 +89,8 @@ void Compute::initDescriptors()
 
     auto writer =
         DescriptorWriter()
-            .WriteImage(0, m_main_rt->getDescriptorImageInfo(), vk::DescriptorType::eStorageImage);
+            .WriteImage(0, m_main_rt->getDescriptorImageInfo(), vk::DescriptorType::eStorageImage)
+            .WriteBuffer(1, sphere_buffer.buffer, sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
     m_renderer->updateDescriptorSets(writer, m_descriptor_set);
 }
 

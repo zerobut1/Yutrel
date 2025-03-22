@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
 struct GLFWwindow;
@@ -35,6 +36,9 @@ namespace Yutrel
         vk::CommandBuffer beginSingleTimeCommandBuffer();
         void endSingleTimeCommandBuffer(vk::CommandBuffer cmd_buffer);
 
+        //--------Buffer---------
+        struct Buffer createBuffer(size_t alloc_size, vk::BufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VkMemoryPropertyFlags required_flags = 0);
+
         //--------Image---------
         void transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::Image image, vk::ImageLayout cur_layout, vk::ImageLayout new_layout);
 
@@ -56,7 +60,7 @@ namespace Yutrel
 
         vk::Pipeline createRenderPipeline(const struct RenderPipelineCreateInfo& info);
 
-        vk::Pipeline createComputePipeline(vk::ComputePipelineCreateInfo info);
+        vk::Pipeline createComputePipeline(const vk::ComputePipelineCreateInfo& info);
 
     private:
         void init(const CreateInfo& info);

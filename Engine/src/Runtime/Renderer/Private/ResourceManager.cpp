@@ -37,6 +37,20 @@ namespace Yutrel
         vmaDestroyAllocator(m_allocator);
     }
 
+    Buffer ResourceManager::createBuffer(const vk::BufferCreateInfo& create_info, const VmaAllocationCreateInfo& allocation_info)
+    {
+        Buffer new_buffer;
+        vmaCreateBuffer(m_allocator, (VkBufferCreateInfo*)&create_info, &allocation_info, (VkBuffer*)&new_buffer.buffer, &new_buffer.allocation, &new_buffer.info);
+
+        m_main_deletion_queue.PushFunction(
+            [=]()
+            {
+                vmaDestroyBuffer(m_allocator, new_buffer.buffer, new_buffer.allocation);
+            });
+
+        return new_buffer;
+    }
+
     Image ResourceManager::createImage(const vk::ImageCreateInfo& info)
     {
         Image res_image;
@@ -45,7 +59,7 @@ namespace Yutrel
         image_ai.usage         = VMA_MEMORY_USAGE_AUTO;
         image_ai.requiredFlags = VkMemoryAllocateFlags(vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-        vmaCreateImage(m_allocator, (VkImageCreateInfo*)&info, &image_ai, (VkImage*)&res_image.image, &res_image.allocation, nullptr);
+        vmaCreateImage(m_allocator, (VkImageCreateInfo*)&info, &image_ai, (VkImage*)&res_image.image, &res_image.allocation, &res_image.info);
 
         m_main_deletion_queue.PushFunction(
             [=]()
@@ -190,7 +204,7 @@ namespace Yutrel
         return result.value;
     }
 
-    vk::Pipeline ResourceManager::createComputePipeline(vk::ComputePipelineCreateInfo info)
+    vk::Pipeline ResourceManager::createComputePipeline(const vk::ComputePipelineCreateInfo& info)
     {
         auto device = m_context->getDevice();
 
