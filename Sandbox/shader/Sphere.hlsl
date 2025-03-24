@@ -7,40 +7,38 @@ class Sphere : Object
 
     bool hit(Ray ray, float t_min, float t_max, out HitRecord rec)
     {
-        float3 co = ray.origin - center;
+        float3 oc = center - ray.origin;
         float a = dot(ray.direction, ray.direction);
-        float half_b = dot(co, ray.direction);
-        float c = dot(co, co) - radius * radius;
+        float h = dot(ray.direction, oc);
+        float c = dot(oc, oc) - radius * radius;
 
-        float discriminant = half_b * half_b - a * c;
+        float discriminant = h * h - a * c;
 
         [flatten]
-        if(discriminant > 0)
+        if(discriminant < 0)
         {
-            float root = sqrt(discriminant);
+            return false;
+        }
             
-            float temp = (-half_b - root) / a;
+        float sqrtd = sqrt(discriminant);
+        
+        float root = (h - sqrtd) / a;
+        [flatten]
+        if(root <= t_min || root >= t_max)
+        {
+            root = (h + sqrtd) / a;
             [flatten]
-            if(temp < t_max && temp > t_min)
+            if(root <= t_min || root >= t_max)
             {
-                rec.t = temp;
-                rec.position = ray.at(rec.t);
-                float3 outward_normal = (rec.position - center) / radius;
-                rec.setFaceNormal(ray, outward_normal);
-                return true;
-            }
-            
-            temp = (-half_b + root) / a;
-            if (temp < t_max && temp > t_min)
-            {
-                rec.t = temp;
-                rec.position = ray.at(rec.t);
-                float3 outward_normal = (rec.position - center) / radius;
-                rec.setFaceNormal(ray, outward_normal);
-                return true;
+                return false;
             }
         }
-        
-        return false;
+
+        rec.t = root;
+        rec.position = ray.at(rec.t);
+        float3 outward_normal = (rec.position - center) / radius;
+        rec.setFaceNormal(ray, outward_normal);
+
+        return true;
     }
 };
