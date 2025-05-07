@@ -1,4 +1,6 @@
-#include "Object.hlsl"
+#pragma once
+
+#include "Object.hlsli"
 
 class Sphere : Object
 {

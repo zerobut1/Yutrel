@@ -1,4 +1,6 @@
-#include "Common.hlsl"
+#pragma once
+
+#include "Common.hlsli"
 
 interface Object
 {

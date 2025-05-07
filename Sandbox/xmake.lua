@@ -18,4 +18,5 @@ target("Sandbox")
     -- shader
     add_rules("utils.hlsl2spv", {bin2c = true})
     add_files("shader/*.cs.hlsl")
+    add_headerfiles("shader/**.hlsli")
     add_packages("directxshadercompiler")

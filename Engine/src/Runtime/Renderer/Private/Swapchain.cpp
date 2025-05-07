@@ -31,7 +31,7 @@ namespace Yutrel
 
         vkb::Swapchain vkb_swapchain =
             swapchain_builder
-                .set_desired_format({VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
+                .set_desired_format({VK_FORMAT_A2B10G10R10_UNORM_PACK32, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
                 .set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
                 .set_desired_extent(info.window->getWidth(), info.window->getHeight())
                 .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)

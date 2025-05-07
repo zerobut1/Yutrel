@@ -1,4 +1,4 @@
-#include "Sphere.hlsl"
+#include "Sphere.hlsli"
 
 RWTexture2D<float4> output_texture;
 

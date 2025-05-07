@@ -1,3 +1,5 @@
+#pragma once
+
 #define FLOAT_MAX         (asfloat(0x7F7FFFFF))
 #define POSITIVE_INFINITY (asfloat(0x7F800000))
 #define NEGATIVE_INFINITY (asfloat(0xFF800000))
