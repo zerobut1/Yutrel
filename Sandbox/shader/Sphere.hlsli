@@ -7,7 +7,7 @@ class Sphere : Object
     float3 center;
     float radius;
 
-    bool hit(Ray ray, float t_min, float t_max, out HitRecord rec)
+    bool hit(Ray ray, Interval ray_t, out HitRecord rec)
     {
         float3 oc = center - ray.origin;
         float a = dot(ray.direction, ray.direction);
@@ -26,11 +26,11 @@ class Sphere : Object
         
         float root = (h - sqrtd) / a;
         [flatten]
-        if(root <= t_min || root >= t_max)
+        if(!ray_t.surrounds(root))
         {
             root = (h + sqrtd) / a;
             [flatten]
-            if(root <= t_min || root >= t_max)
+            if(!ray_t.surrounds(root))
             {
                 return false;
             }

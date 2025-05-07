@@ -38,12 +38,14 @@ void main(
     HitRecord rec;
     bool is_hit = false;
     float closest_so_far = POSITIVE_INFINITY;
-    [unroll]
+    [loop]
     for(int i=0; i<push_constants.sphere_count; i++)
     {
         HitRecord temp_rec;
-        [flatten]
-        if(spheres[i].hit(ray, 0, closest_so_far, temp_rec))
+        Interval ray_t;
+        ray_t.min = 0;
+        ray_t.max = closest_so_far;
+        if(spheres[i].hit(ray, ray_t, temp_rec))
         {
             is_hit = true;
             closest_so_far = temp_rec.t;
