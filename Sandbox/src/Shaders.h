@@ -2,6 +2,6 @@
 
 #include <vector>
 
-static const std::vector<unsigned char> TEST_COMP{
-    #include "test.cs.spv.h"
+static const std::vector<unsigned char> MAIN_COMP{
+    #include "Main.cs.spv.h"
 };

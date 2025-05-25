@@ -14,12 +14,15 @@ void Compute::onAttach(Yutrel::Application* app)
     m_app      = app;
     m_renderer = app->getRenderer();
 
+    m_camera = std::make_unique<Camera>(m_viewport_width, m_viewport_height);
+
     Yutrel::RenderTarget::CreateInfo rt_ci{};
-    rt_ci.extent = vk::Extent2D{1920, 1080};
+    rt_ci.extent = vk::Extent2D{m_camera->getImageWidth(), m_camera->getImageHeight()};
     rt_ci.format = vk::Format::eR32G32B32A32Sfloat;
     rt_ci.layout = vk::ImageLayout::eGeneral;
     m_main_rt    = Yutrel::RenderTarget::create(m_renderer, rt_ci);
 
+    initCameraBuffer();
     initDataBuffer();
     initDescriptors();
     initPipeline();
@@ -31,6 +34,8 @@ void Compute::onDetach()
 
 void Compute::onRender(vk::CommandBuffer cmd_buffer)
 {
+    updateCameraBuffer();
+
     auto swapchain = m_app->getSwapchain();
 
     m_main_rt->transitionImageLayout(cmd_buffer, vk::ImageLayout::eGeneral);
@@ -58,11 +63,25 @@ void Compute::onRender(vk::CommandBuffer cmd_buffer)
 
 void Compute::onResize(uint32_t width, uint32_t height)
 {
+    // push constants
     m_viewport_width  = width;
     m_viewport_height = height;
 
     m_push_constants.viewport_width  = m_viewport_width;
     m_push_constants.viewport_height = m_viewport_height;
+
+    // camera
+    m_camera = std::make_unique<Camera>(m_viewport_width, m_viewport_height);
+
+    m_camera_data.center           = m_camera->getCenter();
+    m_camera_data.pixel00_location = m_camera->getPixel00Location();
+    m_camera_data.pixel_delta_u    = m_camera->getPixelDeltaU();
+    m_camera_data.pixel_delta_v    = m_camera->getPixelDeltaV();
+}
+
+void Compute::initCameraBuffer()
+{
+    m_camera_buffer = m_renderer->createBuffer(sizeof(CameraData), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 }
 
 void Compute::initDataBuffer()
@@ -72,8 +91,8 @@ void Compute::initDataBuffer()
 
     m_push_constants.sphere_count = m_spheres.size();
 
-    sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
-    memcpy(sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
+    m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
 }
 
 void Compute::initDescriptors()
@@ -81,7 +100,8 @@ void Compute::initDescriptors()
     auto layout_ci =
         DescriptorSetLayoutCreateInfo()
             .AddBinding(0, vk::DescriptorType::eStorageImage)
-            .AddBinding(1, vk::DescriptorType::eStorageBuffer)
+            .AddBinding(1, vk::DescriptorType::eUniformBuffer)
+            .AddBinding(2, vk::DescriptorType::eStorageBuffer)
             .SetShaderStage(vk::ShaderStageFlagBits::eCompute);
 
     m_descriptor_set_layout = m_renderer->createDescriptorSetLayout(layout_ci);
@@ -90,7 +110,8 @@ void Compute::initDescriptors()
     auto writer =
         DescriptorWriter()
             .WriteImage(0, m_main_rt->getDescriptorImageInfo(), vk::DescriptorType::eStorageImage)
-            .WriteBuffer(1, sphere_buffer.buffer, sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
+            .WriteBuffer(1, m_camera_buffer.buffer, m_camera_buffer.info.size, 0, vk::DescriptorType::eUniformBuffer)
+            .WriteBuffer(2, m_sphere_buffer.buffer, m_sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
     m_renderer->updateDescriptorSets(writer, m_descriptor_set);
 }
 
@@ -109,7 +130,7 @@ void Compute::initPipeline()
 
     m_pipeline_layout = m_renderer->createPipelineLayout(compute_layout_ci);
 
-    vk::ShaderModule compute_shader = m_renderer->createShaderModule(TEST_COMP);
+    vk::ShaderModule compute_shader = m_renderer->createShaderModule(MAIN_COMP);
 
     auto compute_shader_stage =
         vk::PipelineShaderStageCreateInfo()
@@ -139,4 +160,9 @@ void Compute::draw(vk::CommandBuffer cmd_buffer)
     auto extent = m_main_rt->getExtent();
 
     cmd_buffer.dispatch(std::ceil(extent.width / 16.0), std::ceil(extent.height / 16.0), 1);
+}
+
+void Compute::updateCameraBuffer()
+{
+    memcpy(m_camera_buffer.info.pMappedData, &m_camera_data, sizeof(CameraData));
 }
