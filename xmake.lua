@@ -5,19 +5,22 @@ set_warnings("all")
 
 add_rules("mode.debug", "mode.release")
 
-set_languages("c++17")
-set_toolchains("clang")
+set_languages("c++20")
+set_encodings("utf-8")
 
 -- 通用
-add_requires("glfw","spdlog","stb","glm")
+add_requires("spdlog", "stb", "glm")
+
+-- glfw
+add_requires("glfw")
 
 -- Vulkan
-add_requires("vulkansdk","vk-bootstrap","vulkan-memory-allocator")
+add_requires("vulkansdk", "vk-bootstrap v1.4.320", "vulkan-memory-allocator")
 
 -- imgui
-add_requires("imgui", {configs = {glfw_vulkan = true}})
+add_requires("imgui", {configs = {glfw = true, vulkan = true}})
 
 -- shader
 add_requires("glslang", {configs = {binaryonly = true}})
 
-includes("Engine","Sandbox")
+includes("Engine", "Sandbox")

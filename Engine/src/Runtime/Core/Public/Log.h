@@ -58,11 +58,11 @@ namespace Yutrel
     };
 } // namespace Yutrel
 
-#define LOG_DEBUG(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Debug, "[" + std::string(__FUNCTION__) + "] " + __VA_ARGS__)
-#define LOG_INFO(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Info, "[" + std::string(__FUNCTION__) + "] " + __VA_ARGS__)
-#define LOG_WARN(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Warn, "[" + std::string(__FUNCTION__) + "] " + __VA_ARGS__)
-#define LOG_ERROR(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Error, "[" + std::string(__FUNCTION__) + "] " + __VA_ARGS__)
-#define LOG_FATAL(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Fatal, "[" + std::string(__FUNCTION__) + "] " + __VA_ARGS__)
+#define LOG_DEBUG(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Debug, "[" + std::string(__FUNCTION__) + "] " + std::format(__VA_ARGS__))
+#define LOG_INFO(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Info, "[" + std::string(__FUNCTION__) + "] " + std::format(__VA_ARGS__))
+#define LOG_WARN(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Warn, "[" + std::string(__FUNCTION__) + "] " + std::format(__VA_ARGS__))
+#define LOG_ERROR(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Error, "[" + std::string(__FUNCTION__) + "] " + std::format(__VA_ARGS__))
+#define LOG_FATAL(...) Yutrel::Log::Get().log(Yutrel::Log::LogLevel::Fatal, "[" + std::string(__FUNCTION__) + "] " + std::format(__VA_ARGS__))
 
 #define YUTREL_ASSERT(x, ...)       \
     {                               \
