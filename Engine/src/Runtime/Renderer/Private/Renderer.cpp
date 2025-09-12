@@ -238,7 +238,7 @@ namespace Yutrel
                 .setCodeSize(shader_code.size())
                 .setPCode(reinterpret_cast<const uint32_t*>(shader_code.data()));
 
-        VkShaderModule shader_module = m_context->getDevice().createShaderModule(shader_ci);
+        vk::ShaderModule shader_module = m_context->getDevice().createShaderModule(shader_ci);
 
         return shader_module;
     }

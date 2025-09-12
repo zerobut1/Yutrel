@@ -33,6 +33,7 @@ namespace Yutrel
         // 创建窗口
         m_width       = info.width;
         m_height      = info.height;
+        m_title       = info.title;
         m_GLFW_window = glfwCreateWindow(m_width, m_height, info.title.c_str(), nullptr, nullptr);
         if (!m_GLFW_window)
         {
@@ -76,16 +77,42 @@ namespace Yutrel
         return glfwWindowShouldClose(m_GLFW_window);
     }
 
-    void Window::setTitle(const std::string& title)
-    {
-        glfwSetWindowTitle(m_GLFW_window, title.c_str());
-    }
-
     void Window::resize(uint32_t width, uint32_t height)
     {
         glfwSetWindowSize(m_GLFW_window, width, height);
         updateWindowSize();
         m_callbacks->handleWindowSizeChange();
+    }
+
+    double Window::getTime() const
+    {
+        return glfwGetTime();
+    }
+
+    void Window::calculateFPSAndSetTitle()
+    {
+        static double previous_seconds = getTime();
+        static int frame_count         = 0;
+        double current_seconds         = getTime();
+        double elapsed_seconds         = current_seconds - previous_seconds;
+
+        if (elapsed_seconds > 0.25)
+        {
+            previous_seconds    = current_seconds;
+            double fps          = static_cast<double>(frame_count) / elapsed_seconds;
+            double ms_per_frame = 1000.0 / fps;
+
+            setTitle(std::format("{} - {:.2f} ms/frame ({:.1f} FPS)", m_title, ms_per_frame, fps));
+
+            frame_count = 0;
+        }
+
+        frame_count++;
+    }
+
+    void Window::setTitle(const std::string& title)
+    {
+        glfwSetWindowTitle(m_GLFW_window, title.c_str());
     }
 
     void Window::updateWindowSize()

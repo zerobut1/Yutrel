@@ -7,6 +7,8 @@ struct PushConstants {
     uint viewport_width;
     uint viewport_height;
     uint sphere_count;
+    uint samples_per_pixel;
+    float time;
 } push_constants;
 
 struct Camera

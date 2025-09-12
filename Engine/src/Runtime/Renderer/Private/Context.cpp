@@ -4,7 +4,7 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <VKBootstrap.h>
+#include <VkBootstrap.h>
 
 namespace Yutrel
 {

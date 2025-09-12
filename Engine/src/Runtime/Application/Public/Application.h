@@ -38,6 +38,8 @@ namespace Yutrel
         std::shared_ptr<class Window> getWindow() const { return m_window; }
         std::shared_ptr<class Swapchain> getSwapchain() const { return m_swapchain; }
 
+        double getTime() const;
+
     private:
         void init(const ApplicationCreateInfo& info);
         void shutdown();

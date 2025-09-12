@@ -43,9 +43,9 @@ namespace Yutrel
         vmaCreateBuffer(m_allocator, (VkBufferCreateInfo*)&create_info, &allocation_info, (VkBuffer*)&new_buffer.buffer, &new_buffer.allocation, &new_buffer.info);
 
         m_main_deletion_queue.PushFunction(
-            [=]()
+            [=, this]()
             {
-                vmaDestroyBuffer(m_allocator, new_buffer.buffer, new_buffer.allocation);
+                vmaDestroyBuffer(m_allocator, static_cast<VkBuffer>(new_buffer.buffer), new_buffer.allocation);
             });
 
         return new_buffer;
@@ -62,9 +62,9 @@ namespace Yutrel
         vmaCreateImage(m_allocator, (VkImageCreateInfo*)&info, &image_ai, (VkImage*)&res_image.image, &res_image.allocation, &res_image.info);
 
         m_main_deletion_queue.PushFunction(
-            [=]()
+            [=, this]()
             {
-                vmaDestroyImage(m_allocator, res_image.image, res_image.allocation);
+                vmaDestroyImage(m_allocator, static_cast<VkImage>(res_image.image), res_image.allocation);
             });
 
         return res_image;

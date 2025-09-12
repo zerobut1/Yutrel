@@ -80,6 +80,7 @@ namespace Yutrel
             while (!m_window->shouldClose())
             {
                 m_window->pollEvents();
+                m_window->calculateFPSAndSetTitle();
 
                 // todo resize
 
@@ -120,6 +121,11 @@ namespace Yutrel
         {
             LOG_ERROR("std::exception: {}", e.what());
         };
+    }
+
+    double Application::getTime() const
+    {
+        return m_window->getTime();
     }
 
     void Application::addComponent(const std::shared_ptr<ComponentBase>& component)

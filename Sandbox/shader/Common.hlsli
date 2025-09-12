@@ -30,3 +30,8 @@ struct HitRecord
         normal = front_face ? outward_normal : -outward_normal;
     }
 };
+
+float rand(float seed)
+{
+    return frac(sin(seed * 12.9898) * 43758.5453);
+}

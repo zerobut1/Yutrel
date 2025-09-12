@@ -29,6 +29,8 @@ private:
 
     void draw(vk::CommandBuffer cmd_buffer);
 
+    void updatePushConstants();
+
     void updateCameraBuffer();
 
 private:
@@ -51,6 +53,8 @@ private:
         uint32_t viewport_width;
         uint32_t viewport_height;
         uint32_t sphere_count;
+        uint32_t samples_per_pixel;
+        float time;
     } m_push_constants;
 
     // Camera data

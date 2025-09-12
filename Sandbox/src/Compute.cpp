@@ -34,6 +34,8 @@ void Compute::onDetach()
 
 void Compute::onRender(vk::CommandBuffer cmd_buffer)
 {
+    updatePushConstants();
+
     updateCameraBuffer();
 
     auto swapchain = m_app->getSwapchain();
@@ -89,7 +91,8 @@ void Compute::initDataBuffer()
     m_spheres.emplace_back(Sphere{glm::vec3(0, 0, -1.0f), 0.5f});
     m_spheres.emplace_back(Sphere{glm::vec3(0, -100.5f, -1.0f), 100.0f});
 
-    m_push_constants.sphere_count = static_cast<uint32_t>(m_spheres.size());
+    m_push_constants.sphere_count      = static_cast<uint32_t>(m_spheres.size());
+    m_push_constants.samples_per_pixel = 10;
 
     m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
     memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
@@ -107,11 +110,11 @@ void Compute::initDescriptors()
     m_descriptor_set_layout = m_renderer->createDescriptorSetLayout(layout_ci);
     m_descriptor_set        = m_renderer->allocateDescriptorSets(m_descriptor_set_layout);
 
-    auto writer =
-        DescriptorWriter()
-            .WriteImage(0, m_main_rt->getDescriptorImageInfo(), vk::DescriptorType::eStorageImage)
-            .WriteBuffer(1, m_camera_buffer.buffer, m_camera_buffer.info.size, 0, vk::DescriptorType::eUniformBuffer)
-            .WriteBuffer(2, m_sphere_buffer.buffer, m_sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
+    DescriptorWriter writer;
+    writer.WriteImage(0, m_main_rt->getDescriptorImageInfo(), vk::DescriptorType::eStorageImage)
+        .WriteBuffer(1, m_camera_buffer.buffer, m_camera_buffer.info.size, 0, vk::DescriptorType::eUniformBuffer)
+        .WriteBuffer(2, m_sphere_buffer.buffer, m_sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
+
     m_renderer->updateDescriptorSets(writer, m_descriptor_set);
 }
 
@@ -160,6 +163,11 @@ void Compute::draw(vk::CommandBuffer cmd_buffer)
     auto extent = m_main_rt->getExtent();
 
     cmd_buffer.dispatch(static_cast<uint32_t>(std::ceil(extent.width / 16.0)), static_cast<uint32_t>(std::ceil(extent.height / 16.0)), 1);
+}
+
+void Compute::updatePushConstants()
+{
+    m_push_constants.time = static_cast<float>(m_app->getTime());
 }
 
 void Compute::updateCameraBuffer()

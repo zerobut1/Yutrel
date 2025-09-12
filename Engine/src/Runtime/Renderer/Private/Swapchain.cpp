@@ -5,7 +5,7 @@
 #include "Window.h"
 
 #include <GLFW/glfw3.h>
-#include <VKBootstrap.h>
+#include <VkBootstrap.h>
 
 namespace Yutrel
 {

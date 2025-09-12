@@ -45,14 +45,16 @@ namespace Yutrel
 
         void pollEvents() const;
         bool shouldClose() const;
-        void setTitle(const std::string& title);
         void resize(uint32_t width, uint32_t height);
+        double getTime() const;
+        void calculateFPSAndSetTitle();
 
         GLFWwindow* getWindow() const { return m_GLFW_window; };
         uint32_t getWidth() const { return m_width; };
         uint32_t getHeight() const { return m_height; };
 
     private:
+        void setTitle(const std::string& title);
         void updateWindowSize();
         void setWindowSize(uint32_t width, uint32_t height);
 
@@ -73,6 +75,7 @@ namespace Yutrel
         GLFWwindow* m_GLFW_window{nullptr};
         uint32_t m_width{0};
         uint32_t m_height{0};
+        std::string m_title;
         // WindowMode m_window_mode{WindowMode::Normal};
         ICallbacks* m_callbacks{nullptr};
     };
