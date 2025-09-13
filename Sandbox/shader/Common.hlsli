@@ -31,7 +31,32 @@ struct HitRecord
     }
 };
 
-float rand(float seed)
+float random(float seed)
 {
     return frac(sin(seed * 12.9898) * 43758.5453);
+}
+
+float3 randomFloat3(float min,float max, float seed)
+{
+    return lerp(min,
+                max,
+                frac(sin(dot(seed, float3(127.1, 311.7, 74.7))) * float3(43758.5453123, 78.233, 12.345)));
+}
+
+float3 randomUnitVector(float seed)
+{
+    return normalize(randomFloat3(-1, 1, seed));
+}
+
+float3 randomOnHemisphere(float3 normal, float seed)
+{
+    float3 on_unit_sphere = randomUnitVector(seed + dot(normal, float3(12.9898, 78.233, 45.164)));
+    if(dot(on_unit_sphere, normal) > 0.0)
+    {
+        return on_unit_sphere;
+    }
+    else
+    {
+        return -on_unit_sphere;
+    }
 }

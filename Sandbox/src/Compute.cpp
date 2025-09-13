@@ -92,6 +92,7 @@ void Compute::initDataBuffer()
     m_spheres.emplace_back(Sphere{glm::vec3(0, -100.5f, -1.0f), 100.0f});
 
     m_push_constants.sphere_count      = static_cast<uint32_t>(m_spheres.size());
+    m_push_constants.max_depth         = 10;
     m_push_constants.samples_per_pixel = 10;
 
     m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);

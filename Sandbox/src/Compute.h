@@ -54,6 +54,7 @@ private:
         uint32_t viewport_height;
         uint32_t sphere_count;
         uint32_t samples_per_pixel;
+        uint32_t max_depth;
         float time;
     } m_push_constants;
 

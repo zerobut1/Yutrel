@@ -8,6 +8,7 @@ struct PushConstants {
     uint viewport_height;
     uint sphere_count;
     uint samples_per_pixel;
+    uint max_depth;
     float time;
 } push_constants;
 
