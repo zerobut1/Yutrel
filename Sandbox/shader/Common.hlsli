@@ -17,10 +17,17 @@ class Ray
     }
 };
 
+class Material
+{
+    uint type;
+    uint ptr;
+};
+
 struct HitRecord
 {
     float3 position;
     float3 normal;
+    Material material;
     float t;
     bool front_face;
 
@@ -59,4 +66,10 @@ float3 randomOnHemisphere(float3 normal, float seed)
     {
         return -on_unit_sphere;
     }
+}
+
+bool nearZero(float3 v)
+{
+    const float s = 1e-8;
+    return (abs(v.x) < s) && (abs(v.y) < s) && (abs(v.z) < s);
 }

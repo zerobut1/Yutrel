@@ -71,11 +71,20 @@ private:
 
     Yutrel::Buffer m_camera_buffer;
 
+    // Material
+    std::vector<glm::vec4> m_material_data;
+
+    Yutrel::Buffer m_material_buffer;
+
     // Sphere data
     struct Sphere
     {
         glm::vec3 center;
         float radius;
+        alignas(16) struct{
+            uint32_t type;
+            uint32_t ptr;
+        } material;
     };
     std::vector<Sphere> m_spheres;
 

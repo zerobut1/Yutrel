@@ -1,4 +1,5 @@
 #include "World.hlsli"
+#include "Material.hlsli"
 
 RWTexture2D<float4> output_texture;
 
@@ -23,10 +24,15 @@ float3 rayColor(Ray ray, World world, float seed)
         [flatten]
         if(world.hit(ray, ray_t, rec))
         {
-            float3 direction = randomOnHemisphere(rec.normal, seed + depth);
-            ray.origin = rec.position;
-            ray.direction = direction;
-            out_color *= 0.5;
+            float3 attenuation;
+            if(scatter(rec.material, ray, rec, attenuation, ray, seed + depth))
+            {
+                out_color *= attenuation;
+            }
+            else
+            {
+                return float3(0, 0, 0);
+            }
         }
         else
         {
@@ -69,5 +75,7 @@ void main(
         out_color.rgb += rayColor(ray, world, seed);
     }
 
-	output_texture[dispatch_thread_id.xy] = saturate(out_color / (float)push_constants.samples_per_pixel);
+    out_color = saturate(out_color / (float)push_constants.samples_per_pixel);
+    out_color.rgb = sqrt(out_color.rgb); // gamma correction
+	output_texture[dispatch_thread_id.xy] = out_color;
 }

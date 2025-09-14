@@ -26,7 +26,7 @@ struct Camera
 [[vk::binding(1, 0)]]
 ConstantBuffer<Camera> camera;
 
-[[vk::binding(2, 0)]]
+[[vk::binding(3, 0)]]
 StructuredBuffer<Sphere> spheres;
 
 class World : Object

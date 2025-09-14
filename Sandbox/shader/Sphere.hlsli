@@ -6,6 +6,7 @@ class Sphere : Object
 {
     float3 center;
     float radius;
+    Material material;
 
     bool hit(Ray ray, Interval ray_t, out HitRecord rec)
     {
@@ -40,6 +41,7 @@ class Sphere : Object
         rec.position = ray.at(rec.t);
         float3 outward_normal = (rec.position - center) / radius;
         rec.setFaceNormal(ray, outward_normal);
+        rec.material = material;
 
         return true;
     }

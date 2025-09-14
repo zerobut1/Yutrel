@@ -88,15 +88,23 @@ void Compute::initCameraBuffer()
 
 void Compute::initDataBuffer()
 {
-    m_spheres.emplace_back(Sphere{glm::vec3(0, 0, -1.0f), 0.5f});
-    m_spheres.emplace_back(Sphere{glm::vec3(0, -100.5f, -1.0f), 100.0f});
+    // material
+    m_material_data.emplace_back(glm::vec4(0.8f, 0.8f, 0.0f, 0.0f));
+    m_material_data.emplace_back(glm::vec4(0.8f, 0.8f, 0.8f, 0.0f));
 
+    m_material_buffer = m_renderer->createBuffer(sizeof(glm::vec4) * m_material_data.size(), vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    memcpy(m_material_buffer.info.pMappedData, m_material_data.data(), sizeof(glm::vec4) * m_material_data.size());
+
+    // sphere
+    m_spheres.emplace_back(Sphere{glm::vec3(0, 0, -1.0f), 0.5f, {1, 0}});
+    m_spheres.emplace_back(Sphere{glm::vec3(0, -100.5f, -1.0f), 100.0f, {2, 1}});
+    m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
+
+    // push constants
     m_push_constants.sphere_count      = static_cast<uint32_t>(m_spheres.size());
     m_push_constants.max_depth         = 10;
     m_push_constants.samples_per_pixel = 10;
-
-    m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
-    memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
 }
 
 void Compute::initDescriptors()
@@ -105,7 +113,8 @@ void Compute::initDescriptors()
         DescriptorSetLayoutCreateInfo()
             .AddBinding(0, vk::DescriptorType::eStorageImage)
             .AddBinding(1, vk::DescriptorType::eUniformBuffer)
-            .AddBinding(2, vk::DescriptorType::eStorageBuffer)
+            .AddBinding(2, vk::DescriptorType::eStorageBuffer) // material
+            .AddBinding(3, vk::DescriptorType::eStorageBuffer) // sphere
             .SetShaderStage(vk::ShaderStageFlagBits::eCompute);
 
     m_descriptor_set_layout = m_renderer->createDescriptorSetLayout(layout_ci);
@@ -114,7 +123,8 @@ void Compute::initDescriptors()
     DescriptorWriter writer;
     writer.WriteImage(0, m_main_rt->getDescriptorImageInfo(), vk::DescriptorType::eStorageImage)
         .WriteBuffer(1, m_camera_buffer.buffer, m_camera_buffer.info.size, 0, vk::DescriptorType::eUniformBuffer)
-        .WriteBuffer(2, m_sphere_buffer.buffer, m_sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
+        .WriteBuffer(2, m_material_buffer.buffer, m_material_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer)
+        .WriteBuffer(3, m_sphere_buffer.buffer, m_sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
 
     m_renderer->updateDescriptorSets(writer, m_descriptor_set);
 }
