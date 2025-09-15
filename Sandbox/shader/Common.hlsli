@@ -17,17 +17,16 @@ class Ray
     }
 };
 
-class Material
+class MaterialIndex
 {
-    uint type;
-    uint ptr;
+    uint index;
 };
 
 struct HitRecord
 {
     float3 position;
     float3 normal;
-    Material material;
+    MaterialIndex material;
     float t;
     bool front_face;
 

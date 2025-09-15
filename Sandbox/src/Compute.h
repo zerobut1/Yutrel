@@ -72,7 +72,19 @@ private:
     Yutrel::Buffer m_camera_buffer;
 
     // Material
-    std::vector<glm::vec4> m_material_data;
+    enum MaterialType
+    {
+        MT_None = 0,
+        MT_Lambertian = 1,
+        MT_Metal = 2,
+    };
+
+    struct Material
+    {
+        alignas(16) MaterialType type;
+        alignas(16) glm::vec4 data;
+    };
+    std::vector<Material> m_material_data;
 
     Yutrel::Buffer m_material_buffer;
 
@@ -81,10 +93,7 @@ private:
     {
         glm::vec3 center;
         float radius;
-        alignas(16) struct{
-            uint32_t type;
-            uint32_t ptr;
-        } material;
+        alignas(16) uint32_t material_index;
     };
     std::vector<Sphere> m_spheres;
 

@@ -6,7 +6,7 @@ class Sphere : Object
 {
     float3 center;
     float radius;
-    Material material;
+    MaterialIndex material;
 
     bool hit(Ray ray, Interval ray_t, out HitRecord rec)
     {
