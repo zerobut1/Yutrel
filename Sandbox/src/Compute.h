@@ -53,8 +53,6 @@ private:
         uint32_t viewport_width;
         uint32_t viewport_height;
         uint32_t sphere_count;
-        uint32_t samples_per_pixel;
-        uint32_t max_depth;
         float time;
     } m_push_constants;
 
@@ -63,10 +61,15 @@ private:
 
     struct CameraData
     {
-        alignas(16) glm::vec3 center;
-        alignas(16) glm::vec3 pixel00_location;
-        alignas(16) glm::vec3 pixel_delta_u;
+        glm::vec3 center;
+        uint32_t samples_per_pixel;
+        glm::vec3 pixel00_location;
+        uint32_t max_depth;
+        glm::vec3 pixel_delta_u;
+        float defocus_angle;
         alignas(16) glm::vec3 pixel_delta_v;
+        alignas(16) glm::vec3 defocus_disk_u;
+        alignas(16) glm::vec3 defocus_disk_v;
     } m_camera_data;
 
     Yutrel::Buffer m_camera_buffer;
@@ -74,9 +77,9 @@ private:
     // Material
     enum MaterialType
     {
-        MT_None = 0,
+        MT_None       = 0,
         MT_Lambertian = 1,
-        MT_Metal = 2,
+        MT_Metal      = 2,
         MT_Dielectric = 3,
     };
 

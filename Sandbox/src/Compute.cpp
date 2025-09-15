@@ -5,16 +5,25 @@
 #include <Renderer.h>
 #include <Swapchain.h>
 
+#include <random>
+
 #include "Shaders.h"
 
 using namespace Yutrel;
+
+inline double randomDouble()
+{
+    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    static std::mt19937 generator;
+    return distribution(generator);
+}
 
 void Compute::onAttach(Yutrel::Application* app)
 {
     m_app      = app;
     m_renderer = app->getRenderer();
 
-    m_camera = std::make_unique<Camera>(m_viewport_width, m_viewport_height);
+    initCameraBuffer();
 
     Yutrel::RenderTarget::CreateInfo rt_ci{};
     rt_ci.extent = vk::Extent2D{m_camera->getImageWidth(), m_camera->getImageHeight()};
@@ -22,7 +31,6 @@ void Compute::onAttach(Yutrel::Application* app)
     rt_ci.layout = vk::ImageLayout::eGeneral;
     m_main_rt    = Yutrel::RenderTarget::create(m_renderer, rt_ci);
 
-    initCameraBuffer();
     initDataBuffer();
     initDescriptors();
     initPipeline();
@@ -73,44 +81,84 @@ void Compute::onResize(uint32_t width, uint32_t height)
     m_push_constants.viewport_height = m_viewport_height;
 
     // camera
-    m_camera = std::make_unique<Camera>(m_viewport_width, m_viewport_height);
+    m_camera->resize(m_viewport_width, m_viewport_height);
+}
+
+void Compute::initCameraBuffer()
+{
+    m_camera                    = std::make_unique<Camera>(m_viewport_width, m_viewport_height);
+    m_camera->samples_per_pixel = 50;
+    m_camera->max_depth         = 10;
+    m_camera->vfov              = 20.0f;
+    m_camera->look_from         = glm::vec3(13.0f, 2.0f, 3.0f);
+    m_camera->look_at           = glm::vec3(0.0f, 0.0f, 0.0f);
+    m_camera->vup               = glm::vec3(0.0f, 1.0f, 0.0f);
+    m_camera->defocus_angle     = 0.6f;
+    m_camera->focus_distance    = 10.0f;
+    m_camera->init();
 
     m_camera_data.center           = m_camera->getCenter();
     m_camera_data.pixel00_location = m_camera->getPixel00Location();
     m_camera_data.pixel_delta_u    = m_camera->getPixelDeltaU();
     m_camera_data.pixel_delta_v    = m_camera->getPixelDeltaV();
-}
 
-void Compute::initCameraBuffer()
-{
+    m_camera_data.samples_per_pixel = m_camera->samples_per_pixel;
+    m_camera_data.max_depth         = m_camera->max_depth;
+
+    m_camera_data.defocus_angle  = m_camera->defocus_angle;
+    m_camera_data.defocus_disk_u = m_camera->getDefocusDiskU();
+    m_camera_data.defocus_disk_v = m_camera->getDefocusDiskV();
+
     m_camera_buffer = m_renderer->createBuffer(sizeof(CameraData), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 }
 
 void Compute::initDataBuffer()
 {
-    // material
-    m_material_data.emplace_back(Material{MT_Lambertian, glm::vec4(0.8f, 0.8f, 0.0f, 0.0f)});
-    m_material_data.emplace_back(Material{MT_Lambertian, glm::vec4(0.1f, 0.2f, 0.5f, 0.0f)});
-    m_material_data.emplace_back(Material{MT_Dielectric, glm::vec4(1.5f, 0.0f, 0.0f, 0.0f)});
-    m_material_data.emplace_back(Material{MT_Dielectric, glm::vec4(1.0f / 1.5f, 0.0f, 0.0f, 0.0f)});
-    m_material_data.emplace_back(Material{MT_Metal, glm::vec4(0.8f, 0.6f, 0.2f, 1.0f)});
+    // ground
+    m_material_data.emplace_back(Material{MT_Lambertian, glm::vec4(0.4f, 0.8f, 1.0f, 0.0f)}); // ground
+    m_spheres.emplace_back(Sphere{glm::vec3(0, -1000.0f, 0.0f), 1000.0f, 0});
+
+    // small spheres
+    for (int a = -11; a < 11; a++)
+    {
+        for (int b = -11; b < 11; b++)
+        {
+            auto choose_mat = randomDouble();
+            glm::vec3 center(static_cast<float>(a) + 0.9f * static_cast<float>(randomDouble()), 0.2f, static_cast<float>(b) + 0.9f * static_cast<float>(randomDouble()));
+
+            if (glm::length(center - glm::vec3(4.0f, 0.2f, 0.0f)) > 0.9f)
+            {
+                if (choose_mat < 0.8) // diffuse
+                {
+                    glm::vec3 albedo = glm::vec3(static_cast<float>(randomDouble()) * static_cast<float>(randomDouble()),
+                                                 static_cast<float>(randomDouble()) * static_cast<float>(randomDouble()),
+                                                 static_cast<float>(randomDouble()) * static_cast<float>(randomDouble()));
+                    m_material_data.emplace_back(Material{MT_Lambertian, glm::vec4(albedo, 0.0f)});
+                    m_spheres.emplace_back(Sphere{center, 0.2f, static_cast<uint32_t>(m_material_data.size() - 1)});
+                }
+                else if (choose_mat < 0.95) // metal
+                {
+                    glm::vec3 albedo = glm::vec3(0.5f * (1.0f + static_cast<float>(randomDouble())),
+                                                 0.5f * (1.0f + static_cast<float>(randomDouble())),
+                                                 0.5f * (1.0f + static_cast<float>(randomDouble())));
+                    float fuzz       = 0.5f * static_cast<float>(randomDouble());
+                    m_material_data.emplace_back(Material{MT_Metal, glm::vec4(albedo, fuzz)});
+                    m_spheres.emplace_back(Sphere{center, 0.2f, static_cast<uint32_t>(m_material_data.size() - 1)});
+                }
+                else // glass
+                {
+                    m_material_data.emplace_back(Material{MT_Dielectric, glm::vec4(1.5f, 0.0f, 0.0f, 0.0f)});
+                    m_spheres.emplace_back(Sphere{center, 0.2f, static_cast<uint32_t>(m_material_data.size() - 1)});
+                }
+            }
+        }
+    }
+    m_push_constants.sphere_count = static_cast<uint32_t>(m_spheres.size());
 
     m_material_buffer = m_renderer->createBuffer(sizeof(Material) * m_material_data.size(), vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
     memcpy(m_material_buffer.info.pMappedData, m_material_data.data(), sizeof(Material) * m_material_data.size());
-
-    // sphere
-    m_spheres.emplace_back(Sphere{glm::vec3(0, -100.5f, -1.0f), 100.0f, 0});
-    m_spheres.emplace_back(Sphere{glm::vec3(0.0f, 0.0f, -1.2f), 0.5f, 1});
-    m_spheres.emplace_back(Sphere{glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, 2});
-    m_spheres.emplace_back(Sphere{glm::vec3(-1.0f, 0.0f, -1.0f), 0.4f, 3});
-    m_spheres.emplace_back(Sphere{glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, 4});
     m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
     memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
-
-    // push constants
-    m_push_constants.sphere_count      = static_cast<uint32_t>(m_spheres.size());
-    m_push_constants.max_depth         = 10;
-    m_push_constants.samples_per_pixel = 10;
 }
 
 void Compute::initDescriptors()

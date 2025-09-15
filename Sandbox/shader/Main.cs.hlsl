@@ -19,7 +19,7 @@ float3 rayColor(Ray ray, World world, float seed)
     ray_t.min = 0.001;
     ray_t.max = POSITIVE_INFINITY;
 
-    for(int depth = 0; depth < push_constants.max_depth; depth++)
+    for(int depth = 0; depth < camera.max_depth; depth++)
     {
         [flatten]
         if(world.hit(ray, ray_t, rec))
@@ -55,7 +55,7 @@ void main(
 
     World world;
 
-    for(int sample_index = 0; sample_index < push_constants.samples_per_pixel; sample_index++)
+    for(int sample_index = 0; sample_index < camera.samples_per_pixel; sample_index++)
     {
         float seed = sample_index + push_constants.time;
 
@@ -64,18 +64,12 @@ void main(
                                 random(seed));
         pixel_offset = (pixel_offset - 0.5) / float2(push_constants.viewport_width, push_constants.viewport_height);
 
-        Ray ray;
-        ray.origin = camera.center;
-        ray.direction = camera.pixel00_location +
-                        camera.pixel_delta_u * screen_position.x +
-                        camera.pixel_delta_v * screen_position.y +
-                        float3(pixel_offset, 0) -
-                        camera.center;
-
+        Ray ray = getRay(screen_position, sample_index);
+        
         out_color.rgb += rayColor(ray, world, seed);
     }
 
-    out_color = saturate(out_color / (float)push_constants.samples_per_pixel);
+    out_color = saturate(out_color / (float)camera.samples_per_pixel);
     out_color.rgb = sqrt(out_color.rgb); // gamma correction
 	output_texture[dispatch_thread_id.xy] = out_color;
 }

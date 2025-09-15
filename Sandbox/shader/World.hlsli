@@ -1,30 +1,15 @@
 #pragma once
 
 #include "Sphere.hlsli"
+#include "Camera.hlsli"
 
 [[vk::push_constant]]
 struct PushConstants {
     uint viewport_width;
     uint viewport_height;
     uint sphere_count;
-    uint samples_per_pixel;
-    uint max_depth;
     float time;
 } push_constants;
-
-struct Camera
-{
-    float3 center;
-    float _padding0;
-    float3 pixel00_location;
-    float _padding1;
-    float3 pixel_delta_u;
-    float _padding2;
-    float3 pixel_delta_v;
-    float _padding3;
-};
-[[vk::binding(1, 0)]]
-ConstantBuffer<Camera> camera;
 
 [[vk::binding(3, 0)]]
 StructuredBuffer<Sphere> spheres;

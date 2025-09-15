@@ -42,6 +42,11 @@ float random(float seed)
     return frac(sin(seed * 12.9898) * 43758.5453);
 }
 
+float random(float min, float max, float seed)
+{
+    return lerp(min, max, frac(sin(seed * 12.9898) * 43758.5453));
+}
+
 float3 randomFloat3(float min,float max, float seed)
 {
     return lerp(min,
@@ -65,6 +70,18 @@ float3 randomOnHemisphere(float3 normal, float seed)
     {
         return -on_unit_sphere;
     }
+}
+
+float3 randomInUnitDisk(float seed)
+{
+    float3 p;
+    float i = 0.0f;
+    do
+    {
+        p = float3(random(-1.0f, 1.0f, seed + i + 1), random(-1.0f, 1.0f, seed + i + 2), 0);
+        i += 0.1234f;
+    } while (dot(p, p) >= 1.0);
+    return p;
 }
 
 bool nearZero(float3 v)
