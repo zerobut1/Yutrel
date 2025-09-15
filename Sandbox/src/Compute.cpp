@@ -89,9 +89,10 @@ void Compute::initCameraBuffer()
 void Compute::initDataBuffer()
 {
     // material
-    m_material_data.emplace_back(Material{MT_Lambertian,glm::vec4(0.8f, 0.8f, 0.0f, 0.0f)});
-    m_material_data.emplace_back(Material{MT_Lambertian,glm::vec4(0.1f, 0.2f, 0.5f, 0.0f)});
-    m_material_data.emplace_back(Material{MT_Metal, glm::vec4(0.8f, 0.8f, 0.8f, 0.3f)});
+    m_material_data.emplace_back(Material{MT_Lambertian, glm::vec4(0.8f, 0.8f, 0.0f, 0.0f)});
+    m_material_data.emplace_back(Material{MT_Lambertian, glm::vec4(0.1f, 0.2f, 0.5f, 0.0f)});
+    m_material_data.emplace_back(Material{MT_Dielectric, glm::vec4(1.5f, 0.0f, 0.0f, 0.0f)});
+    m_material_data.emplace_back(Material{MT_Dielectric, glm::vec4(1.0f / 1.5f, 0.0f, 0.0f, 0.0f)});
     m_material_data.emplace_back(Material{MT_Metal, glm::vec4(0.8f, 0.6f, 0.2f, 1.0f)});
 
     m_material_buffer = m_renderer->createBuffer(sizeof(Material) * m_material_data.size(), vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
@@ -101,7 +102,8 @@ void Compute::initDataBuffer()
     m_spheres.emplace_back(Sphere{glm::vec3(0, -100.5f, -1.0f), 100.0f, 0});
     m_spheres.emplace_back(Sphere{glm::vec3(0.0f, 0.0f, -1.2f), 0.5f, 1});
     m_spheres.emplace_back(Sphere{glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, 2});
-    m_spheres.emplace_back(Sphere{glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, 3});
+    m_spheres.emplace_back(Sphere{glm::vec3(-1.0f, 0.0f, -1.0f), 0.4f, 3});
+    m_spheres.emplace_back(Sphere{glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, 4});
     m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
     memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
 

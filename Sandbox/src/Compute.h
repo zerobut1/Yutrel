@@ -77,6 +77,7 @@ private:
         MT_None = 0,
         MT_Lambertian = 1,
         MT_Metal = 2,
+        MT_Dielectric = 3,
     };
 
     struct Material
