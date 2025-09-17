@@ -40,6 +40,7 @@ namespace Yutrel
         Renderer::CreateInfo renderer_ci{};
         renderer_ci.device_features.samplerAnisotropy   = vk::True;
         renderer_ci.device_features_13.synchronization2 = vk::True;
+        renderer_ci.device_features_13.dynamicRendering = vk::True;
         m_renderer                                      = std::make_shared<Renderer>(renderer_ci);
 
         //----------窗口----------

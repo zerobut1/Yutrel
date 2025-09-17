@@ -1,9 +1,14 @@
 #include "Compute.h"
 
+#include <Context.h>
 #include <DescriptorSet.h>
 #include <Pipeline.h>
 #include <Renderer.h>
 #include <Swapchain.h>
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 
 #include <random>
 
@@ -34,6 +39,8 @@ void Compute::onAttach(Yutrel::Application* app)
     initDataBuffer();
     initDescriptors();
     initPipeline();
+
+    initImGui();
 }
 
 void Compute::onDetach()
@@ -46,8 +53,11 @@ void Compute::onRender(vk::CommandBuffer cmd_buffer)
 
     updateCameraBuffer();
 
+    updateImGui();
+
     auto swapchain = m_app->getSwapchain();
 
+    // ray tracing
     m_main_rt->transitionImageLayout(cmd_buffer, vk::ImageLayout::eGeneral);
 
     draw(cmd_buffer);
@@ -65,9 +75,17 @@ void Compute::onRender(vk::CommandBuffer cmd_buffer)
                                  m_main_rt->getExtent(),
                                  swapchain->getExtent());
 
+    // Imgui
     m_renderer->transitionImageLayout(cmd_buffer,
                                       swapchain->getCurrentImage(),
                                       vk::ImageLayout::eTransferDstOptimal,
+                                      vk::ImageLayout::eColorAttachmentOptimal);
+
+    drawImGui(cmd_buffer, swapchain);
+
+    m_renderer->transitionImageLayout(cmd_buffer,
+                                      swapchain->getCurrentImage(),
+                                      vk::ImageLayout::eColorAttachmentOptimal,
                                       vk::ImageLayout::ePresentSrcKHR);
 }
 
@@ -148,7 +166,9 @@ void Compute::initDataBuffer()
                 else // glass
                 {
                     m_material_data.emplace_back(Material{MT_Dielectric, glm::vec4(1.5f, 0.0f, 0.0f, 0.0f)});
-                    m_spheres.emplace_back(Sphere{center, 0.2f, static_cast<uint32_t>(m_material_data.size() - 1)});
+                    float radius = static_cast<float>(randomDouble());
+                    center.y     = radius;
+                    m_spheres.emplace_back(Sphere{center, radius, static_cast<uint32_t>(m_material_data.size() - 1)});
                 }
             }
         }
@@ -217,6 +237,37 @@ void Compute::initPipeline()
     m_renderer->destroyShaderModule(compute_shader);
 }
 
+void Compute::initImGui()
+{
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(2.0f); // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+    style.FontScaleDpi = 2.0f;
+
+    ImGui_ImplGlfw_InitForVulkan(m_app->getWindow()->getWindow(), true);
+    ImGui_ImplVulkan_InitInfo init_info{
+        .Instance            = static_cast<VkInstance>(m_renderer->getContext()->getInstance()),
+        .PhysicalDevice      = static_cast<VkPhysicalDevice>(m_renderer->getContext()->getGPU()),
+        .Device              = static_cast<VkDevice>(m_renderer->getContext()->getDevice()),
+        .QueueFamily         = m_renderer->getContext()->getGraphicsQueueIndex(),
+        .Queue               = static_cast<VkQueue>(m_renderer->getContext()->getGraphicsQueue()),
+        .DescriptorPool      = static_cast<VkDescriptorPool>(m_renderer->getDescriptorPool()),
+        .MinImageCount       = 2,
+        .ImageCount          = 2,
+        .MSAASamples         = VK_SAMPLE_COUNT_1_BIT,
+        .UseDynamicRendering = true,
+    };
+    ImGui_ImplVulkan_Init(&init_info);
+}
+
 void Compute::draw(vk::CommandBuffer cmd_buffer)
 {
     cmd_buffer.bindPipeline(vk::PipelineBindPoint::eCompute, m_pipeline);
@@ -237,5 +288,53 @@ void Compute::updatePushConstants()
 
 void Compute::updateCameraBuffer()
 {
+    m_camera_data.samples_per_pixel = m_camera->samples_per_pixel;
+    m_camera_data.max_depth         = m_camera->max_depth;
+
     memcpy(m_camera_buffer.info.pMappedData, &m_camera_data, sizeof(CameraData));
+}
+
+void Compute::updateImGui()
+{
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    {
+        ImGui::Begin("Config");
+        ImGui::SliderInt("SamplesPerPixel", reinterpret_cast<int*>(&m_camera->samples_per_pixel), 0, 100);
+        ImGui::SliderInt("MaxDepth", reinterpret_cast<int*>(&m_camera->max_depth), 0, 10);
+        ImGui::End();
+    }
+
+    ImGui::Render();
+}
+
+void Compute::drawImGui(vk::CommandBuffer cmd_buffer, std::shared_ptr<Yutrel::Swapchain> swapchain)
+{
+
+    auto color_attachment =
+        vk::RenderingAttachmentInfo()
+            .setImageView(swapchain->getCurrentImageView())
+            .setImageLayout(vk::ImageLayout::eGeneral)
+            .setLoadOp(vk::AttachmentLoadOp::eLoad)
+            .setStoreOp(vk::AttachmentStoreOp::eStore);
+
+    auto render_info =
+        vk::RenderingInfo()
+            .setRenderArea(vk::Rect2D({0, 0}, swapchain->getExtent()))
+            .setLayerCount(1)
+            .setColorAttachments(color_attachment);
+
+    cmd_buffer.beginRendering(render_info);
+
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd_buffer);
+
+    cmd_buffer.endRendering();
+
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+    }
 }

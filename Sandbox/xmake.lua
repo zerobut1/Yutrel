@@ -13,7 +13,7 @@ target("Sandbox")
         "Window"
     )
 
-    add_packages("glm")
+    add_packages("glm", "imgui")
 
     -- shader
     add_rules("utils.hlsl2spv", {bin2c = true})

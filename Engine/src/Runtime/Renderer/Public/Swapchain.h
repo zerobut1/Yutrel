@@ -29,6 +29,7 @@ namespace Yutrel
 
         vk::SwapchainKHR getSwapchain() const { return m_swapchain; }
         vk::Image getCurrentImage() const { return m_images[m_cur_image_index]; }
+        vk::ImageView getCurrentImageView() const { return m_image_views[m_cur_image_index]; }
         vk::Extent2D getExtent() const { return m_extent; }
 
     private:

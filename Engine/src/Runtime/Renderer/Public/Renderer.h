@@ -29,6 +29,7 @@ namespace Yutrel
         std::shared_ptr<class Context> getContext() { return m_context; }
         std::shared_ptr<class ResourceManager> getResourceManager() { return m_resource_manager; }
         std::shared_ptr<class Frame> getCurrentFrame() const { return m_frames[m_frame_count % s_max_frame]; }
+        vk::DescriptorPool getDescriptorPool() const { return m_descriptor_pool; }
 
         std::shared_ptr<Frame> prepareBeforeRender();
         void submitRendering(std::shared_ptr<Frame> cur_frame);

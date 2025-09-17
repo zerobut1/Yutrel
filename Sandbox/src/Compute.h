@@ -27,11 +27,17 @@ private:
 
     void initPipeline();
 
+    void initImGui();
+
     void draw(vk::CommandBuffer cmd_buffer);
 
     void updatePushConstants();
 
     void updateCameraBuffer();
+
+    void updateImGui();
+
+    void drawImGui(vk::CommandBuffer cmd_buffer, std::shared_ptr<Yutrel::Swapchain> swapchain);
 
 private:
     Yutrel::Application* m_app;

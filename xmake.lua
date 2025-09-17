@@ -18,7 +18,7 @@ add_requires("glfw")
 add_requires("vulkansdk", "vk-bootstrap v1.4.320", "vulkan-memory-allocator")
 
 -- imgui
-add_requires("imgui", {configs = {glfw = true, vulkan = true}})
+add_requires("imgui v1.92.1-docking", {configs = {glfw = true, vulkan = true}})
 
 -- shader
 add_requires("glslang", {configs = {binaryonly = true}})
