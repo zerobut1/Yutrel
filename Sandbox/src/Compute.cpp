@@ -105,7 +105,7 @@ void Compute::onResize(uint32_t width, uint32_t height)
 void Compute::initCameraBuffer()
 {
     m_camera                    = std::make_unique<Camera>(m_viewport_width, m_viewport_height);
-    m_camera->samples_per_pixel = 50;
+    m_camera->samples_per_pixel = 10;
     m_camera->max_depth         = 10;
     m_camera->vfov              = 20.0f;
     m_camera->look_from         = glm::vec3(13.0f, 2.0f, 3.0f);

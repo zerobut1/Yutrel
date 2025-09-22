@@ -32,7 +32,7 @@ namespace Yutrel
     public:
         void run();
 
-        void addComponent(const std::shared_ptr<ComponentBase>& component);
+        void addComponent(std::unique_ptr<ComponentBase> component);
 
         std::shared_ptr<class Renderer> getRenderer() const { return m_renderer; }
         std::shared_ptr<class Window> getWindow() const { return m_window; }
@@ -48,7 +48,7 @@ namespace Yutrel
         void handleWindowSizeChange() override;
 
     private:
-        std::vector<std::shared_ptr<ComponentBase>> m_components;
+        std::vector<std::unique_ptr<ComponentBase>> m_components;
 
         std::shared_ptr<Renderer> m_renderer;
         std::shared_ptr<Window> m_window;

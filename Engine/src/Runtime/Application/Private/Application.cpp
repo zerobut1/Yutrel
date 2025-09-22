@@ -129,9 +129,10 @@ namespace Yutrel
         return m_window->getTime();
     }
 
-    void Application::addComponent(const std::shared_ptr<ComponentBase>& component)
+    void Application::addComponent(std::unique_ptr<ComponentBase> component)
     {
-        m_components.emplace_back(component)->onAttach(this);
+        component->onAttach(this);
+        m_components.emplace_back(std::move(component));
     }
 
     void Application::handleWindowSizeChange()
