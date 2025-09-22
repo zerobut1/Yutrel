@@ -8,7 +8,7 @@ namespace Yutrel
     RenderTarget::RenderTarget(Renderer* renderer, const CreateInfo& info)
         : m_renderer(renderer)
     {
-        auto resource_manager = renderer->getResourceManager();
+        auto resource_manager = m_renderer->getResourceManager();
 
         m_extent = info.extent;
         m_format = info.format;
@@ -34,7 +34,7 @@ namespace Yutrel
         // layout
         {
             auto cmd_buffer = m_renderer->beginSingleTimeCommandBuffer();
-            renderer->transitionImageLayout(cmd_buffer,
+            m_renderer->transitionImageLayout(cmd_buffer,
                                             m_image.image,
                                             vk::ImageLayout::eUndefined,
                                             info.layout);
