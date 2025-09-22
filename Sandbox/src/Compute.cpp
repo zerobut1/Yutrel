@@ -7,8 +7,6 @@
 #include <Swapchain.h>
 
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
 
 #include <random>
 
@@ -19,7 +17,7 @@ using namespace Yutrel;
 inline double randomDouble()
 {
     static std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    static std::mt19937 generator;
+    static std::mt19937 generator(std::random_device{}());
     return distribution(generator);
 }
 
@@ -39,8 +37,6 @@ void Compute::onAttach(Yutrel::Application* app)
     initDataBuffer();
     initDescriptors();
     initPipeline();
-
-    initImGui();
 }
 
 void Compute::onDetach()
@@ -53,9 +49,7 @@ void Compute::onRender(vk::CommandBuffer cmd_buffer)
 
     updateCameraBuffer();
 
-    updateImGui();
-
-    auto swapchain = m_app->getSwapchain();
+    auto* swapchain = m_app->getSwapchain();
 
     // ray tracing
     m_main_rt->transitionImageLayout(cmd_buffer, vk::ImageLayout::eGeneral);
@@ -74,19 +68,6 @@ void Compute::onRender(vk::CommandBuffer cmd_buffer)
                                  swapchain->getCurrentImage(),
                                  m_main_rt->getExtent(),
                                  swapchain->getExtent());
-
-    // Imgui
-    m_renderer->transitionImageLayout(cmd_buffer,
-                                      swapchain->getCurrentImage(),
-                                      vk::ImageLayout::eTransferDstOptimal,
-                                      vk::ImageLayout::eColorAttachmentOptimal);
-
-    drawImGui(cmd_buffer, swapchain);
-
-    m_renderer->transitionImageLayout(cmd_buffer,
-                                      swapchain->getCurrentImage(),
-                                      vk::ImageLayout::eColorAttachmentOptimal,
-                                      vk::ImageLayout::ePresentSrcKHR);
 }
 
 void Compute::onResize(uint32_t width, uint32_t height)
@@ -102,10 +83,20 @@ void Compute::onResize(uint32_t width, uint32_t height)
     m_camera->resize(m_viewport_width, m_viewport_height);
 }
 
+void Compute::onUIUpdate()
+{
+    {
+        ImGui::Begin("Config");
+        ImGui::SliderInt("SamplesPerPixel", reinterpret_cast<int*>(&m_camera->samples_per_pixel), 0, 100);
+        ImGui::SliderInt("MaxDepth", reinterpret_cast<int*>(&m_camera->max_depth), 0, 10);
+        ImGui::End();
+    }
+}
+
 void Compute::initCameraBuffer()
 {
     m_camera                    = std::make_unique<Camera>(m_viewport_width, m_viewport_height);
-    m_camera->samples_per_pixel = 50;
+    m_camera->samples_per_pixel = 10;
     m_camera->max_depth         = 10;
     m_camera->vfov              = 20.0f;
     m_camera->look_from         = glm::vec3(13.0f, 2.0f, 3.0f);
@@ -177,8 +168,8 @@ void Compute::initDataBuffer()
 
     m_material_buffer = m_renderer->createBuffer(sizeof(Material) * m_material_data.size(), vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
     memcpy(m_material_buffer.info.pMappedData, m_material_data.data(), sizeof(Material) * m_material_data.size());
-    m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
-    memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
+    m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * m_spheres.size(), vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * m_spheres.size());
 }
 
 void Compute::initDescriptors()
@@ -196,7 +187,7 @@ void Compute::initDescriptors()
 
     DescriptorWriter writer;
     writer.WriteImage(0, m_main_rt->getDescriptorImageInfo(), vk::DescriptorType::eStorageImage)
-        .WriteBuffer(1, m_camera_buffer.buffer, m_camera_buffer.info.size, 0, vk::DescriptorType::eUniformBuffer)
+        .WriteBuffer(1, m_camera_buffer.buffer, sizeof(CameraData), 0, vk::DescriptorType::eUniformBuffer)
         .WriteBuffer(2, m_material_buffer.buffer, m_material_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer)
         .WriteBuffer(3, m_sphere_buffer.buffer, m_sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
 
@@ -237,37 +228,6 @@ void Compute::initPipeline()
     m_renderer->destroyShaderModule(compute_shader);
 }
 
-void Compute::initImGui()
-{
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-    ImGui::StyleColorsDark();
-
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(2.0f); // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-    style.FontScaleDpi = 2.0f;
-
-    ImGui_ImplGlfw_InitForVulkan(m_app->getWindow()->getWindow(), true);
-    ImGui_ImplVulkan_InitInfo init_info{
-        .Instance            = static_cast<VkInstance>(m_renderer->getContext()->getInstance()),
-        .PhysicalDevice      = static_cast<VkPhysicalDevice>(m_renderer->getContext()->getGPU()),
-        .Device              = static_cast<VkDevice>(m_renderer->getContext()->getDevice()),
-        .QueueFamily         = m_renderer->getContext()->getGraphicsQueueIndex(),
-        .Queue               = static_cast<VkQueue>(m_renderer->getContext()->getGraphicsQueue()),
-        .DescriptorPool      = static_cast<VkDescriptorPool>(m_renderer->getDescriptorPool()),
-        .MinImageCount       = 2,
-        .ImageCount          = 2,
-        .MSAASamples         = VK_SAMPLE_COUNT_1_BIT,
-        .UseDynamicRendering = true,
-    };
-    ImGui_ImplVulkan_Init(&init_info);
-}
-
 void Compute::draw(vk::CommandBuffer cmd_buffer)
 {
     cmd_buffer.bindPipeline(vk::PipelineBindPoint::eCompute, m_pipeline);
@@ -292,49 +252,4 @@ void Compute::updateCameraBuffer()
     m_camera_data.max_depth         = m_camera->max_depth;
 
     memcpy(m_camera_buffer.info.pMappedData, &m_camera_data, sizeof(CameraData));
-}
-
-void Compute::updateImGui()
-{
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    {
-        ImGui::Begin("Config");
-        ImGui::SliderInt("SamplesPerPixel", reinterpret_cast<int*>(&m_camera->samples_per_pixel), 0, 100);
-        ImGui::SliderInt("MaxDepth", reinterpret_cast<int*>(&m_camera->max_depth), 0, 10);
-        ImGui::End();
-    }
-
-    ImGui::Render();
-}
-
-void Compute::drawImGui(vk::CommandBuffer cmd_buffer, std::shared_ptr<Yutrel::Swapchain> swapchain)
-{
-
-    auto color_attachment =
-        vk::RenderingAttachmentInfo()
-            .setImageView(swapchain->getCurrentImageView())
-            .setImageLayout(vk::ImageLayout::eGeneral)
-            .setLoadOp(vk::AttachmentLoadOp::eLoad)
-            .setStoreOp(vk::AttachmentStoreOp::eStore);
-
-    auto render_info =
-        vk::RenderingInfo()
-            .setRenderArea(vk::Rect2D({0, 0}, swapchain->getExtent()))
-            .setLayerCount(1)
-            .setColorAttachments(color_attachment);
-
-    cmd_buffer.beginRendering(render_info);
-
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd_buffer);
-
-    cmd_buffer.endRendering();
-
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-    }
 }

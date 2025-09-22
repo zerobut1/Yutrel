@@ -6,6 +6,8 @@
 
 namespace Yutrel
 {
+    class Renderer;
+
     class RenderTarget
     {
     public:
@@ -18,10 +20,10 @@ namespace Yutrel
 
     public:
         RenderTarget() = delete;
-        RenderTarget(std::shared_ptr<class Renderer> renderer, const CreateInfo& info);
+        explicit RenderTarget(Renderer* renderer, const CreateInfo& info);
         ~RenderTarget();
 
-        static std::unique_ptr<RenderTarget> create(std::shared_ptr<class Renderer> renderer, const CreateInfo& info);
+        static std::unique_ptr<RenderTarget> create(Renderer* renderer, const CreateInfo& info);
 
         void transitionImageLayout(vk::CommandBuffer cmd_buffer, vk::ImageLayout layout);
 
@@ -34,7 +36,7 @@ namespace Yutrel
         vk::DescriptorImageInfo getDescriptorImageInfo() const { return m_descriptor; }
 
     private:
-        std::shared_ptr<Renderer> m_renderer;
+        Renderer* m_renderer;
 
         Image m_image;
         vk::DescriptorImageInfo m_descriptor;

@@ -1,13 +1,14 @@
 #pragma once
 
 #include <Application.h>
+#include <Log.h>
 #include <RenderTarget.h>
 
 #include <glm/glm.hpp>
 
 #include "Camera.h"
 
-class Compute : public Yutrel::ComponentBase
+class Compute : public Yutrel::ComponentWithUIBase
 {
 public:
     void onAttach(Yutrel::Application* app) override;
@@ -18,6 +19,8 @@ public:
 
     void onResize(uint32_t width, uint32_t height) override;
 
+    void onUIUpdate() override;
+
 private:
     void initCameraBuffer();
 
@@ -27,21 +30,15 @@ private:
 
     void initPipeline();
 
-    void initImGui();
-
     void draw(vk::CommandBuffer cmd_buffer);
 
     void updatePushConstants();
 
     void updateCameraBuffer();
 
-    void updateImGui();
-
-    void drawImGui(vk::CommandBuffer cmd_buffer, std::shared_ptr<Yutrel::Swapchain> swapchain);
-
 private:
     Yutrel::Application* m_app;
-    std::shared_ptr<Yutrel::Renderer> m_renderer;
+    Yutrel::Renderer* m_renderer;
 
     std::unique_ptr<Yutrel::RenderTarget> m_main_rt;
 
@@ -108,6 +105,4 @@ private:
     std::vector<Sphere> m_spheres;
 
     Yutrel::Buffer m_sphere_buffer;
-
-    constexpr static uint32_t max_sphere_num = 1000;
 };

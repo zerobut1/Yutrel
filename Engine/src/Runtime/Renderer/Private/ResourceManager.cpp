@@ -7,7 +7,7 @@
 
 namespace Yutrel
 {
-    ResourceManager::ResourceManager(std::shared_ptr<class Context> context)
+    ResourceManager::ResourceManager(Context* context)
         : m_context(context)
     {
         init();

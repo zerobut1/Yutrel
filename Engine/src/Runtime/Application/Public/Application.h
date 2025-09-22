@@ -17,7 +17,10 @@ namespace Yutrel
         uint32_t height{1080};
     };
 
+    class Renderer;
     class ComponentBase;
+    class Swapchain;
+    class Gui;
 
     class Application final : public Window::ICallbacks
     {
@@ -32,11 +35,11 @@ namespace Yutrel
     public:
         void run();
 
-        void addComponent(const std::shared_ptr<ComponentBase>& component);
+        void addComponent(std::unique_ptr<ComponentBase> component);
 
-        std::shared_ptr<class Renderer> getRenderer() const { return m_renderer; }
-        std::shared_ptr<class Window> getWindow() const { return m_window; }
-        std::shared_ptr<class Swapchain> getSwapchain() const { return m_swapchain; }
+        Renderer* getRenderer() const { return m_renderer.get(); }
+        Window* getWindow() const { return m_window.get(); }
+        Swapchain* getSwapchain() const { return m_swapchain.get(); }
 
         double getTime() const;
 
@@ -48,11 +51,12 @@ namespace Yutrel
         void handleWindowSizeChange() override;
 
     private:
-        std::vector<std::shared_ptr<ComponentBase>> m_components;
+        std::vector<std::unique_ptr<ComponentBase>> m_components;
 
-        std::shared_ptr<Renderer> m_renderer;
-        std::shared_ptr<Window> m_window;
-        std::shared_ptr<Swapchain> m_swapchain;
+        std::unique_ptr<Renderer> m_renderer;
+        std::unique_ptr<Window> m_window;
+        std::unique_ptr<Swapchain> m_swapchain;
+        std::unique_ptr<Gui> m_gui;
 
         uint32_t m_viewport_width{0};
         uint32_t m_viewport_height{0};
@@ -67,6 +71,12 @@ namespace Yutrel
         virtual void onDetach()                                = 0;
         virtual void onRender(vk::CommandBuffer cmd_buffer)    = 0;
         virtual void onResize(uint32_t width, uint32_t height) = 0;
+    };
+
+    class ComponentWithUIBase : public ComponentBase
+    {
+    public:
+        virtual void onUIUpdate() = 0;
     };
 
 } // namespace Yutrel

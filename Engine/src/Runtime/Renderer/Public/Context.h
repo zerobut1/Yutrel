@@ -30,8 +30,8 @@ namespace Yutrel
         vk::PhysicalDevice getGPU() const { return m_GPU; }
         vk::Device getDevice() const { return m_device; }
         vk::Instance getInstance() const { return m_instance; }
-        vk::Queue getGraphicsQueue() const { return m_graphics_queue; }
-        uint32_t getGraphicsQueueIndex() const { return m_graphics_queue_family_index; }
+        vk::Queue getMainQueue() const { return m_main_queue; }
+        uint32_t getMainQueueIndex() const { return m_main_queue_family_index; }
 
     private:
         void init(const CreateInfo& info);
@@ -43,7 +43,8 @@ namespace Yutrel
         vk::PhysicalDevice m_GPU;
         vk::PhysicalDeviceProperties m_GPU_properties;
         vk::Device m_device;
-        vk::Queue m_graphics_queue;
-        uint32_t m_graphics_queue_family_index;
+        vk::Queue m_main_queue;
+        uint32_t m_main_queue_family_index;
+        vk::Queue m_compute_queue;
     };
 } // namespace Yutrel

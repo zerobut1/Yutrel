@@ -2,5 +2,6 @@ includes(
     "Application",
     "Core",
     "Renderer",
-    "Window"
+    "Window",
+    "Gui"
 )

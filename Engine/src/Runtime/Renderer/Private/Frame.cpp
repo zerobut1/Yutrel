@@ -1,11 +1,11 @@
 #include "Frame.h"
 
-#include "Log.h"
 #include "Context.h"
+#include "Log.h"
 
 namespace Yutrel
 {
-    Frame::Frame(std::shared_ptr<Context> context)
+    Frame::Frame(Context* context)
         : m_context(context)
     {
         init();
@@ -23,7 +23,7 @@ namespace Yutrel
         // command
         auto cmd_pool_ci =
             vk::CommandPoolCreateInfo()
-                .setQueueFamilyIndex(m_context->getGraphicsQueueIndex())
+                .setQueueFamilyIndex(m_context->getMainQueueIndex())
                 .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
 
         m_cmd_pool = device.createCommandPool(cmd_pool_ci);
@@ -115,7 +115,7 @@ namespace Yutrel
                 .setCommandBufferInfos(cmd_buffer_si);
 
         // 提交到队列
-        m_context->getGraphicsQueue().submit2(submit_info, m_render_fence);
+        m_context->getMainQueue().submit2(submit_info, m_render_fence);
     }
 
 } // namespace Yutrel

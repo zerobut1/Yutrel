@@ -47,14 +47,13 @@ namespace Yutrel
         bool shouldClose() const;
         void resize(uint32_t width, uint32_t height);
         double getTime() const;
-        void calculateFPSAndSetTitle();
+        void setTitle(const std::string& title);
 
         GLFWwindow* getWindow() const { return m_GLFW_window; };
         uint32_t getWidth() const { return m_width; };
         uint32_t getHeight() const { return m_height; };
 
     private:
-        void setTitle(const std::string& title);
         void updateWindowSize();
         void setWindowSize(uint32_t width, uint32_t height);
 

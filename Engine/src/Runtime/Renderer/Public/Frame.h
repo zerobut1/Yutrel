@@ -4,11 +4,13 @@
 
 namespace Yutrel
 {
+    class Context;
+
     class Frame final
     {
     public:
         Frame() = delete;
-        Frame(std::shared_ptr<class Context> context);
+        explicit Frame(Context* context);
         ~Frame();
 
         Frame(const Frame&)            = delete;
@@ -27,7 +29,7 @@ namespace Yutrel
         void destroy();
 
     private:
-        std::shared_ptr<Context> m_context;
+        Context* m_context;
 
         // 指令
         vk::CommandPool m_cmd_pool;

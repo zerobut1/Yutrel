@@ -85,7 +85,7 @@ namespace Yutrel
 
     vk::Result Swapchain::present(vk::Semaphore semaphore)
     {
-        auto queue = m_context->getGraphicsQueue();
+        auto queue = m_context->getMainQueue();
 
         auto present_info =
             vk::PresentInfoKHR()

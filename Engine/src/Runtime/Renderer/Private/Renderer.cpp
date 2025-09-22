@@ -31,21 +31,21 @@ namespace Yutrel
         context_ci.device_features_12 = info.device_features_12;
         context_ci.device_features_13 = info.device_features_13;
 
-        m_context = std::make_shared<Context>(context_ci);
+        m_context = std::make_unique<Context>(context_ci);
 
         //----------帧数据------------
         for (auto& frame : m_frames)
         {
-            frame = std::make_shared<Frame>(m_context);
+            frame = std::make_unique<Frame>(getContext());
         }
 
         //--------资源管理—————————————
-        m_resource_manager = std::make_shared<ResourceManager>(m_context);
+        m_resource_manager = std::make_unique<ResourceManager>(getContext());
 
         //---------单次指令池-------------
         auto cmd_pool_ci =
             vk::CommandPoolCreateInfo()
-                .setQueueFamilyIndex(m_context->getGraphicsQueueIndex())
+                .setQueueFamilyIndex(m_context->getMainQueueIndex())
                 .setFlags({});
 
         m_cmd_pool = m_context->getDevice().createCommandPool(cmd_pool_ci);
@@ -55,11 +55,12 @@ namespace Yutrel
             {vk::DescriptorType::eUniformBuffer, 100},
             {vk::DescriptorType::eStorageImage, 100},
             {vk::DescriptorType::eCombinedImageSampler, 100},
+            {vk::DescriptorType::eStorageBuffer, 100},
         };
 
         auto pool_ci =
             vk::DescriptorPoolCreateInfo()
-                .setFlags({})
+                .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
                 .setMaxSets(100)
                 .setPoolSizes(sizes);
 
@@ -72,21 +73,22 @@ namespace Yutrel
 
         device.waitIdle();
 
+
+        for (auto& frame : m_frames)
+        {
+            frame.release();
+        }
+
+        m_resource_manager.release();
+
         device.destroy(m_descriptor_pool);
 
         device.destroy(m_cmd_pool);
 
-        m_resource_manager.reset();
-
-        for (auto frame : m_frames)
-        {
-            frame.reset();
-        }
-
-        m_context.reset();
+        m_context.release();
     }
 
-    std::shared_ptr<Frame> Renderer::prepareBeforeRender()
+    Frame* Renderer::prepareBeforeRender()
     {
         auto cur_frame = getCurrentFrame();
 
@@ -96,7 +98,7 @@ namespace Yutrel
         return cur_frame;
     }
 
-    void Renderer::submitRendering(std::shared_ptr<Frame> cur_frame)
+    void Renderer::submitRendering(Frame* cur_frame)
     {
         // 终止指令缓冲
         cur_frame->endCommandBuffer();
@@ -137,7 +139,7 @@ namespace Yutrel
             vk::SubmitInfo2()
                 .setCommandBufferInfos(cmd_buffer_si);
 
-        auto queue = m_context->getGraphicsQueue();
+        auto queue = m_context->getMainQueue();
 
         queue.submit2(submit_info);
         queue.waitIdle();

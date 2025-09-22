@@ -6,13 +6,17 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
+    class Renderer;
+    class Window;
+    class Context;
+
     class Swapchain final
     {
     public:
         struct CreateInfo
         {
-            std::shared_ptr<class Renderer> renderer;
-            std::shared_ptr<class Window> window;
+            Renderer* renderer;
+            Window* window;
         };
 
     public:
@@ -31,6 +35,7 @@ namespace Yutrel
         vk::Image getCurrentImage() const { return m_images[m_cur_image_index]; }
         vk::ImageView getCurrentImageView() const { return m_image_views[m_cur_image_index]; }
         vk::Extent2D getExtent() const { return m_extent; }
+        vk::Format getFormat() const { return m_format; }
 
     private:
         void init(const CreateInfo& info);
@@ -46,7 +51,7 @@ namespace Yutrel
         uint32_t m_image_count{0};
         uint32_t m_cur_image_index{0};
 
-        std::shared_ptr<class Context> m_context;
+        Context* m_context;
     };
 
 } // namespace Yutrel
