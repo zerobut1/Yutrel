@@ -5,7 +5,7 @@
 
 namespace Yutrel
 {
-    RenderTarget::RenderTarget(std::shared_ptr<Renderer> renderer, const CreateInfo& info)
+    RenderTarget::RenderTarget(Renderer* renderer, const CreateInfo& info)
         : m_renderer(renderer)
     {
         auto resource_manager = renderer->getResourceManager();
@@ -53,7 +53,7 @@ namespace Yutrel
     {
     }
 
-    std::unique_ptr<RenderTarget> RenderTarget::create(std::shared_ptr<class Renderer> renderer, const CreateInfo& info)
+    std::unique_ptr<RenderTarget> RenderTarget::create(Renderer* renderer, const CreateInfo& info)
     {
         return std::make_unique<RenderTarget>(renderer, info);
     }

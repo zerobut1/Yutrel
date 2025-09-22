@@ -37,11 +37,11 @@ private:
 
     void updateImGui();
 
-    void drawImGui(vk::CommandBuffer cmd_buffer, std::shared_ptr<Yutrel::Swapchain> swapchain);
+    void drawImGui(vk::CommandBuffer cmd_buffer, Yutrel::Swapchain* swapchain);
 
 private:
     Yutrel::Application* m_app;
-    std::shared_ptr<Yutrel::Renderer> m_renderer;
+    Yutrel::Renderer* m_renderer;
 
     std::unique_ptr<Yutrel::RenderTarget> m_main_rt;
 

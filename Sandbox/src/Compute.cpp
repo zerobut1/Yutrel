@@ -55,7 +55,7 @@ void Compute::onRender(vk::CommandBuffer cmd_buffer)
 
     updateImGui();
 
-    auto swapchain = m_app->getSwapchain();
+    auto* swapchain = m_app->getSwapchain();
 
     // ray tracing
     m_main_rt->transitionImageLayout(cmd_buffer, vk::ImageLayout::eGeneral);
@@ -310,9 +310,8 @@ void Compute::updateImGui()
     ImGui::Render();
 }
 
-void Compute::drawImGui(vk::CommandBuffer cmd_buffer, std::shared_ptr<Yutrel::Swapchain> swapchain)
+void Compute::drawImGui(vk::CommandBuffer cmd_buffer, Yutrel::Swapchain* swapchain)
 {
-
     auto color_attachment =
         vk::RenderingAttachmentInfo()
             .setImageView(swapchain->getCurrentImageView())

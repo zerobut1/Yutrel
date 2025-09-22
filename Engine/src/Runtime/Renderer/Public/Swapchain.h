@@ -6,13 +6,16 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
+    class Renderer;
+    class Window;
+
     class Swapchain final
     {
     public:
         struct CreateInfo
         {
-            std::shared_ptr<class Renderer> renderer;
-            std::shared_ptr<class Window> window;
+            Renderer* renderer;
+            Window* window;
         };
 
     public:

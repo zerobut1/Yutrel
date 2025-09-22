@@ -17,7 +17,9 @@ namespace Yutrel
         uint32_t height{1080};
     };
 
+    class Renderer;
     class ComponentBase;
+    class Swapchain;
 
     class Application final : public Window::ICallbacks
     {
@@ -34,9 +36,9 @@ namespace Yutrel
 
         void addComponent(std::unique_ptr<ComponentBase> component);
 
-        std::shared_ptr<class Renderer> getRenderer() const { return m_renderer; }
-        std::shared_ptr<class Window> getWindow() const { return m_window; }
-        std::shared_ptr<class Swapchain> getSwapchain() const { return m_swapchain; }
+        Renderer* getRenderer() const { return m_renderer.get(); }
+        Window* getWindow() const { return m_window.get(); }
+        Swapchain* getSwapchain() const { return m_swapchain.get(); }
 
         double getTime() const;
 
@@ -50,9 +52,9 @@ namespace Yutrel
     private:
         std::vector<std::unique_ptr<ComponentBase>> m_components;
 
-        std::shared_ptr<Renderer> m_renderer;
-        std::shared_ptr<Window> m_window;
-        std::shared_ptr<Swapchain> m_swapchain;
+        std::unique_ptr<Renderer> m_renderer;
+        std::unique_ptr<Window> m_window;
+        std::unique_ptr<Swapchain> m_swapchain;
 
         uint32_t m_viewport_width{0};
         uint32_t m_viewport_height{0};

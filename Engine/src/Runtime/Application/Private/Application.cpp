@@ -41,7 +41,7 @@ namespace Yutrel
         renderer_ci.device_features.samplerAnisotropy   = vk::True;
         renderer_ci.device_features_13.synchronization2 = vk::True;
         renderer_ci.device_features_13.dynamicRendering = vk::True;
-        m_renderer                                      = std::make_shared<Renderer>(renderer_ci);
+        m_renderer                                      = std::make_unique<Renderer>(renderer_ci);
 
         //----------窗口----------
         Window::CreateInfo window_ci{};
@@ -50,14 +50,14 @@ namespace Yutrel
         window_ci.height    = info.height;
         window_ci.callbacks = this;
 
-        m_window = std::make_shared<Window>(window_ci);
+        m_window = std::make_unique<Window>(window_ci);
 
         //----------交换链------------
         Swapchain::CreateInfo swapchain_ci{};
-        swapchain_ci.renderer = m_renderer;
-        swapchain_ci.window   = m_window;
+        swapchain_ci.renderer = getRenderer();
+        swapchain_ci.window   = getWindow();
 
-        m_swapchain = std::make_shared<Swapchain>(swapchain_ci);
+        m_swapchain = std::make_unique<Swapchain>(swapchain_ci);
     }
 
     void Application::shutdown()
