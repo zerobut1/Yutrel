@@ -15,7 +15,8 @@ add_requires("spdlog", "stb", "glm")
 add_requires("glfw")
 
 -- Vulkan
-add_requires("vulkansdk", "vk-bootstrap v1.4.320", "vulkan-memory-allocator")
+add_requires("vulkansdk", "vulkan-memory-allocator")
+add_requires("vk-bootstrap v1.4.320")
 
 -- imgui
 add_requires("imgui v1.92.1-docking", {configs = {glfw = true, vulkan = true}})

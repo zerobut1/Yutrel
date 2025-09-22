@@ -45,7 +45,7 @@ namespace Yutrel
         //---------单次指令池-------------
         auto cmd_pool_ci =
             vk::CommandPoolCreateInfo()
-                .setQueueFamilyIndex(m_context->getGraphicsQueueIndex())
+                .setQueueFamilyIndex(m_context->getMainQueueIndex())
                 .setFlags({});
 
         m_cmd_pool = m_context->getDevice().createCommandPool(cmd_pool_ci);
@@ -128,7 +128,7 @@ namespace Yutrel
             vk::SubmitInfo2()
                 .setCommandBufferInfos(cmd_buffer_si);
 
-        auto queue = m_context->getGraphicsQueue();
+        auto queue = m_context->getMainQueue();
 
         queue.submit2(submit_info);
         queue.waitIdle();

@@ -1,5 +1,6 @@
 #include "Window.h"
 
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include "Log.h"
@@ -29,6 +30,7 @@ namespace Yutrel
 
         // Vulkan则禁止创建opengl上下文
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         // 创建窗口
         m_width       = info.width;
@@ -89,30 +91,9 @@ namespace Yutrel
         return glfwGetTime();
     }
 
-    void Window::calculateFPSAndSetTitle()
-    {
-        static double previous_seconds = getTime();
-        static int frame_count         = 0;
-        double current_seconds         = getTime();
-        double elapsed_seconds         = current_seconds - previous_seconds;
-
-        if (elapsed_seconds > 0.25)
-        {
-            previous_seconds    = current_seconds;
-            double fps          = static_cast<double>(frame_count) / elapsed_seconds;
-            double ms_per_frame = 1000.0 / fps;
-
-            setTitle(std::format("{} - {:.2f} ms/frame ({:.1f} FPS)", m_title, ms_per_frame, fps));
-
-            frame_count = 0;
-        }
-
-        frame_count++;
-    }
-
     void Window::setTitle(const std::string& title)
     {
-        glfwSetWindowTitle(m_GLFW_window, title.c_str());
+        glfwSetWindowTitle(m_GLFW_window, (m_title + title).c_str());
     }
 
     void Window::updateWindowSize()

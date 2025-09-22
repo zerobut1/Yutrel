@@ -6,6 +6,8 @@
 #include "Swapchain.h"
 #include "Window.h"
 
+#include <string>
+
 namespace Yutrel
 {
     Application::Application(const ApplicationCreateInfo& info)
@@ -57,11 +59,30 @@ namespace Yutrel
 
     void Application::run()
     {
-
         while (!m_window->shouldClose())
         {
             m_window->pollEvents();
-            m_window->calculateFPSAndSetTitle();
+
+            // 计算FPS
+            {
+                static double previous_seconds = getTime();
+                static int frame_count         = 0;
+                double current_seconds         = getTime();
+                double elapsed_seconds         = current_seconds - previous_seconds;
+
+                if (elapsed_seconds > 0.25)
+                {
+                    previous_seconds    = current_seconds;
+                    double fps          = static_cast<double>(frame_count) / elapsed_seconds;
+                    double ms_per_frame = 1000.0 / fps;
+
+                    m_window->setTitle(std::format(" - {:.2f} ms/frame ({:.1f} FPS)", ms_per_frame, fps));
+
+                    frame_count = 0;
+                }
+
+                frame_count++;
+            }
 
             // todo resize
 

@@ -21,10 +21,11 @@ float3 rayColor(Ray ray, World world, float seed)
 
     for(int depth = 0; depth < camera.max_depth; depth++)
     {
-        [flatten]
+        [branch]
         if(world.hit(ray, ray_t, rec))
         {
             float3 attenuation;
+            [branch]
             if(scatter(rec.material, ray, rec, attenuation, ray, seed + depth))
             {
                 out_color *= attenuation;

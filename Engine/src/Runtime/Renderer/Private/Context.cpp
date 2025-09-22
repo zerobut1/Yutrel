@@ -70,8 +70,9 @@ namespace Yutrel
         m_device         = vkb_device.device;
 
         // 获取图形队列
-        m_graphics_queue              = vkb_device.get_queue(vkb::QueueType::graphics).value();
-        m_graphics_queue_family_index = vkb_device.get_queue_index(vkb::QueueType::graphics).value();
+        m_main_queue              = vkb_device.get_queue(vkb::QueueType::graphics).value();
+        m_main_queue_family_index = vkb_device.get_queue_index(vkb::QueueType::graphics).value();
+        m_compute_queue           = vkb_device.get_queue(vkb::QueueType::compute).value();
     }
 
     void Context::destroy()
