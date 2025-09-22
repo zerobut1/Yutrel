@@ -1,11 +1,11 @@
 #include "Frame.h"
 
-#include "Log.h"
 #include "Context.h"
+#include "Log.h"
 
 namespace Yutrel
 {
-    Frame::Frame(std::shared_ptr<Context> context)
+    Frame::Frame(Context* context)
         : m_context(context)
     {
         init();

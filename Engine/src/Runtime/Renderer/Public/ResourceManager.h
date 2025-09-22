@@ -8,6 +8,8 @@
 
 namespace Yutrel
 {
+    class Context;
+
     // 删除队列
     struct DeletionQueue
     {
@@ -50,7 +52,7 @@ namespace Yutrel
     {
     public:
         ResourceManager() = delete;
-        explicit ResourceManager(std::shared_ptr<class Context> context);
+        explicit ResourceManager(Context* context);
         ~ResourceManager();
 
         ResourceManager(const ResourceManager&)            = delete;
@@ -76,7 +78,7 @@ namespace Yutrel
         void destroy();
 
     private:
-        std::shared_ptr<Context> m_context;
+        Context* m_context;
 
         VmaAllocator m_allocator{nullptr};
         DeletionQueue m_main_deletion_queue;

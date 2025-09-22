@@ -19,7 +19,7 @@ using namespace Yutrel;
 inline double randomDouble()
 {
     static std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    static std::mt19937 generator;
+    static std::mt19937 generator(std::random_device{}());
     return distribution(generator);
 }
 
@@ -177,8 +177,8 @@ void Compute::initDataBuffer()
 
     m_material_buffer = m_renderer->createBuffer(sizeof(Material) * m_material_data.size(), vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
     memcpy(m_material_buffer.info.pMappedData, m_material_data.data(), sizeof(Material) * m_material_data.size());
-    m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * max_sphere_num, vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
-    memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * max_sphere_num);
+    m_sphere_buffer = m_renderer->createBuffer(sizeof(Sphere) * m_spheres.size(), vk::BufferUsageFlagBits::eStorageBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    memcpy(m_sphere_buffer.info.pMappedData, m_spheres.data(), sizeof(Sphere) * m_spheres.size());
 }
 
 void Compute::initDescriptors()

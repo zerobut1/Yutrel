@@ -8,6 +8,7 @@ namespace Yutrel
 {
     class Renderer;
     class Window;
+    class Context;
 
     class Swapchain final
     {
@@ -49,7 +50,7 @@ namespace Yutrel
         uint32_t m_image_count{0};
         uint32_t m_cur_image_index{0};
 
-        std::shared_ptr<class Context> m_context;
+        Context* m_context;
     };
 
 } // namespace Yutrel

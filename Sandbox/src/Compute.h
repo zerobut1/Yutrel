@@ -108,6 +108,4 @@ private:
     std::vector<Sphere> m_spheres;
 
     Yutrel::Buffer m_sphere_buffer;
-
-    constexpr static uint32_t max_sphere_num = 1000;
 };

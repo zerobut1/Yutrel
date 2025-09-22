@@ -67,11 +67,6 @@ namespace Yutrel
         {
             c->onDetach();
         }
-        m_components.clear();
-
-        m_swapchain.reset();
-        m_window.reset();
-        m_renderer.reset();
     }
 
     void Application::run()
