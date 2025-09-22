@@ -10,26 +10,12 @@ namespace Yutrel
 {
     Application::Application(const ApplicationCreateInfo& info)
     {
-        try
-        {
-            init(info);
-        }
-        catch (const std::exception& e)
-        {
-            LOG_ERROR("std::exception: {}", e.what());
-        };
+        init(info);
     }
 
     Application::~Application()
     {
-        try
-        {
-            shutdown();
-        }
-        catch (const std::exception& e)
-        {
-            LOG_ERROR("std::exception: {}", e.what());
-        };
+        shutdown();
     }
 
     void Application::init(const ApplicationCreateInfo& info)
@@ -71,52 +57,46 @@ namespace Yutrel
 
     void Application::run()
     {
-        try
+
+        while (!m_window->shouldClose())
         {
-            while (!m_window->shouldClose())
+            m_window->pollEvents();
+            m_window->calculateFPSAndSetTitle();
+
+            // todo resize
+
+            // 重建渲染视口大小
             {
-                m_window->pollEvents();
-                m_window->calculateFPSAndSetTitle();
-
-                // todo resize
-
-                // 重建渲染视口大小
+                const bool b_need_resize = (m_window->getWidth() != m_viewport_width) || (m_window->getHeight() != m_viewport_height);
+                if (b_need_resize)
                 {
-                    const bool b_need_resize = (m_window->getWidth() != m_viewport_width) || (m_window->getHeight() != m_viewport_height);
-                    if (b_need_resize)
-                    {
-                        m_viewport_width  = m_window->getWidth();
-                        m_viewport_height = m_window->getHeight();
-                        for (auto& c : m_components)
-                        {
-                            c->onResize(m_viewport_width, m_viewport_height);
-                        }
-                    }
-                }
-
-                // 渲染一帧
-                {
-                    auto cur_frame = m_renderer->prepareBeforeRender();
-
-                    m_swapchain->acquireNextImage(cur_frame->getAvailableForRenderSemaphore());
-
-                    auto cmd_buffer = cur_frame->beginCommandBuffer();
-
+                    m_viewport_width  = m_window->getWidth();
+                    m_viewport_height = m_window->getHeight();
                     for (auto& c : m_components)
                     {
-                        c->onRender(cmd_buffer);
+                        c->onResize(m_viewport_width, m_viewport_height);
                     }
-
-                    m_renderer->submitRendering(cur_frame);
-
-                    m_swapchain->present(cur_frame->getFinishedForPresentationSemaphore());
                 }
             }
+
+            // 渲染一帧
+            {
+                auto cur_frame = m_renderer->prepareBeforeRender();
+
+                m_swapchain->acquireNextImage(cur_frame->getAvailableForRenderSemaphore());
+
+                auto cmd_buffer = cur_frame->beginCommandBuffer();
+
+                for (auto& c : m_components)
+                {
+                    c->onRender(cmd_buffer);
+                }
+
+                m_renderer->submitRendering(cur_frame);
+
+                m_swapchain->present(cur_frame->getFinishedForPresentationSemaphore());
+            }
         }
-        catch (const std::exception& e)
-        {
-            LOG_ERROR("std::exception: {}", e.what());
-        };
     }
 
     double Application::getTime() const
