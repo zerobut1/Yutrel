@@ -72,7 +72,7 @@ namespace Yutrel
         void shutdown();
 
     private:
-        static constexpr uint8_t s_max_frame{2};
+        static constexpr uint32_t s_max_frame{3};
 
         std::unique_ptr<Context> m_context;
         std::unique_ptr<ResourceManager> m_resource_manager;

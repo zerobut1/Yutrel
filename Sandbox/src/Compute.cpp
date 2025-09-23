@@ -196,7 +196,7 @@ void Compute::initDescriptors()
 
     DescriptorWriter writer;
     writer.WriteImage(0, m_main_rt->getDescriptorImageInfo(), vk::DescriptorType::eStorageImage)
-        .WriteBuffer(1, m_camera_buffer.buffer, m_camera_buffer.info.size, 0, vk::DescriptorType::eUniformBuffer)
+        .WriteBuffer(1, m_camera_buffer.buffer, sizeof(CameraData), 0, vk::DescriptorType::eUniformBuffer)
         .WriteBuffer(2, m_material_buffer.buffer, m_material_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer)
         .WriteBuffer(3, m_sphere_buffer.buffer, m_sphere_buffer.info.size, 0, vk::DescriptorType::eStorageBuffer);
 
@@ -242,28 +242,33 @@ void Compute::initImGui()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     ImGui::StyleColorsDark();
 
     ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(2.0f); // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+    style.ScaleAllSizes(2.0f);
     style.FontScaleDpi = 2.0f;
 
+    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf");
+
     ImGui_ImplGlfw_InitForVulkan(m_app->getWindow()->getWindow(), true);
+    vk::Format swapchain_format = m_app->getSwapchain()->getFormat();
     ImGui_ImplVulkan_InitInfo init_info{
-        .Instance            = static_cast<VkInstance>(m_renderer->getContext()->getInstance()),
-        .PhysicalDevice      = static_cast<VkPhysicalDevice>(m_renderer->getContext()->getGPU()),
-        .Device              = static_cast<VkDevice>(m_renderer->getContext()->getDevice()),
-        .QueueFamily         = m_renderer->getContext()->getMainQueueIndex(),
-        .Queue               = static_cast<VkQueue>(m_renderer->getContext()->getMainQueue()),
-        .DescriptorPool      = static_cast<VkDescriptorPool>(m_renderer->getDescriptorPool()),
-        .MinImageCount       = 2,
-        .ImageCount          = 2,
-        .MSAASamples         = VK_SAMPLE_COUNT_1_BIT,
-        .UseDynamicRendering = true,
+        .Instance                    = static_cast<VkInstance>(m_renderer->getContext()->getInstance()),
+        .PhysicalDevice              = static_cast<VkPhysicalDevice>(m_renderer->getContext()->getGPU()),
+        .Device                      = static_cast<VkDevice>(m_renderer->getContext()->getDevice()),
+        .QueueFamily                 = m_renderer->getContext()->getMainQueueIndex(),
+        .Queue                       = static_cast<VkQueue>(m_renderer->getContext()->getMainQueue()),
+        .DescriptorPool              = static_cast<VkDescriptorPool>(m_renderer->getDescriptorPool()),
+        .MinImageCount               = 2,
+        .ImageCount                  = 2,
+        .MSAASamples                 = VK_SAMPLE_COUNT_1_BIT,
+        .UseDynamicRendering         = true,
+        .PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfo()
+                                           .setColorAttachmentCount(1)
+                                           .setColorAttachmentFormats(swapchain_format),
     };
     ImGui_ImplVulkan_Init(&init_info);
 }
@@ -315,7 +320,7 @@ void Compute::drawImGui(vk::CommandBuffer cmd_buffer, Yutrel::Swapchain* swapcha
     auto color_attachment =
         vk::RenderingAttachmentInfo()
             .setImageView(swapchain->getCurrentImageView())
-            .setImageLayout(vk::ImageLayout::eGeneral)
+            .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
             .setLoadOp(vk::AttachmentLoadOp::eLoad)
             .setStoreOp(vk::AttachmentStoreOp::eStore);
 

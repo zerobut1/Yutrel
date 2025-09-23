@@ -12,5 +12,6 @@ target("Renderer")
         "vulkansdk",
         "vulkan-memory-allocator",
         "vk-bootstrap",
+        "imgui",
         { public = true }
     )

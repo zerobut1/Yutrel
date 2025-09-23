@@ -55,6 +55,10 @@ namespace Yutrel
         {
             c->onDetach();
         }
+
+        m_swapchain.release();
+        m_renderer.release();
+        m_window.release();
     }
 
     void Application::run()

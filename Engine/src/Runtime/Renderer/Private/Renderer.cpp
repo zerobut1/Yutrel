@@ -10,6 +10,10 @@
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
+
 namespace Yutrel
 {
     Renderer::Renderer(const CreateInfo& info)
@@ -55,11 +59,12 @@ namespace Yutrel
             {vk::DescriptorType::eUniformBuffer, 100},
             {vk::DescriptorType::eStorageImage, 100},
             {vk::DescriptorType::eCombinedImageSampler, 100},
+            {vk::DescriptorType::eStorageBuffer, 100},
         };
 
         auto pool_ci =
             vk::DescriptorPoolCreateInfo()
-                .setFlags({})
+                .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
                 .setMaxSets(100)
                 .setPoolSizes(sizes);
 
@@ -72,9 +77,20 @@ namespace Yutrel
 
         device.waitIdle();
 
+        ImGui_ImplVulkan_Shutdown();
+
+        for (auto& frame : m_frames)
+        {
+            frame.release();
+        }
+
+        m_resource_manager.release();
+
         device.destroy(m_descriptor_pool);
 
         device.destroy(m_cmd_pool);
+
+        m_context.release();
     }
 
     Frame* Renderer::prepareBeforeRender()

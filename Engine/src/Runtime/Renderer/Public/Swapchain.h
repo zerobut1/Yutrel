@@ -35,6 +35,7 @@ namespace Yutrel
         vk::Image getCurrentImage() const { return m_images[m_cur_image_index]; }
         vk::ImageView getCurrentImageView() const { return m_image_views[m_cur_image_index]; }
         vk::Extent2D getExtent() const { return m_extent; }
+        vk::Format getFormat() const { return m_format; }
 
     private:
         void init(const CreateInfo& info);
