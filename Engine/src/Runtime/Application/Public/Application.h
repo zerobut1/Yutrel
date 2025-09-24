@@ -20,6 +20,7 @@ namespace Yutrel
     class Renderer;
     class ComponentBase;
     class Swapchain;
+    class Gui;
 
     class Application final : public Window::ICallbacks
     {
@@ -55,6 +56,7 @@ namespace Yutrel
         std::unique_ptr<Renderer> m_renderer;
         std::unique_ptr<Window> m_window;
         std::unique_ptr<Swapchain> m_swapchain;
+        std::unique_ptr<Gui> m_gui;
 
         uint32_t m_viewport_width{0};
         uint32_t m_viewport_height{0};
@@ -69,6 +71,12 @@ namespace Yutrel
         virtual void onDetach()                                = 0;
         virtual void onRender(vk::CommandBuffer cmd_buffer)    = 0;
         virtual void onResize(uint32_t width, uint32_t height) = 0;
+    };
+
+    class ComponentWithUIBase : public ComponentBase
+    {
+    public:
+        virtual void onUIUpdate() = 0;
     };
 
 } // namespace Yutrel

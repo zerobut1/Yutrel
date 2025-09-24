@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include "Frame.h"
+#include "Gui.h"
 #include "Log.h"
 #include "Renderer.h"
 #include "Swapchain.h"
@@ -46,6 +47,15 @@ namespace Yutrel
         swapchain_ci.window   = getWindow();
 
         m_swapchain = std::make_unique<Swapchain>(swapchain_ci);
+
+        //---------Gui--------------
+        Gui::CreateInfo gui_ci{
+            .renderer  = getRenderer(),
+            .window    = getWindow(),
+            .swapchain = getSwapchain(),
+        };
+
+        m_gui = std::make_unique<Gui>(gui_ci);
     }
 
     void Application::shutdown()
@@ -56,6 +66,7 @@ namespace Yutrel
             c->onDetach();
         }
 
+        m_gui.release();
         m_swapchain.release();
         m_renderer.release();
         m_window.release();
@@ -63,6 +74,7 @@ namespace Yutrel
 
     void Application::run()
     {
+        // Main Loop
         while (!m_window->shouldClose())
         {
             m_window->pollEvents();
@@ -104,6 +116,21 @@ namespace Yutrel
                 }
             }
 
+            // UI更新
+            {
+                for (auto& c : m_components)
+                {
+                    if (auto c_ui = dynamic_cast<ComponentWithUIBase*>(c.get()))
+                    {
+                        m_gui->updateUI(
+                            [c_ui]()
+                            {
+                                c_ui->onUIUpdate();
+                            });
+                    }
+                }
+            }
+
             // 渲染一帧
             {
                 auto cur_frame = m_renderer->prepareBeforeRender();
@@ -116,6 +143,8 @@ namespace Yutrel
                 {
                     c->onRender(cmd_buffer);
                 }
+
+                m_gui->drawUI(cmd_buffer);
 
                 m_renderer->submitRendering(cur_frame);
 

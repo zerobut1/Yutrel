@@ -7,8 +7,6 @@
 #include <Swapchain.h>
 
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
 
 #include <random>
 
@@ -39,8 +37,6 @@ void Compute::onAttach(Yutrel::Application* app)
     initDataBuffer();
     initDescriptors();
     initPipeline();
-
-    initImGui();
 }
 
 void Compute::onDetach()
@@ -52,8 +48,6 @@ void Compute::onRender(vk::CommandBuffer cmd_buffer)
     updatePushConstants();
 
     updateCameraBuffer();
-
-    updateImGui();
 
     auto* swapchain = m_app->getSwapchain();
 
@@ -74,19 +68,6 @@ void Compute::onRender(vk::CommandBuffer cmd_buffer)
                                  swapchain->getCurrentImage(),
                                  m_main_rt->getExtent(),
                                  swapchain->getExtent());
-
-    // Imgui
-    m_renderer->transitionImageLayout(cmd_buffer,
-                                      swapchain->getCurrentImage(),
-                                      vk::ImageLayout::eTransferDstOptimal,
-                                      vk::ImageLayout::eColorAttachmentOptimal);
-
-    drawImGui(cmd_buffer, swapchain);
-
-    m_renderer->transitionImageLayout(cmd_buffer,
-                                      swapchain->getCurrentImage(),
-                                      vk::ImageLayout::eColorAttachmentOptimal,
-                                      vk::ImageLayout::ePresentSrcKHR);
 }
 
 void Compute::onResize(uint32_t width, uint32_t height)
@@ -100,6 +81,16 @@ void Compute::onResize(uint32_t width, uint32_t height)
 
     // camera
     m_camera->resize(m_viewport_width, m_viewport_height);
+}
+
+void Compute::onUIUpdate()
+{
+    {
+        ImGui::Begin("Config");
+        ImGui::SliderInt("SamplesPerPixel", reinterpret_cast<int*>(&m_camera->samples_per_pixel), 0, 100);
+        ImGui::SliderInt("MaxDepth", reinterpret_cast<int*>(&m_camera->max_depth), 0, 10);
+        ImGui::End();
+    }
 }
 
 void Compute::initCameraBuffer()
@@ -237,42 +228,6 @@ void Compute::initPipeline()
     m_renderer->destroyShaderModule(compute_shader);
 }
 
-void Compute::initImGui()
-{
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-    ImGui::StyleColorsDark();
-
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(2.0f);
-    style.FontScaleDpi = 2.0f;
-
-    io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf");
-
-    ImGui_ImplGlfw_InitForVulkan(m_app->getWindow()->getWindow(), true);
-    vk::Format swapchain_format = m_app->getSwapchain()->getFormat();
-    ImGui_ImplVulkan_InitInfo init_info{
-        .Instance                    = static_cast<VkInstance>(m_renderer->getContext()->getInstance()),
-        .PhysicalDevice              = static_cast<VkPhysicalDevice>(m_renderer->getContext()->getGPU()),
-        .Device                      = static_cast<VkDevice>(m_renderer->getContext()->getDevice()),
-        .QueueFamily                 = m_renderer->getContext()->getMainQueueIndex(),
-        .Queue                       = static_cast<VkQueue>(m_renderer->getContext()->getMainQueue()),
-        .DescriptorPool              = static_cast<VkDescriptorPool>(m_renderer->getDescriptorPool()),
-        .MinImageCount               = 2,
-        .ImageCount                  = 2,
-        .MSAASamples                 = VK_SAMPLE_COUNT_1_BIT,
-        .UseDynamicRendering         = true,
-        .PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfo()
-                                           .setColorAttachmentCount(1)
-                                           .setColorAttachmentFormats(swapchain_format),
-    };
-    ImGui_ImplVulkan_Init(&init_info);
-}
-
 void Compute::draw(vk::CommandBuffer cmd_buffer)
 {
     cmd_buffer.bindPipeline(vk::PipelineBindPoint::eCompute, m_pipeline);
@@ -297,48 +252,4 @@ void Compute::updateCameraBuffer()
     m_camera_data.max_depth         = m_camera->max_depth;
 
     memcpy(m_camera_buffer.info.pMappedData, &m_camera_data, sizeof(CameraData));
-}
-
-void Compute::updateImGui()
-{
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    {
-        ImGui::Begin("Config");
-        ImGui::SliderInt("SamplesPerPixel", reinterpret_cast<int*>(&m_camera->samples_per_pixel), 0, 100);
-        ImGui::SliderInt("MaxDepth", reinterpret_cast<int*>(&m_camera->max_depth), 0, 10);
-        ImGui::End();
-    }
-
-    ImGui::Render();
-}
-
-void Compute::drawImGui(vk::CommandBuffer cmd_buffer, Yutrel::Swapchain* swapchain)
-{
-    auto color_attachment =
-        vk::RenderingAttachmentInfo()
-            .setImageView(swapchain->getCurrentImageView())
-            .setImageLayout(vk::ImageLayout::eColorAttachmentOptimal)
-            .setLoadOp(vk::AttachmentLoadOp::eLoad)
-            .setStoreOp(vk::AttachmentStoreOp::eStore);
-
-    auto render_info =
-        vk::RenderingInfo()
-            .setRenderArea(vk::Rect2D({0, 0}, swapchain->getExtent()))
-            .setLayerCount(1)
-            .setColorAttachments(color_attachment);
-
-    cmd_buffer.beginRendering(render_info);
-
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd_buffer);
-
-    cmd_buffer.endRendering();
-
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-    }
 }

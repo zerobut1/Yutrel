@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Context.h"
+
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
@@ -7,7 +9,6 @@ struct GLFWwindow;
 
 namespace Yutrel
 {
-    class Context;
     class ResourceManager;
     class Frame;
 

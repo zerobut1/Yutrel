@@ -10,10 +10,11 @@ target("Sandbox")
         "Application",
         "Core",
         "Renderer",
-        "Window"
+        "Window",
+        "Gui"
     )
 
-    add_packages("glm", "imgui")
+    add_packages("glm")
 
     -- shader
     add_rules("utils.hlsl2spv", {bin2c = true})

@@ -10,10 +10,6 @@
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
-
 namespace Yutrel
 {
     Renderer::Renderer(const CreateInfo& info)
@@ -77,7 +73,6 @@ namespace Yutrel
 
         device.waitIdle();
 
-        ImGui_ImplVulkan_Shutdown();
 
         for (auto& frame : m_frames)
         {
