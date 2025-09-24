@@ -33,18 +33,20 @@ namespace Yutrel
         m_renderer                                      = std::make_unique<Renderer>(renderer_ci);
 
         //----------窗口----------
-        Window::CreateInfo window_ci{};
-        window_ci.title     = info.name;
-        window_ci.width     = info.width;
-        window_ci.height    = info.height;
-        window_ci.callbacks = this;
+        Window::CreateInfo window_ci{
+            .width     = info.width,
+            .height    = info.height,
+            .title     = info.name,
+            .callbacks = this,
+        };
 
         m_window = std::make_unique<Window>(window_ci);
 
         //----------交换链------------
-        Swapchain::CreateInfo swapchain_ci{};
-        swapchain_ci.renderer = getRenderer();
-        swapchain_ci.window   = getWindow();
+        Swapchain::CreateInfo swapchain_ci{
+            .renderer = getRenderer(),
+            .window   = getWindow(),
+        };
 
         m_swapchain = std::make_unique<Swapchain>(swapchain_ci);
 
